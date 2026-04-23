@@ -1,0 +1,42 @@
+// Colors
+$--color-primary: #005bf5;
+$--color-success: #00b42a;
+$--color-warning: #ff9500;
+$--color-danger: #f53f3f;
+
+// Page & Container
+$--color-bg-page: #f0f2f5;
+$--color-bg-container: #fff;
+
+// Shell (Deep Navy)
+$--sidebar-bg: #071c3d;
+$--sidebar-sub-bg: #0f1a33;
+$--sidebar-text: rgba(255, 255, 255, 0.65);
+$--sidebar-hover: rgba(255, 255, 255, 0.2);
+$--navbar-bg: #071c3d;
+
+// Typography
+$--font-size-base: 12px;
+$--font-family: Verdana, PingFang SC, Microsoft YaHei, Arial, sans-serif;
+
+// CSS Variables
+:root {
+  --color-primary: #{$--color-primary};
+  --color-success: #{$--color-success};
+  --color-warning: #{$--color-warning};
+  --color-danger: #{$--color-danger};
+  --color-bg-page: #{$--color-bg-page};
+  --color-bg-container: #{$--color-bg-container};
+  
+  --sidebar-bg: #{$--sidebar-bg};
+  --sidebar-sub-bg: #{$--sidebar-sub-bg};
+  --sidebar-text: #{$--sidebar-text};
+  --sidebar-hover: #{$--sidebar-hover};
+  --navbar-bg: #{$--navbar-bg};
+}
+
+html.dark {
+  --color-bg-page: #141414;
+  --color-bg-container: #1d1d1d;
+  // dark tokens to be added...
+}
