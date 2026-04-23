@@ -25,34 +25,121 @@
       </div>
     </div>
 
-    <!-- 2. 搜索过滤区 (轻量化面板) -->
+    <!-- 2. 搜索过滤区 (极致简约看板风格) -->
     <div class="search-panel modern-card">
       <el-form :model="queryParams" inline size="small" class="search-form">
-        <el-form-item label="立项时间">
-          <el-date-picker
-            v-model="queryParams.dateRange"
-            type="daterange"
-            range-separator="-"
-            start-placeholder="开始"
-            end-placeholder="结束"
-            style="width: 200px"
-          />
+        <!-- 复合时间筛选 -->
+        <el-form-item>
+          <div class="composite-picker">
+            <el-select v-model="queryParams.dateType" style="width: 100px" class="type-select">
+              <el-option label="立项日期" value="1" />
+              <el-option label="结项日期" value="2" />
+            </el-select>
+            <el-date-picker
+              v-model="queryParams.dateRange"
+              type="daterange"
+              range-separator="至"
+              start-placeholder="开始时间"
+              end-placeholder="结束时间"
+              style="width: 230px"
+            />
+          </div>
         </el-form-item>
         
-        <el-form-item label="进度">
-          <el-select v-model="queryParams.progress" placeholder="全部" clearable style="width: 90px">
-            <el-option label="待设计" value="待设计" />
+        <el-form-item>
+          <el-select v-model="queryParams.platform" placeholder="平台" clearable style="width: 110px">
+            <el-option label="Amazon" value="Amazon" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="经理">
-          <el-select v-model="queryParams.manager" placeholder="不限" clearable style="width: 90px">
+        <el-form-item>
+          <el-select v-model="queryParams.category" placeholder="运营大类" clearable style="width: 120px">
+            <el-option label="运动户外" value="1" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item>
+          <el-select v-model="queryParams.manager" placeholder="产品经理" clearable style="width: 110px">
             <el-option label="谢东桥" value="1" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="关键词">
-          <el-input v-model="queryParams.proposalNo" placeholder="编号/名称/SPU" style="width: 180px" clearable />
+        <el-form-item>
+          <el-select v-model="queryParams.progress" placeholder="当前进度" clearable style="width: 110px">
+            <el-option label="待设计" value="待设计" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item>
+          <el-select v-model="queryParams.devMethod" placeholder="开发方式" clearable style="width: 110px">
+            <el-option label="全新品" value="1" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item>
+          <el-select v-model="queryParams.level" placeholder="提案等级" clearable style="width: 100px">
+            <el-option label="A" value="A" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item>
+          <el-select v-model="queryParams.newDevProgress" placeholder="新品开发进度" clearable style="width: 120px">
+            <el-option label="进行中" value="1" />
+          </el-select>
+        </el-form-item>
+
+        <!-- 复合关键词搜索 (带特殊图标) -->
+        <el-form-item>
+          <el-input 
+            v-model="queryParams.proposalNo" 
+            placeholder="请输入内容" 
+            style="width: 240px"
+            class="search-keyword"
+            clearable
+          >
+            <template #prepend>
+              <el-select v-model="queryParams.searchType" style="width: 100px">
+                <el-option label="提案编号" value="1" />
+                <el-option label="产品名称" value="2" />
+              </el-select>
+            </template>
+            <template #suffix>
+              <div class="input-suffix-icons">
+                <el-icon @click="handleQuery" class="search-btn-icon"><Search /></el-icon>
+                <el-divider direction="vertical" />
+                
+                <el-popover
+                  v-model:visible="batchSearchVisible"
+                  placement="bottom-end"
+                  :width="200"
+                  trigger="click"
+                  popper-class="batch-search-popper"
+                >
+                  <template #reference>
+                    <el-icon class="grid-menu"><Menu /></el-icon>
+                  </template>
+                  
+                  <div class="batch-search-container">
+                    <el-input
+                      v-model="batchSearchValue"
+                      type="textarea"
+                      :rows="12"
+                      placeholder="一行一项"
+                      resize="none"
+                      class="batch-textarea"
+                    />
+                    <div class="batch-footer">
+                      <el-button size="small" @click="clearBatchSearch" class="btn-clear">清空</el-button>
+                      <div class="right-btns">
+                        <el-button size="small" @click="batchSearchVisible = false">关闭</el-button>
+                        <el-button size="small" type="primary" @click="handleBatchSearch">搜索</el-button>
+                      </div>
+                    </div>
+                  </div>
+                </el-popover>
+              </div>
+            </template>
+          </el-input>
         </el-form-item>
 
         <div class="search-btns">
@@ -66,12 +153,11 @@
     <div class="action-toolbar">
       <div class="left">
         <el-button type="primary" size="small" icon="Plus">创建提案</el-button>
-        <el-button size="small" icon="Box">批量操作</el-button>
+        <el-button size="small" icon="Download">导出</el-button>
       </div>
       <div class="right">
         <div class="tool-group">
           <el-icon @click="handleRefresh" title="刷新"><RefreshRight /></el-icon>
-          <el-icon title="导出"><Download /></el-icon>
           <el-icon title="设置"><Operation /></el-icon>
         </div>
       </div>
@@ -342,6 +428,19 @@ const handleExpandChange = (row: any, expandedRows: any[]) => {
 
 const statTabs = STAT_TABS
 const queryParams = reactive({ ...INITIAL_QUERY_PARAMS })
+const batchSearchVisible = ref(false)
+const batchSearchValue = ref('')
+
+const handleBatchSearch = () => {
+  // 将换行符转换为逗号或其他后端支持的格式赋值给 proposalNo
+  queryParams.proposalNo = batchSearchValue.value.replace(/\n/g, ',')
+  batchSearchVisible.value = false
+  handleQuery()
+}
+
+const clearBatchSearch = () => {
+  batchSearchValue.value = ''
+}
 
 const allTableData = ref([
   { proposalNo: 'TA-202604101', source: '开发预案', date: '2026-04-22', status: '待设计', spu: 'US0218', platform: 'Amazon', category: '运动户外', productName: 'ZZ-户外牧羊人钩', style: '防鼠挡板配件', material: 'ABS+金属', manager: '谢东桥', devMethod: '全新品-现货', level: 'D', estProposalDate: '2026-05-15', devStatus: '未完结-正常', brand: '-', model: '-', launchTime: '-', isResearched: '否' },
@@ -459,13 +558,15 @@ const resetQuery = () => {
   }
 }
 
-/* 2. 搜索面板 (轻量化) */
+/* 2. 搜索面板 (标准化) */
 .search-panel {
   padding: 12px 16px;
+  
   .search-form {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
+    gap: 0;
     
     :deep(.el-form-item) {
       margin-bottom: 0;
@@ -473,10 +574,96 @@ const resetQuery = () => {
       .el-form-item__label { font-size: 12px; color: #8c8c8c; padding-right: 8px; }
     }
 
+    /* 复合选择器通用样式 */
+    .composite-picker {
+      display: flex;
+      align-items: center;
+      
+      :deep(.type-select .el-input__wrapper) {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+        background-color: #fafafa;
+        box-shadow: 1px 0 0 0 #dcdfe6 inset, 0 1px 0 0 #dcdfe6 inset, 0 -1px 0 0 #dcdfe6 inset !important;
+      }
+      
+      :deep(.el-range-editor.el-input__inner) {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+    }
+
+    /* 复合关键词搜索样式 */
+    .search-keyword {
+      :deep(.el-input-group__prepend) {
+        background-color: #fafafa;
+        padding: 0 10px;
+        .el-select { margin: -1px -13px; }
+      }
+
+      .input-suffix-icons {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #909399;
+        
+        .el-icon {
+          cursor: pointer;
+          font-size: 16px;
+          transition: color 0.2s;
+          &:hover { color: var(--el-color-primary); }
+        }
+        
+        .search-btn-icon { font-size: 15px; }
+        .grid-menu { font-size: 14px; }
+        .el-divider { height: 12px; margin: 0; }
+      }
+    }
+
     .search-btns {
       margin-left: auto;
       display: flex;
       gap: 8px;
+      .el-button { padding: 8px 16px; }
+    }
+  }
+}
+
+/* 批量搜索弹出框 */
+:global(.batch-search-popper) {
+  padding: 12px !important;
+  border-radius: 4px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.batch-search-container {
+  .batch-textarea {
+    :deep(.el-textarea__inner) {
+      border: 1px solid #dcdfe6;
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #606266;
+      &:focus { border-color: var(--el-color-primary); }
+    }
+  }
+
+  .batch-footer {
+    margin-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .right-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-clear {
+      color: #606266;
+      background: #f5f7fa;
+      border-color: #e4e7ed;
+      &:hover { color: var(--el-color-primary); background: #fff; }
     }
   }
 }

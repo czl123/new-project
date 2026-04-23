@@ -50,6 +50,7 @@ export const INITIAL_QUERY_PARAMS = {
   progress: '', 
   devMethod: '', 
   level: '', 
+  newDevProgress: '',
   proposalNo: '', 
   searchType: '1'
 }
