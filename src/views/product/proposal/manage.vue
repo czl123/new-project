@@ -363,9 +363,9 @@
         <el-table-column prop="archiveDesc" label="归档说明" width="120" show-overflow-tooltip />
 
         <el-table-column label="操作" width="100" fixed="right" align="center">
-          <template #default>
+          <template #default="{ row }">
             <div class="action-cell">
-              <el-link type="primary" :underline="false" class="action-link">详情</el-link>
+              <el-link type="primary" :underline="false" class="action-link" @click="handleDetail(row)">详情</el-link>
               <el-divider direction="vertical" />
               <el-dropdown trigger="click">
                 <span class="dropdown-trigger">操作</span>
@@ -407,6 +407,12 @@
         </div>
       </div>
     </div>
+
+    <!-- 详情抽屉 -->
+    <DetailDrawer 
+      v-model="detailDrawerVisible" 
+      :detail-data="currentDetail" 
+    />
   </div>
 </template>
 
@@ -414,12 +420,20 @@
 import { ref, reactive, computed } from 'vue'
 import { useTableHeight } from '../../../hooks/useTableHeight'
 import { STAT_TABS, STATUS_COLORS, INITIAL_QUERY_PARAMS } from './constants'
+import DetailDrawer from './components/DetailDrawer.vue'
 
 const tableHeight = useTableHeight(240)
 const activeStat = ref('全部')
 const currentPage = ref(1)
 const pageSize = ref(20)
 const expandedRowKeys = ref<string[]>([])
+const detailDrawerVisible = ref(false)
+const currentDetail = ref<any>({})
+
+const handleDetail = (row: any) => {
+  currentDetail.value = row
+  detailDrawerVisible.value = true
+}
 
 const handleExpandChange = (row: any, expandedRows: any[]) => {
   if (expandedRows.length > 0) {
