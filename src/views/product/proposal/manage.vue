@@ -198,7 +198,7 @@
 import { ref, reactive, computed } from 'vue'
 import { useTableHeight } from '../../../hooks/useTableHeight'
 
-const tableHeight = useTableHeight(215)
+const tableHeight = useTableHeight(310)
 const activeStat = ref('全部')
 const currentPage = ref(1)
 const pageSize = ref(20)
