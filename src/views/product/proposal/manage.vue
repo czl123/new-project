@@ -362,18 +362,21 @@
         <el-table-column prop="archiveTime" label="归档时间" width="110" align="center" class-name="text-secondary" />
         <el-table-column prop="archiveDesc" label="归档说明" width="120" show-overflow-tooltip />
 
-        <el-table-column label="操作" width="110" fixed="right" align="center">
+        <el-table-column label="操作" width="100" fixed="right" align="center">
           <template #default>
             <div class="action-cell">
-              <el-link type="primary" :underline="false">详情</el-link>
+              <el-link type="primary" :underline="false" class="action-link">详情</el-link>
               <el-divider direction="vertical" />
               <el-dropdown trigger="click">
-                <span class="dropdown-trigger">更多</span>
+                <span class="dropdown-trigger">操作</span>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item>编辑提案</el-dropdown-item>
-                    <el-dropdown-item>流程审批</el-dropdown-item>
-                    <el-dropdown-item divided class="text-red">删除</el-dropdown-item>
+                    <el-dropdown-item>编辑</el-dropdown-item>
+                    <el-dropdown-item>创建任务</el-dropdown-item>
+                    <el-dropdown-item>定品申请</el-dropdown-item>
+                    <el-dropdown-item>信息编辑</el-dropdown-item>
+                    <el-dropdown-item>归档</el-dropdown-item>
+                    <el-dropdown-item>转移</el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
@@ -771,7 +774,14 @@ const resetQuery = () => {
 
 .action-cell {
   display: flex; align-items: center; justify-content: center;
-  .dropdown-trigger { color: #1890ff; cursor: pointer; font-size: 12px; margin-left: 4px; }
+  .action-link, .dropdown-trigger { 
+    font-size: 12px; 
+    color: #1890ff; 
+    cursor: pointer; 
+    display: flex;
+    align-items: center;
+  }
+  .dropdown-trigger { margin-left: 4px; }
 }
 
 .text-red { color: #ff4d4f; }
