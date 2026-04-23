@@ -316,15 +316,24 @@
 
       <!-- 分页区域 -->
       <div class="pagination-footer">
-        <span class="total-count">共 2292 条记录</span>
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[20, 50, 100]"
-          layout="prev, pager, next, sizes, jumper"
-          :total="2292"
-          background
-        />
+        <div class="footer-left">
+          <div class="toolbar-tip">
+            <el-icon><InfoFilled /></el-icon>
+            <span>提示：点击行首 <el-icon class="mini-expand"><ArrowRight /></el-icon> 展开，查看详细概况、待办流程及协作进度。</span>
+          </div>
+        </div>
+        
+        <div class="footer-right">
+          <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :page-sizes="[20, 50, 100]"
+            layout="prev, pager, next, sizes, jumper"
+            :total="2292"
+            background
+          />
+          <span class="total-count">共 2292 条记录</span>
+        </div>
       </div>
     </div>
   </div>
@@ -450,10 +459,59 @@ const resetQuery = () => Object.keys(queryParams).forEach(key => (queryParams as
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #f0f0f0;
+  
+  .left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .toolbar-tip {
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
+    padding: 2px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(24, 144, 255, 0.2);
+    color: #409eff;
+    box-shadow: 0 2px 6px rgba(0, 102, 255, 0.05);
+    margin-left: 12px;
+
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      background: #409eff;
+      border-radius: 50%;
+      position: relative;
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: inherit;
+        animation: pulse 2s infinite;
+      }
+    }
+
+    .mini-expand {
+      font-size: 10px;
+      color: #1890ff;
+      font-weight: bold;
+      transform: rotate(90deg); // 模拟展开后的向下箭头
+    }
+  }
   .tool-icons {
     display: flex; gap: 16px; font-size: 16px; color: #8c8c8c; cursor: pointer;
     .el-icon:hover { color: var(--color-primary); }
   }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  70% { transform: scale(2.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
 }
 
 /* 现代表格样式 */
@@ -527,14 +585,66 @@ const resetQuery = () => Object.keys(queryParams).forEach(key => (queryParams as
 
 .text-red { color: #ff4d4f; }
 
-/* 分页区 */
+/* 分页区布局最终修正方案：左提示，右分页+总数 */
 .pagination-footer {
-  padding: 10px 16px;
+  padding: 12px 16px;
   display: flex;
-  justify-content: space-between;
+  justify-content: space-between; // 核心：左右两端对齐
   align-items: center;
   border-top: 1px solid #f0f0f0;
-  .total-count { font-size: 13px; color: #8c8c8c; }
+  background: #fff;
+  
+  .footer-left {
+    display: flex;
+    align-items: center;
+  }
+
+  .footer-right {
+    display: flex;
+    align-items: center;
+    gap: 12px; // 分页与总条数的间距
+
+    .total-count { 
+      font-size: 13px; 
+      color: #8c8c8c; 
+      white-space: nowrap;
+    }
+
+    :deep(.el-pagination) {
+      padding: 0;
+      width: auto;
+      justify-content: flex-end;
+    }
+  }
+
+  .toolbar-tip {
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f0f7ff;
+    padding: 5px 14px;
+    border-radius: 4px;
+    border: 1px solid #91d5ff;
+    color: #1890ff;
+    white-space: nowrap;
+    
+    .el-icon { font-size: 14px; color: #1890ff; }
+    .mini-expand {
+      font-size: 10px;
+      color: #1890ff;
+      border: 1px solid #91d5ff;
+      border-radius: 2px;
+      padding: 1px;
+      background: #fff;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+    }
+  }
 }
 /* 展开行详细样式优化版 */
 .expand-wrapper {
