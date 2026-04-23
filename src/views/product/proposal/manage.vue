@@ -106,7 +106,94 @@
         highlight-current-row
       >
         <el-table-column type="index" label="#" width="45" align="center" fixed />
-        <el-table-column type="expand" width="30" fixed />
+        <el-table-column type="expand" width="20" fixed>
+          <template #default="{ row }">
+            <div class="expand-wrapper">
+              <!-- 左侧组合列：统计 + 待办 -->
+              <div class="expand-column-left">
+                <!-- 统计板块 -->
+                <div class="expand-section">
+                  <div class="section-title">提案概况</div>
+                  <div class="info-list">
+                    <div class="info-item">任务发布：<span class="val">共【0/1/1】轮</span> <el-icon class="hint-icon"><QuestionFilled /></el-icon></div>
+                    <div class="info-item">开模次数：<span class="val">共【0】次</span></div>
+                    <div class="info-item">定品申请：<span class="val">共【1】轮</span></div>
+                    <div class="info-item">提案用时：<span class="val">共【7(0)】天</span> <el-icon class="hint-icon"><QuestionFilled /></el-icon></div>
+                    <div class="info-item">样品数量：<span class="val-link">共【1/1/0】件</span> <el-icon class="hint-icon"><QuestionFilled /></el-icon></div>
+                    <div class="info-item">研发投入：<span class="val">共【0】元</span></div>
+                  </div>
+                </div>
+
+                <!-- 待办板块 -->
+                <div class="expand-section">
+                  <div class="section-title">待办流程</div>
+                  <div class="todo-pipeline">
+                    <!-- 阶段 1: 拿样 -->
+                    <div class="pipeline-node">
+                      <div class="node-tag">拿样阶段</div>
+                      <div class="node-content">
+                        <div class="info-item">任务待发：<el-link type="primary" :underline="false">0</el-link></div>
+                        <div class="info-item">定制反馈：<el-link type="primary" :underline="false">0</el-link></div>
+                      </div>
+                    </div>
+                    <!-- 阶段 2: 反馈 -->
+                    <div class="pipeline-node">
+                      <div class="node-tag">反馈阶段</div>
+                      <div class="node-content">
+                        <div class="info-item">样品反馈：<el-link type="primary" :underline="false">0</el-link></div>
+                        <div class="info-item">样品待还：<el-link type="primary" :underline="false">0</el-link></div>
+                      </div>
+                    </div>
+                    <!-- 阶段 3: 定品 -->
+                    <div class="pipeline-node">
+                      <div class="node-tag">定品阶段</div>
+                      <div class="node-content">
+                        <div class="info-item">信息补充：<el-link type="primary" :underline="false">0</el-link></div>
+                        <div class="info-item">首单需求：<span class="status-text">已确认</span> <el-icon class="hint-icon"><QuestionFilled /></el-icon></div>
+                        <div class="info-item">定品待申：<el-link type="primary" :underline="false">0</el-link></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 协作图表板块 -->
+              <div class="expand-section chart-section">
+                <div class="section-title">协作</div>
+                <div class="chart-container">
+                  <div class="chart-legend">
+                    <span class="leg-item"><i class="dot blue"></i>时长</span>
+                    <span class="leg-item"><i class="dot green"></i>样品数</span>
+                    <span class="leg-item"><i class="dot yellow"></i>费用</span>
+                  </div>
+                  <div class="mock-chart">
+                    <!-- 模拟 Y 轴 -->
+                    <div class="y-axis"><span>15</span><span>12</span><span>9</span><span>6</span><span>3</span><span>0</span></div>
+                    <!-- 模拟绘图区 -->
+                    <div class="chart-area">
+                      <div class="grid-line"></div><div class="grid-line"></div><div class="grid-line"></div><div class="grid-line"></div><div class="grid-line"></div>
+                      <div class="bars">
+                        <div class="bar-group" style="left: 20%">
+                          <div class="label-top">0天</div>
+                          <div class="label-bottom">第【1】轮【定制拿样】<br/>【已关闭】</div>
+                        </div>
+                        <div class="bar-group" style="left: 85%">
+                          <div class="label-top-val">14个</div>
+                          <div class="bar green" style="height: 60%"></div>
+                          <div class="label-bottom">第【1】次定品<br/>【已审批】</div>
+                        </div>
+                      </div>
+                      <!-- 模拟折线 -->
+                      <div class="mock-line"></div>
+                    </div>
+                    <!-- 模拟右侧 Y 轴 -->
+                    <div class="y-axis-right"><span>费用</span><span>1元</span><span>0.8元</span><span>0.6元</span><span>0.4元</span><span>0.2元</span><span>0元</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column prop="proposalNo" label="提案编号" width="120" fixed class-name="font-bold text-dark" />
         <el-table-column label="提案来源" width="100">
           <template #default="{ row }">
@@ -409,5 +496,193 @@ const resetQuery = () => Object.keys(queryParams).forEach(key => (queryParams as
   align-items: center;
   border-top: 1px solid #f0f0f0;
   .total-count { font-size: 13px; color: #8c8c8c; }
+}
+/* 展开行详细样式优化版 */
+.expand-wrapper {
+  display: flex;
+  padding: 24px 40px;
+  background: #fcfdfe;
+  gap: 60px;
+  border-bottom: 1px solid #f0f0f0;
+  border-left: 4px solid var(--color-primary);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.02);
+
+  .expand-column-left {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    flex-shrink: 0;
+  }
+
+  .expand-section {
+    flex-shrink: 0;
+    .section-title { 
+      font-size: 13px; font-weight: 600; color: #1f1f1f; margin-bottom: 16px; 
+      display: flex; align-items: center; gap: 8px;
+      &::before { content: ''; width: 3px; height: 12px; background: var(--color-primary); border-radius: 1px; }
+    }
+    
+    /* 统计表格化布局 */
+    .info-list {
+      display: grid;
+      grid-template-columns: repeat(2, 210px);
+      gap: 1px;
+      background: #f0f0f0;
+      border: 1px solid #f0f0f0;
+      border-radius: 4px;
+      overflow: hidden;
+
+      .info-item {
+        background: #fff;
+        padding: 8px 12px;
+        font-size: 12px;
+        color: #595959;
+        display: flex;
+        align-items: center;
+        
+        .val, .val-link { color: #1f1f1f; font-weight: 600; margin-left: auto; }
+        .val-link { color: var(--color-primary); cursor: pointer; text-decoration: none; border-bottom: 1px dashed var(--color-primary); }
+        .hint-icon { font-size: 12px; color: #bfbfbf; margin-left: 6px; cursor: help; }
+        
+        &:hover { background: #fafafa; }
+      }
+    }
+
+    /* 待办流水线布局 */
+    .todo-pipeline {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+      padding-left: 20px;
+
+      /* 垂直进度线 */
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 8px;
+        bottom: 8px;
+        width: 2px;
+        background: #f0f0f0;
+        border-radius: 1px;
+      }
+
+      .pipeline-node {
+        position: relative;
+        
+        /* 进度圆点 */
+        &::before {
+          content: '';
+          position: absolute;
+          left: -24px;
+          top: 8px;
+          width: 8px;
+          height: 8px;
+          background: #fff;
+          border: 2px solid var(--color-primary);
+          border-radius: 50%;
+          z-index: 1;
+        }
+
+        .node-tag {
+          font-size: 11px;
+          color: var(--color-primary);
+          font-weight: 600;
+          margin-bottom: 6px;
+          display: flex;
+          align-items: center;
+          &::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, #f0f0f0, transparent);
+            margin-left: 8px;
+          }
+        }
+
+        .node-content {
+          display: grid;
+          grid-template-columns: repeat(2, 210px);
+          gap: 1px;
+          background: #f0f0f0;
+          border: 1px solid #f0f0f0;
+          border-radius: 4px;
+          overflow: hidden;
+
+          .info-item {
+            background: #fff;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #595959;
+            display: flex;
+            align-items: center;
+            
+            .el-link, .status-text { 
+              margin-left: auto; 
+              font-weight: 600; 
+              font-size: 12px; 
+              --el-link-font-size: 12px;
+            }
+            .status-text { color: #52c41a; }
+            .hint-icon { font-size: 12px; color: #bfbfbf; margin-left: 6px; cursor: help; }
+            
+            &:hover { background: #fafafa; }
+          }
+        }
+      }
+    }
+
+    &.chart-section { flex: 1; min-width: 500px; }
+  }
+
+  /* 协作图表优化 */
+  .chart-container {
+    background: #fff; border: 1px solid #f0f0f0; border-radius: 8px; padding: 20px; position: relative;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    
+    .chart-legend {
+      display: flex; justify-content: flex-end; gap: 16px; margin-bottom: 16px;
+      .leg-item {
+        display: flex; align-items: center; gap: 4px; font-size: 11px; color: #8c8c8c;
+        .dot { width: 8px; height: 8px; border-radius: 2px; }
+        .dot.blue { background: #1890ff; }
+        .dot.green { background: #52c41a; }
+        .dot.yellow { background: #faad14; }
+      }
+    }
+
+    .mock-chart {
+      display: flex; height: 160px; position: relative;
+      .y-axis, .y-axis-right {
+        display: flex; flex-direction: column; justify-content: space-between; font-size: 10px; color: #bfbfbf; width: 25px; text-align: right;
+      }
+      .y-axis-right { width: 40px; text-align: left; margin-left: 10px; }
+      
+      .chart-area {
+        flex: 1; border-bottom: 1px solid #f0f0f0; position: relative; margin: 0 8px;
+        .grid-line { height: 20%; border-top: 1px dashed #f5f5f5; width: 100%; }
+        
+        .bars {
+          position: absolute; inset: 0;
+          .bar-group {
+            position: absolute; bottom: 0; width: 50px; display: flex; flex-direction: column; align-items: center;
+            .label-top, .label-top-val { font-size: 10px; color: #262626; font-weight: 600; margin-bottom: 4px; }
+            .label-bottom { position: absolute; top: 105%; width: 120px; font-size: 10px; color: #8c8c8c; text-align: center; line-height: 1.2; }
+            .bar { width: 32px; border-radius: 2px 2px 0 0; }
+            .bar.green { background: linear-gradient(to top, #52c41a, #95de64); }
+          }
+        }
+        
+        .mock-line {
+          position: absolute; top: 75%; left: 0; right: 0; height: 1.5px; background: rgba(250, 173, 20, 0.3);
+          &::before, &::after { 
+            content: ''; position: absolute; width: 6px; height: 6px; background: #fff; border: 2px solid #faad14; border-radius: 50%; top: -4px;
+          }
+          &::before { left: 20%; } &::after { left: 85%; }
+        }
+      }
+    }
+  }
 }
 </style>
