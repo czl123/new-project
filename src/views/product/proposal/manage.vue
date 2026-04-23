@@ -4,18 +4,24 @@
     <div class="compact-stat-bar modern-card">
       <div class="stat-title">待办统计：</div>
       <div class="stat-list">
-        <div 
+        <el-tooltip 
           v-for="item in statTabs" 
           :key="item.label" 
-          class="stat-chip" 
-          :class="{ active: activeStat === item.label }"
-          :style="{ '--status-color': getStatusColor(item.label) }"
-          @click="handleStatClick(item.label)"
+          :content="item.desc" 
+          placement="bottom" 
+          :show-after="200"
         >
-          <span class="dot"></span>
-          <span class="label">{{ item.label }}</span>
-          <span class="count">{{ getStatCount(item.label) }}</span>
-        </div>
+          <div 
+            class="stat-chip" 
+            :class="{ active: activeStat === item.label }"
+            :style="{ '--status-color': getStatusColor(item.label) }"
+            @click="handleStatClick(item.label)"
+          >
+            <span class="dot"></span>
+            <span class="label">{{ item.label }}</span>
+            <span class="count">{{ getStatCount(item.label) }}</span>
+          </div>
+        </el-tooltip>
       </div>
     </div>
 
@@ -318,6 +324,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { useTableHeight } from '../../../hooks/useTableHeight'
+import { STAT_TABS, STATUS_COLORS, INITIAL_QUERY_PARAMS } from './constants'
 
 const tableHeight = useTableHeight(240)
 const activeStat = ref('全部')
@@ -333,15 +340,8 @@ const handleExpandChange = (row: any, expandedRows: any[]) => {
   }
 }
 
-const statTabs = [
-  { label: '全部' }, { label: '待设计' }, { label: '任务待发' }, { label: '定制反馈' },
-  { label: '样品反馈' }, { label: '样品待还' }, { label: '信息补充' }, { label: '首单需求待采集' },
-  { label: '定品待申' }, { label: '定品二级审批' }
-]
-
-const queryParams = reactive({
-  dateType: '1', dateRange: [], platform: '', category: '', manager: '', progress: '', devMethod: '', level: '', proposalNo: '', searchType: '1'
-})
+const statTabs = STAT_TABS
+const queryParams = reactive({ ...INITIAL_QUERY_PARAMS })
 
 const allTableData = ref([
   { proposalNo: 'TA-202604101', source: '开发预案', date: '2026-04-22', status: '待设计', spu: 'US0218', platform: 'Amazon', category: '运动户外', productName: 'ZZ-户外牧羊人钩', style: '防鼠挡板配件', material: 'ABS+金属', manager: '谢东桥', devMethod: '全新品-现货', level: 'D', estProposalDate: '2026-05-15', devStatus: '未完结-正常', brand: '-', model: '-', launchTime: '-', isResearched: '否' },
@@ -367,14 +367,7 @@ const getStatusClass = (status: string) => {
   return map[status] || 'grey'
 }
 
-const getStatusColor = (label: string) => {
-  const colors: any = {
-    '全部': '#1890ff', '待设计': '#722ed1', '任务待发': '#fa8c16', '定制反馈': '#13c2c2',
-    '样品反馈': '#52c41a', '样品待还': '#eb2f96', '信息补充': '#2f54eb', '首单需求待采集': '#faad14',
-    '定品待申': '#a0d911', '定品二级审批': '#f5222d'
-  }
-  return colors[label] || '#bfbfbf'
-}
+const getStatusColor = (label: string) => STATUS_COLORS[label] || '#bfbfbf'
 
 const handleQuery = () => {
   console.log('查询参数：', queryParams)
@@ -384,7 +377,9 @@ const handleRefresh = () => {
   console.log('刷新数据')
 }
 
-const resetQuery = () => Object.keys(queryParams).forEach(key => (queryParams as any)[key] = '')
+const resetQuery = () => {
+  Object.assign(queryParams, INITIAL_QUERY_PARAMS)
+}
 </script>
 
 <style lang="scss" scoped>
