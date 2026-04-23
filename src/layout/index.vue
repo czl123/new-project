@@ -339,5 +339,5 @@ const closeSubMenu = () => { showSubMenu.value = false; activeSubMenu.value = ''
 .portal-fade-enter-active, .portal-fade-leave-active { transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
 .portal-fade-enter-from, .portal-fade-leave-to { opacity: 0; transform: translateX(-20px); }
 .search-result-item { display: flex; align-items: center; gap: 8px; .category { color: #909399; font-size: 12px; } .divider-icon { font-size: 10px; color: #c0c4cc; } .title { color: #303133; font-weight: 500; } }
-.app-main { flex: 1; background-color: var(--color-bg-page); display: flex; flex-direction: column; overflow: hidden; .view-content { flex: 1; padding: 12px; overflow-y: auto; } }
+.app-main { flex: 1; background-color: var(--color-bg-page); display: flex; flex-direction: column; overflow: hidden; .view-content { flex: 1; overflow: hidden; } }
 </style>

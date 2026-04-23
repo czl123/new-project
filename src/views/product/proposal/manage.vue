@@ -1,102 +1,78 @@
 <template>
   <div class="page-container">
-    <!-- 顶部状态待办统计 (卡片化) -->
-    <div class="stat-tabs modern-card">
-      <div class="stat-label">待办：</div>
-      <div class="stat-items">
+    <!-- 1. 待办统计区 (紧凑彩色标签) -->
+    <div class="compact-stat-bar modern-card">
+      <div class="stat-title">待办统计：</div>
+      <div class="stat-list">
         <div 
           v-for="item in statTabs" 
           :key="item.label" 
-          class="stat-item" 
+          class="stat-chip" 
           :class="{ active: activeStat === item.label }"
+          :style="{ '--status-color': getStatusColor(item.label) }"
           @click="handleStatClick(item.label)"
         >
-          {{ item.label }}<span class="count">{{ getStatCount(item.label) }}</span>
-          <el-icon class="info-icon"><QuestionFilled /></el-icon>
+          <span class="dot"></span>
+          <span class="label">{{ item.label }}</span>
+          <span class="count">{{ getStatCount(item.label) }}</span>
         </div>
       </div>
     </div>
 
-    <!-- 查询过滤区域 (紧凑对齐) -->
-    <div class="search-section modern-card">
-      <el-form :model="queryParams" inline size="small">
-        <el-form-item>
-          <el-select v-model="queryParams.dateType" style="width: 100px">
-            <el-option label="立项日期" value="1" />
-          </el-select>
+    <!-- 2. 搜索过滤区 (轻量化面板) -->
+    <div class="search-panel modern-card">
+      <el-form :model="queryParams" inline size="small" class="search-form">
+        <el-form-item label="立项时间">
           <el-date-picker
             v-model="queryParams.dateRange"
             type="daterange"
-            range-separator="至"
-            start-placeholder="开始时间"
-            end-placeholder="结束时间"
-            style="width: 230px; margin-left: 8px"
+            range-separator="-"
+            start-placeholder="开始"
+            end-placeholder="结束"
+            style="width: 200px"
           />
         </el-form-item>
         
-        <el-form-item>
-          <el-select v-model="queryParams.platform" placeholder="平台" clearable style="width: 100px">
-            <el-option label="Amazon" value="Amazon" />
+        <el-form-item label="进度">
+          <el-select v-model="queryParams.progress" placeholder="全部" clearable style="width: 90px">
+            <el-option label="待设计" value="待设计" />
           </el-select>
         </el-form-item>
 
-        <el-form-item>
-          <el-select v-model="queryParams.category" placeholder="运营大类" clearable style="width: 110px">
-            <el-option label="运动户外" value="1" />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item>
-          <el-select v-model="queryParams.manager" placeholder="产品经理" clearable style="width: 100px">
+        <el-form-item label="经理">
+          <el-select v-model="queryParams.manager" placeholder="不限" clearable style="width: 90px">
             <el-option label="谢东桥" value="1" />
           </el-select>
         </el-form-item>
 
-        <el-form-item>
-          <el-select v-model="queryParams.progress" placeholder="进度" clearable style="width: 100px">
-            <el-option label="待设计" value="待设计" />
-            <el-option label="拿样中" value="拿样中" />
-          </el-select>
+        <el-form-item label="关键词">
+          <el-input v-model="queryParams.proposalNo" placeholder="编号/名称/SPU" style="width: 180px" clearable />
         </el-form-item>
 
-        <el-form-item>
-          <el-input v-model="queryParams.proposalNo" placeholder="请输入内容" style="width: 210px">
-            <template #prepend>
-              <el-select v-model="queryParams.searchType" style="width: 85px">
-                <el-option label="提案编号" value="1" />
-              </el-select>
-            </template>
-            <template #suffix>
-              <div class="input-inner-icons">
-                <el-icon><Search /></el-icon>
-                <el-divider direction="vertical" />
-                <el-icon><Menu /></el-icon>
-              </div>
-            </template>
-          </el-input>
-        </el-form-item>
-
-        <el-form-item>
-          <el-button @click="resetQuery" class="btn-ghost">重置</el-button>
-        </el-form-item>
+        <div class="search-btns">
+          <el-button type="primary" @click="handleQuery">查询</el-button>
+          <el-button @click="resetQuery">重置</el-button>
+        </div>
       </el-form>
     </div>
 
-    <!-- 表格区域 (呼吸感优化) -->
-    <div class="table-container modern-card">
-      <div class="table-toolbar">
-        <div class="left">
-          <el-button type="primary" size="small" icon="Plus">创建提案</el-button>
-        </div>
-        <div class="right">
-          <div class="tool-icons">
-            <el-icon><RefreshRight /></el-icon>
-            <el-icon><Download /></el-icon>
-            <el-icon><Operation /></el-icon>
-          </div>
+    <!-- 3. 动作工具栏 (简约图标组) -->
+    <div class="action-toolbar">
+      <div class="left">
+        <el-button type="primary" size="small" icon="Plus">创建提案</el-button>
+        <el-button size="small" icon="Box">批量操作</el-button>
+      </div>
+      <div class="right">
+        <div class="tool-group">
+          <el-icon @click="handleRefresh" title="刷新"><RefreshRight /></el-icon>
+          <el-icon title="导出"><Download /></el-icon>
+          <el-icon title="设置"><Operation /></el-icon>
         </div>
       </div>
+    </div>
 
+    <!-- 表格区域 -->
+    <div class="table-container modern-card">
       <el-table 
         :data="tableData" 
         :height="tableHeight"
@@ -343,7 +319,7 @@
 import { ref, reactive, computed } from 'vue'
 import { useTableHeight } from '../../../hooks/useTableHeight'
 
-const tableHeight = useTableHeight(310)
+const tableHeight = useTableHeight(240)
 const activeStat = ref('全部')
 const currentPage = ref(1)
 const pageSize = ref(20)
@@ -391,122 +367,155 @@ const getStatusClass = (status: string) => {
   return map[status] || 'grey'
 }
 
+const getStatusColor = (label: string) => {
+  const colors: any = {
+    '全部': '#1890ff', '待设计': '#722ed1', '任务待发': '#fa8c16', '定制反馈': '#13c2c2',
+    '样品反馈': '#52c41a', '样品待还': '#eb2f96', '信息补充': '#2f54eb', '首单需求待采集': '#faad14',
+    '定品待申': '#a0d911', '定品二级审批': '#f5222d'
+  }
+  return colors[label] || '#bfbfbf'
+}
+
+const handleQuery = () => {
+  console.log('查询参数：', queryParams)
+}
+
+const handleRefresh = () => {
+  console.log('刷新数据')
+}
+
 const resetQuery = () => Object.keys(queryParams).forEach(key => (queryParams as any)[key] = '')
 </script>
 
 <style lang="scss" scoped>
 .page-container {
-  padding: 12px;
-  background-color: #f5f7fa;
+  padding: 0 10px 10px 10px;
+  background-color: #f0f2f5;
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .modern-card {
   background: #fff;
   border-radius: 4px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-/* 顶部统计 */
-.stat-tabs {
-  padding: 10px 16px;
+/* 1. 紧凑待办条 */
+.compact-stat-bar {
+  padding: 8px 16px;
   display: flex;
   align-items: center;
-  overflow-x: auto;
-  .stat-label { font-size: 13px; color: #8c8c8c; margin-right: 12px; }
-  .stat-items { display: flex; gap: 6px; }
-  .stat-item {
-    padding: 3px 12px;
-    background: #f0f0f0;
-    border-radius: 12px;
+  gap: 12px;
+
+  .stat-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8c8c8c;
+    white-space: nowrap;
+  }
+
+  .stat-list {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .stat-chip {
+    padding: 2px 10px;
+    background: #f5f5f5;
+    border-radius: 4px;
     font-size: 12px;
     cursor: pointer;
-    white-space: nowrap;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     color: #595959;
+    border: 1px solid #e8e8e8;
     transition: all 0.2s;
-    .count { margin-left: 2px; font-weight: 600; }
-    &:hover { background: #e8e8e8; }
-    &.active { background: var(--color-primary); color: #fff; box-shadow: 0 2px 6px rgba(24, 144, 255, 0.3); }
-    .info-icon { font-size: 12px; opacity: 0.5; }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--status-color);
+    }
+
+    .count {
+      font-weight: 700;
+      color: #8c8c8c;
+    }
+
+    &:hover {
+      border-color: var(--status-color);
+      background: #fff;
+    }
+
+    &.active {
+      background: var(--status-color);
+      border-color: var(--status-color);
+      color: #fff;
+      .dot { background: #fff; }
+      .count { color: #fff; opacity: 0.9; }
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
   }
 }
 
-/* 查询区域 */
-.search-section {
-  padding: 16px 16px 4px 16px;
-  :deep(.el-form-item) { margin-bottom: 12px; margin-right: 16px; }
-  .input-inner-icons { display: flex; align-items: center; gap: 4px; color: #bfbfbf; }
-  .btn-ghost { color: #595959; border-color: #d9d9d9; &:hover { color: var(--color-primary); border-color: var(--color-primary); } }
+/* 2. 搜索面板 (轻量化) */
+.search-panel {
+  padding: 12px 16px;
+  .search-form {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    
+    :deep(.el-form-item) {
+      margin-bottom: 0;
+      margin-right: 16px;
+      .el-form-item__label { font-size: 12px; color: #8c8c8c; padding-right: 8px; }
+    }
+
+    .search-btns {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+    }
+  }
 }
 
-/* 表格容器 */
+/* 3. 动作工具栏 (简约) */
+.action-toolbar {
+  padding: 0 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .left { display: flex; gap: 8px; }
+  
+  .tool-group {
+    display: flex;
+    gap: 16px;
+    color: #8c8c8c;
+    font-size: 16px;
+    .el-icon {
+      cursor: pointer;
+      transition: color 0.2s;
+      &:hover { color: var(--el-color-primary); }
+    }
+  }
+}
+
+/* 4. 表格容器 */
 .table-container {
-  padding: 0;
   flex: 1;
+  padding: 0;
   display: flex;
   flex-direction: column;
 }
 
-.table-toolbar {
-  padding: 12px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #f0f0f0;
-  
-  .left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
-
-  .toolbar-tip {
-    font-size: 11px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
-    padding: 2px 14px;
-    border-radius: 20px;
-    border: 1px solid rgba(24, 144, 255, 0.2);
-    color: #409eff;
-    box-shadow: 0 2px 6px rgba(0, 102, 255, 0.05);
-    margin-left: 12px;
-
-    .pulse-dot {
-      width: 6px;
-      height: 6px;
-      background: #409eff;
-      border-radius: 50%;
-      position: relative;
-      &::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        border-radius: 50%;
-        background: inherit;
-        animation: pulse 2s infinite;
-      }
-    }
-
-    .mini-expand {
-      font-size: 10px;
-      color: #1890ff;
-      font-weight: bold;
-      transform: rotate(90deg); // 模拟展开后的向下箭头
-    }
-  }
-  .tool-icons {
-    display: flex; gap: 16px; font-size: 16px; color: #8c8c8c; cursor: pointer;
-    .el-icon:hover { color: var(--color-primary); }
-  }
-}
 
 @keyframes pulse {
   0% { transform: scale(1); opacity: 0.8; }
@@ -587,9 +596,9 @@ const resetQuery = () => Object.keys(queryParams).forEach(key => (queryParams as
 
 /* 分页区布局最终修正方案：左提示，右分页+总数 */
 .pagination-footer {
-  padding: 12px 16px;
+  padding: 8px 12px;
   display: flex;
-  justify-content: space-between; // 核心：左右两端对齐
+  justify-content: space-between;
   align-items: center;
   border-top: 1px solid #f0f0f0;
   background: #fff;
@@ -602,10 +611,10 @@ const resetQuery = () => Object.keys(queryParams).forEach(key => (queryParams as
   .footer-right {
     display: flex;
     align-items: center;
-    gap: 12px; // 分页与总条数的间距
+    gap: 8px;
 
     .total-count { 
-      font-size: 13px; 
+      font-size: 12px; 
       color: #8c8c8c; 
       white-space: nowrap;
     }
@@ -614,35 +623,35 @@ const resetQuery = () => Object.keys(queryParams).forEach(key => (queryParams as
       padding: 0;
       width: auto;
       justify-content: flex-end;
+      .el-pagination__jump { margin-left: 8px; }
     }
   }
 
   .toolbar-tip {
-    font-size: 12px;
+    font-size: 11px;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     background: #f0f7ff;
-    padding: 5px 14px;
+    padding: 3px 10px;
     border-radius: 4px;
     border: 1px solid #91d5ff;
     color: #1890ff;
     white-space: nowrap;
     
-    .el-icon { font-size: 14px; color: #1890ff; }
+    .el-icon { font-size: 13px; color: #1890ff; }
     .mini-expand {
-      font-size: 10px;
+      font-size: 9px;
       color: #1890ff;
       border: 1px solid #91d5ff;
       border-radius: 2px;
-      padding: 1px;
+      padding: 0;
       background: #fff;
-      line-height: 1;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 14px;
-      height: 14px;
+      width: 12px;
+      height: 12px;
     }
   }
 }
