@@ -104,6 +104,9 @@
         header-cell-class-name="modern-header"
         row-class-name="modern-row"
         highlight-current-row
+        row-key="proposalNo"
+        :expand-row-keys="expandedRowKeys"
+        @expand-change="handleExpandChange"
       >
         <el-table-column type="index" label="#" width="45" align="center" fixed />
         <el-table-column type="expand" width="20" fixed>
@@ -159,7 +162,7 @@
 
               <!-- 协作图表板块 -->
               <div class="expand-section chart-section">
-                <div class="section-title">协作</div>
+                <div class="section-title">协作进度</div>
                 <div class="chart-container">
                   <div class="chart-legend">
                     <span class="leg-item"><i class="dot blue"></i>时长</span>
@@ -173,18 +176,45 @@
                     <div class="chart-area">
                       <div class="grid-line"></div><div class="grid-line"></div><div class="grid-line"></div><div class="grid-line"></div><div class="grid-line"></div>
                       <div class="bars">
-                        <div class="bar-group" style="left: 20%">
-                          <div class="label-top">0天</div>
-                          <div class="label-bottom">第【1】轮【定制拿样】<br/>【已关闭】</div>
+                        <!-- 节点 1 -->
+                        <div class="bar-group" style="left: 10%">
+                          <div class="bars-inner">
+                            <div class="bar-item"><div class="bar-val">2d</div><div class="bar blue" style="height: 15%"></div></div>
+                            <div class="bar-item"><div class="bar-val">3p</div><div class="bar green" style="height: 20%"></div></div>
+                            <div class="bar-item"><div class="bar-val">¥0.1</div><div class="bar yellow" style="height: 10%"></div></div>
+                          </div>
+                          <div class="label-bottom">第【1】轮<br/>【定制拿样】</div>
                         </div>
+                        <!-- 节点 2 -->
+                        <div class="bar-group" style="left: 35%">
+                          <div class="bars-inner">
+                            <div class="bar-item"><div class="bar-val">5d</div><div class="bar blue" style="height: 35%"></div></div>
+                            <div class="bar-item"><div class="bar-val">8p</div><div class="bar green" style="height: 45%"></div></div>
+                            <div class="bar-item"><div class="bar-val">¥0.3</div><div class="bar yellow" style="height: 30%"></div></div>
+                          </div>
+                          <div class="label-bottom">第【1】轮<br/>【样品反馈】</div>
+                        </div>
+                        <!-- 节点 3 -->
+                        <div class="bar-group" style="left: 60%">
+                          <div class="bars-inner">
+                            <div class="bar-item"><div class="bar-val">3d</div><div class="bar blue" style="height: 20%"></div></div>
+                            <div class="bar-item"><div class="bar-val">2p</div><div class="bar green" style="height: 15%"></div></div>
+                            <div class="bar-item"><div class="bar-val">¥0.1</div><div class="bar yellow" style="height: 10%"></div></div>
+                          </div>
+                          <div class="label-bottom">第【2】轮<br/>【需求确认】</div>
+                        </div>
+                        <!-- 节点 4 -->
                         <div class="bar-group" style="left: 85%">
-                          <div class="label-top-val">14个</div>
-                          <div class="bar green" style="height: 60%"></div>
-                          <div class="label-bottom">第【1】次定品<br/>【已审批】</div>
+                          <div class="bars-inner">
+                            <div class="bar-item"><div class="bar-val">12d</div><div class="bar blue" style="height: 75%"></div></div>
+                            <div class="bar-item"><div class="bar-val">18p</div><div class="bar green" style="height: 90%"></div></div>
+                            <div class="bar-item"><div class="bar-val">¥0.8</div><div class="bar yellow" style="height: 80%"></div></div>
+                          </div>
+                          <div class="label-bottom">第【1】次<br/>【定品审批】</div>
                         </div>
                       </div>
-                      <!-- 模拟折线 -->
-                      <div class="mock-line"></div>
+                      <!-- 模拟背景趋势线 -->
+                      <div class="mock-line-bg"></div>
                     </div>
                     <!-- 模拟右侧 Y 轴 -->
                     <div class="y-axis-right"><span>费用</span><span>1元</span><span>0.8元</span><span>0.6元</span><span>0.4元</span><span>0.2元</span><span>0元</span></div>
@@ -308,6 +338,15 @@ const tableHeight = useTableHeight(310)
 const activeStat = ref('全部')
 const currentPage = ref(1)
 const pageSize = ref(20)
+const expandedRowKeys = ref<string[]>([])
+
+const handleExpandChange = (row: any, expandedRows: any[]) => {
+  if (expandedRows.length > 0) {
+    expandedRowKeys.value = [row.proposalNo]
+  } else {
+    expandedRowKeys.value = []
+  }
+}
 
 const statTabs = [
   { label: '全部' }, { label: '待设计' }, { label: '任务待发' }, { label: '定制反馈' },
@@ -506,6 +545,13 @@ const resetQuery = () => Object.keys(queryParams).forEach(key => (queryParams as
   border-bottom: 1px solid #f0f0f0;
   border-left: 4px solid var(--color-primary);
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.02);
+  
+  /* 核心：随屏幕视口自适应，不受表格横向滚动影响 */
+  position: sticky;
+  left: 0;
+  width: calc(100vw - 120px); // 减去侧边栏和内边距的预估宽度
+  box-sizing: border-box;
+  overflow: hidden;
 
   .expand-column-left {
     display: flex;
@@ -633,53 +679,89 @@ const resetQuery = () => Object.keys(queryParams).forEach(key => (queryParams as
       }
     }
 
-    &.chart-section { flex: 1; min-width: 500px; }
-  }
+    &.chart-section { 
+      flex: 1; 
+      min-width: 500px;
+      display: flex;
+      flex-direction: column;
 
-  /* 协作图表优化 */
-  .chart-container {
-    background: #fff; border: 1px solid #f0f0f0; border-radius: 8px; padding: 20px; position: relative;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-    
-    .chart-legend {
-      display: flex; justify-content: flex-end; gap: 16px; margin-bottom: 16px;
-      .leg-item {
-        display: flex; align-items: center; gap: 4px; font-size: 11px; color: #8c8c8c;
-        .dot { width: 8px; height: 8px; border-radius: 2px; }
-        .dot.blue { background: #1890ff; }
-        .dot.green { background: #52c41a; }
-        .dot.yellow { background: #faad14; }
+      .chart-container {
+        flex: 1; // 关键：撑满剩余高度
+        display: flex;
+        flex-direction: column;
+        background: #fff; border: 1px solid #f0f0f0; border-radius: 8px; padding: 24px; position: relative;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        width: 100%;
+
+        .mock-chart {
+          flex: 1; // 关键：图表区域随容器拉伸
+          min-height: 180px; 
+          display: flex; 
+          position: relative;
+        }
       }
     }
+  }
 
-    .mock-chart {
-      display: flex; height: 160px; position: relative;
-      .y-axis, .y-axis-right {
-        display: flex; flex-direction: column; justify-content: space-between; font-size: 10px; color: #bfbfbf; width: 25px; text-align: right;
-      }
-      .y-axis-right { width: 40px; text-align: left; margin-left: 10px; }
+  /* 协作图表图例与坐标轴 */
+  .chart-legend {
+    display: flex; justify-content: flex-start; gap: 24px; margin-bottom: 24px;
+    padding-left: 35px;
+    .leg-item {
+      display: flex; align-items: center; gap: 8px; font-size: 11px; color: #595959;
+      .dot { display: inline-block; position: relative; }
+      .dot.blue { width: 14px; height: 2px; background: #1890ff; border-radius: 1px; }
+      .dot.green { width: 10px; height: 10px; background: #52c41a; border-radius: 2px; }
+      .dot.yellow { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #faad14; background: #fff; }
+    }
+  }
+
+  .mock-chart {
+    .y-axis, .y-axis-right {
+      display: flex; flex-direction: column; justify-content: space-between; font-size: 10px; color: #bfbfbf; width: 25px; text-align: right;
+    }
+    .y-axis-right { width: 40px; text-align: left; margin-left: 10px; }
+    
+    .chart-area {
+      flex: 1; border-bottom: 1px solid #f0f0f0; position: relative; margin: 0 8px;
+      .grid-line { height: 20%; border-top: 1px dashed #f5f5f5; width: 100%; }
       
-      .chart-area {
-        flex: 1; border-bottom: 1px solid #f0f0f0; position: relative; margin: 0 8px;
-        .grid-line { height: 20%; border-top: 1px dashed #f5f5f5; width: 100%; }
-        
-        .bars {
-          position: absolute; inset: 0;
-          .bar-group {
-            position: absolute; bottom: 0; width: 50px; display: flex; flex-direction: column; align-items: center;
-            .label-top, .label-top-val { font-size: 10px; color: #262626; font-weight: 600; margin-bottom: 4px; }
-            .label-bottom { position: absolute; top: 105%; width: 120px; font-size: 10px; color: #8c8c8c; text-align: center; line-height: 1.2; }
-            .bar { width: 32px; border-radius: 2px 2px 0 0; }
-            .bar.green { background: linear-gradient(to top, #52c41a, #95de64); }
+      .bars {
+        position: absolute; inset: 0;
+        .bar-group {
+          position: absolute; bottom: 0; width: 100px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+          
+          .bars-inner {
+            display: flex; align-items: flex-end; gap: 4px; height: 100%; padding-bottom: 4px;
+            
+            .bar-item {
+              display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%;
+              .bar-val { font-size: 9px; color: #8c8c8c; margin-bottom: 2px; font-weight: 500; }
+              .bar { 
+                width: 14px; border-radius: 2px 2px 0 0; transition: height 0.3s ease;
+              }
+              .bar.blue { background: linear-gradient(to top, #1890ff, #91d5ff); }
+              .bar.green { background: linear-gradient(to top, #52c41a, #b7eb8f); }
+              .bar.yellow { background: linear-gradient(to top, #faad14, #ffe58f); }
+            }
+          }
+          
+          .label-bottom { 
+            position: absolute; top: 102%; width: 110px; font-size: 10px; color: #8c8c8c; text-align: center; line-height: 1.2; 
           }
         }
-        
-        .mock-line {
-          position: absolute; top: 75%; left: 0; right: 0; height: 1.5px; background: rgba(250, 173, 20, 0.3);
-          &::before, &::after { 
-            content: ''; position: absolute; width: 6px; height: 6px; background: #fff; border: 2px solid #faad14; border-radius: 50%; top: -4px;
-          }
-          &::before { left: 20%; } &::after { left: 85%; }
+      }
+      
+      /* 背景趋势线 */
+      .mock-line-bg {
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background-image: radial-gradient(circle at 10% 70%, rgba(250, 173, 20, 0.05) 0%, transparent 50%),
+                          radial-gradient(circle at 85% 25%, rgba(250, 173, 20, 0.05) 0%, transparent 50%);
+        pointer-events: none;
+        &::after {
+          content: ''; position: absolute; top: 45%; left: 5%; right: 5%; height: 1px;
+          background: linear-gradient(to right, transparent, rgba(250, 173, 20, 0.2), transparent);
+          border-bottom: 1px dashed rgba(250, 173, 20, 0.1);
         }
       }
     }
