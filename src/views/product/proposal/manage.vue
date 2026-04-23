@@ -116,12 +116,31 @@
         <el-table-column prop="date" label="立项日期" width="95" align="center" />
         <el-table-column label="当前进度" width="100" align="center">
           <template #default="{ row }">
-            <div class="modern-status-wrap">
-              <el-tag :class="['soft-tag', getStatusClass(row.status)]" size="small">
-                {{ row.status }}
-              </el-tag>
-              <span v-if="row.hasBadge" class="red-dot"></span>
-            </div>
+            <el-popover
+              placement="top"
+              :width="220"
+              trigger="hover"
+              popper-class="modern-status-popover"
+            >
+              <template #reference>
+                <div class="modern-status-wrap">
+                  <el-tag :class="['soft-tag', getStatusClass(row.status)]" size="small">
+                    {{ row.status }}
+                  </el-tag>
+                  <div v-if="row.hasBadge" class="modern-badge">?</div>
+                </div>
+              </template>
+              <div class="popover-content">
+                <div class="pop-row">
+                  <span class="label">当前待办人：</span>
+                  <span class="value">{{ row.handler || '杨登峰' }}</span>
+                </div>
+                <div class="pop-row" style="margin-top: 12px">
+                  <span class="label">已等待时长：</span>
+                  <span class="value-box">【<span class="highlight-red">{{ row.waitingDays || '2' }}</span>】(天)</span>
+                </div>
+              </div>
+            </el-popover>
           </template>
         </el-table-column>
         <el-table-column prop="spu" label="SPU" width="90" class-name="text-secondary" />
@@ -330,16 +349,45 @@ const resetQuery = () => Object.keys(queryParams).forEach(key => (queryParams as
 
 .source-link { font-size: 12px; font-weight: 500; }
 
-/* 现代状态标签 */
+/* 现代状态标签与徽标 */
 .modern-status-wrap {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 4px 0; // 增加垂直保护空间
+  
   .soft-tag { border-radius: 4px; border: none; padding: 0 8px; font-weight: 500; }
   .blue { background: #e6f7ff; color: #1890ff; }
   .orange { background: #fff7e6; color: #fa8c16; }
   .green { background: #f6ffed; color: #52c41a; }
-  .red-dot {
-    position: absolute; top: -3px; right: -3px; width: 6px; height: 6px; background: #ff4d4f; border-radius: 50%; border: 1px solid #fff;
+  
+  .modern-badge {
+    position: absolute;
+    top: -4px; // 稍微调低一点，避免触顶
+    right: -10px;
+    width: 14px;
+    height: 14px;
+    background: #ff4d4f;
+    color: #fff;
+    border-radius: 50%;
+    border: 1px solid #fff;
+    font-size: 10px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(255, 77, 79, 0.2);
+    z-index: 10;
+  }
+}
+
+// 核心修复：允许表格单元格溢出显示徽标
+:deep(.el-table__row) {
+  td.el-table__cell {
+    overflow: visible !important;
+    .cell { overflow: visible !important; }
   }
 }
 
