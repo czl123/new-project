@@ -303,7 +303,7 @@
         <!-- 左侧：基础与调研 -->
         <el-col :span="24">
           <div class="section-card">
-            <div class="section-title">基础信息</div>
+            <div class="section-title">提案-基础</div>
             
             <!-- 分组 1：管理与时效 -->
             <div class="sub-section-title">
@@ -349,35 +349,64 @@
           </div>
 
           <div class="section-card mt-16">
-            <div class="section-title">调研深度信息</div>
+            <div class="section-title">提案-调研</div>
             <div class="research-content">
-              <!-- 调研基础文本 -->
-              <div class="research-main-info">
-                <el-descriptions :column="2" border size="small">
-                  <el-descriptions-item label="主攻市场">{{ detailData.mainMarket }}</el-descriptions-item>
-                  <el-descriptions-item label="使用人群">{{ detailData.userGroup }}</el-descriptions-item>
-                </el-descriptions>
-                
-                <div class="text-block mt-16">
-                  <div class="sub-label">卖点说明：</div>
-                  <p class="content-text">{{ detailData.sellingPoints }}</p>
-                </div>
+              
+              <!-- 分组 1：市场与人群 -->
+              <div class="sub-section-title">
+                <el-icon><Monitor /></el-icon>市场与人群
+              </div>
+              <el-descriptions :column="3" border size="small" class="mb-16">
+                <el-descriptions-item label="主攻市场">{{ detailData.mainMarket }}</el-descriptions-item>
+                <el-descriptions-item label="使用人群" :span="2">{{ detailData.userGroup }}</el-descriptions-item>
+                <el-descriptions-item label="市场预估" :span="3">{{ detailData.marketEst }}</el-descriptions-item>
+              </el-descriptions>
+
+              <!-- 分组 2：场景与标签 -->
+              <div class="sub-section-title">
+                <el-icon><Guide /></el-icon>场景与标签
+              </div>
+              <el-descriptions :column="3" border size="small" class="mb-16">
+                <el-descriptions-item label="使用场景">{{ detailData.usageScenario }}</el-descriptions-item>
+                <el-descriptions-item label="季节标签">
+                  <el-tag v-for="tag in detailData.seasonTags" :key="tag" size="small" class="mr-4">{{ tag }}</el-tag>
+                </el-descriptions-item>
+                <el-descriptions-item label="节日标签">
+                  <el-tag v-for="tag in detailData.holidayTags" :key="tag" size="small" type="success" class="mr-4">{{ tag }}</el-tag>
+                </el-descriptions-item>
+              </el-descriptions>
+
+              <!-- 分组 3：素材与卖点 -->
+              <div class="sub-section-title">
+                <el-icon><Film /></el-icon>素材与卖点
+              </div>
+              
+              <div class="text-block mb-16">
+                <div class="sub-label">卖点说明：</div>
+                <p class="content-text">{{ detailData.sellingPoints }}</p>
               </div>
 
-              <!-- 参考与文档 -->
-              <el-row :gutter="24" class="mt-16">
+              <el-row :gutter="24">
                 <el-col :span="12">
                   <div class="link-block">
                     <div class="sub-label">参考链接：</div>
-                    <el-link type="primary" :href="detailData.refLink" target="_blank" class="ref-link">
-                      {{ detailData.refLink }}
-                    </el-link>
+                    <div class="multi-links mt-8">
+                      <div v-for="(link, idx) in detailData.refLinks" :key="idx" class="link-item">
+                        <el-icon><Link /></el-icon>
+                        <el-link type="primary" :href="link.url" target="_blank">{{ link.label }}</el-link>
+                      </div>
+                    </div>
                   </div>
-                  <div class="file-block mt-12">
-                    <div class="sub-label">调研文档：</div>
-                    <el-tag size="small" closable @close="void 0" class="file-tag">
-                      <el-icon><Document /></el-icon> {{ detailData.researchFile }}
-                    </el-tag>
+                  <div class="file-block mt-16">
+                    <div class="sub-label">相关文档：</div>
+                    <div class="mt-8 flex-wrap">
+                      <el-tag size="small" class="file-tag mr-8 mb-4">
+                        <el-icon><Document /></el-icon> 调研：{{ detailData.researchFile }}
+                      </el-tag>
+                      <el-tag size="small" class="file-tag roi-tag mb-4">
+                        <el-icon><DataAnalysis /></el-icon> ROI：{{ detailData.roiFile }}
+                      </el-tag>
+                    </div>
                   </div>
                 </el-col>
                 <el-col :span="12">
@@ -398,13 +427,9 @@
               </el-row>
             </div>
           </div>
-        </el-col>
-      </el-row>
-
-      <!-- 4. 任务与定品 (Tab 化处理) -->
-      <div class="section-card mt-16">
-        <el-tabs v-model="activeTab">
-          <el-tab-pane label="任务追踪" name="tasks">
+          <!-- 3. 提案-任务 -->
+          <div class="section-card mt-16">
+            <div class="section-title">提案-任务</div>
             <el-table :data="detailData.tasks" size="small" border stripe>
               <el-table-column type="index" label="序号" width="50" />
               <el-table-column prop="name" label="任务名称" />
@@ -419,38 +444,296 @@
                 <template #default><el-link type="primary" :underline="false">详情</el-link></template>
               </el-table-column>
             </el-table>
-          </el-tab-pane>
-          <el-tab-pane label="定品信息" name="final">
-            <el-table :data="detailData.finalSpecs" size="small" border>
-              <el-table-column prop="code" label="物料编码" width="120" />
-              <el-table-column prop="color" label="颜色" width="80" />
-              <el-descriptions-item label="尺寸">{{ detailData.size }}</el-descriptions-item>
-              <el-table-column prop="material" label="材质明细" show-overflow-tooltip />
-              <el-table-column prop="logistics" label="物流方式" width="120" />
-            </el-table>
-          </el-tab-pane>
-          <el-tab-pane label="首单信息" name="firstOrder">
-             <div class="empty-placeholder">暂无首单数据</div>
-          </el-tab-pane>
-        </el-tabs>
-      </div>
+          </div>
 
-      <!-- 5. 底部结项信息 -->
-      <div class="section-card mt-16 footer-stats">
-        <el-row :gutter="20">
-          <el-col :span="6">
-            <div class="footer-item">
-              <span class="label">预计结项：</span>
-              <span class="val">{{ detailData.estFinishDate }}</span>
-            </div>
-          </el-col>
-          <el-col :span="6">
-            <div class="footer-item">
-              <span class="label">实际结项：</span>
-              <span class="val">-</span>
-            </div>
-          </el-col>
-        </el-row>
+          <!-- 4. 提案-定品 (多级表头与业务分类) -->
+          <div class="section-card mt-16">
+            <div class="section-title">提案-定品</div>
+            <el-tabs v-model="finalTabActive" class="inner-tabs">
+              <el-tab-pane label="属性信息" name="attr">
+                <el-table 
+                  :data="detailData.finalSpecList" 
+                  size="small" 
+                  border 
+                  class="business-spec-table"
+                  style="width: 100%"
+                >
+                  <!-- 固定列 -->
+                  <el-table-column prop="materialCode" label="物料编码" width="120" fixed />
+
+                  <!-- 分类 1：基本属性 -->
+                  <el-table-column label="基本属性" header-align="center" label-class-name="h-basic">
+                    <el-table-column prop="brand" width="100">
+                      <template #header><span class="t-basic">公司品牌</span></template>
+                    </el-table-column>
+                    <el-table-column prop="pattern" width="100">
+                      <template #header><span class="t-basic">图案</span></template>
+                    </el-table-column>
+                    <el-table-column prop="color" width="90">
+                      <template #header><span class="t-basic">颜色</span></template>
+                    </el-table-column>
+                    <el-table-column prop="hasBattery" width="80">
+                      <template #header><span class="t-basic">是否带电</span></template>
+                    </el-table-column>
+                    <el-table-column prop="isCe" width="80">
+                      <template #header><span class="t-basic">是否CE类</span></template>
+                    </el-table-column>
+                    <el-table-column prop="specs" width="90">
+                      <template #header><span class="t-basic">规格</span></template>
+                    </el-table-column>
+                    <el-table-column prop="pkgMethod" width="110">
+                      <template #header><span class="t-basic">包装方式</span></template>
+                    </el-table-column>
+                    <el-table-column prop="pkgQty" width="90">
+                      <template #header><span class="t-basic">包装数量</span></template>
+                    </el-table-column>
+                    <el-table-column prop="colorNo" width="80">
+                      <template #header><span class="t-basic">色号</span></template>
+                    </el-table-column>
+                    <el-table-column prop="subCategory" width="100">
+                      <template #header><span class="t-basic">二级类目</span></template>
+                    </el-table-column>
+                    <el-table-column prop="logoReplaceable" width="100">
+                      <template #header><span class="t-basic">Logo可替换</span></template>
+                    </el-table-column>
+                    <el-table-column prop="suggestLogistics" width="110">
+                      <template #header><span class="t-basic">建议物流方式</span></template>
+                    </el-table-column>
+                    <el-table-column prop="firstLogistics" width="110">
+                      <template #header><span class="t-basic">首单物流方式</span></template>
+                    </el-table-column>
+                    <el-table-column prop="model" width="110">
+                      <template #header><span class="t-basic">适用机型</span></template>
+                    </el-table-column>
+                    <el-table-column prop="materialDetail" width="120" show-overflow-tooltip>
+                      <template #header><span class="t-basic">材质明细</span></template>
+                    </el-table-column>
+                    <el-table-column prop="multiPackage" width="80">
+                      <template #header><span class="t-basic">一品多包</span></template>
+                    </el-table-column>
+                    <el-table-column prop="packageCount" width="80">
+                      <template #header><span class="t-basic">包裹数量</span></template>
+                    </el-table-column>
+                  </el-table-column>
+
+                  <!-- 分类 2：规格参数 -->
+                  <el-table-column label="规格参数" header-align="center" label-class-name="h-params">
+                    <el-table-column prop="size" width="80">
+                      <template #header><span class="req-star">*</span> <span class="t-params">尺码</span></template>
+                    </el-table-column>
+                    <el-table-column prop="diameter" width="80">
+                      <template #header><span class="req-star">*</span> <span class="t-params">直径</span></template>
+                    </el-table-column>
+                    <el-table-column prop="capacity" width="80">
+                      <template #header><span class="t-params">容量</span></template>
+                    </el-table-column>
+                    <el-table-column prop="unitSize" width="100">
+                      <template #header><span class="t-params">单品尺寸</span></template>
+                    </el-table-column>
+                    <el-table-column prop="pkgSize" width="100">
+                      <template #header><span class="t-params">包装尺寸</span></template>
+                    </el-table-column>
+                    <el-table-column prop="pkgWeight" width="90">
+                      <template #header><span class="t-params">包装重量</span></template>
+                    </el-table-column>
+                  </el-table-column>
+
+                  <!-- 分类 3：知识产权信息 -->
+                  <el-table-column label="知识产权信息" header-align="center" label-class-name="h-ip">
+                    <el-table-column prop="patentDesc" width="120">
+                      <template #header><span class="t-ip">专利说明</span></template>
+                    </el-table-column>
+                    <el-table-column prop="patentCert" width="100">
+                      <template #header><span class="t-ip">专利证书</span></template>
+                    </el-table-column>
+                    <el-table-column prop="patentDate" width="100">
+                      <template #header><span class="t-ip">下证日期</span></template>
+                    </el-table-column>
+                    <el-table-column prop="copyrightDesc" width="120">
+                      <template #header><span class="t-ip">版权说明</span></template>
+                    </el-table-column>
+                  </el-table-column>
+
+                  <!-- 分类 4：营销卖点设计 -->
+                  <el-table-column label="营销卖点设计" header-align="center" label-class-name="h-marketing">
+                    <el-table-column prop="opsLeader" width="90">
+                      <template #header><span class="t-marketing">运营负责人</span></template>
+                    </el-table-column>
+                    <el-table-column prop="copyLevel" width="80">
+                      <template #header><span class="t-marketing">文案等级</span></template>
+                    </el-table-column>
+                    <el-table-column prop="copyReq" width="120">
+                      <template #header><span class="t-marketing">文案要求</span></template>
+                    </el-table-column>
+                    <el-table-column prop="imgLevel" width="80">
+                      <template #header><span class="t-marketing">图片等级</span></template>
+                    </el-table-column>
+                    <el-table-column prop="imgReq" width="120">
+                      <template #header><span class="t-marketing">图片要求</span></template>
+                    </el-table-column>
+                    <el-table-column prop="refLink" width="120" show-overflow-tooltip>
+                      <template #header><span class="t-marketing">参考链接</span></template>
+                    </el-table-column>
+                  </el-table-column>
+
+                  <!-- 分类 5/6/7：核心、仓储、质量 (保留表头颜色，去掉单元格颜色) -->
+                  <el-table-column label="营销核心卖点" header-align="center" label-class-name="h-core">
+                    <el-table-column prop="points" width="180" show-overflow-tooltip>
+                      <template #header><span class="t-core">产品要点</span></template>
+                    </el-table-column>
+                  </el-table-column>
+
+                  <el-table-column label="仓储识别标识" header-align="center" label-class-name="h-storage">
+                    <el-table-column prop="shortDesc" width="180" show-overflow-tooltip>
+                      <template #header><span class="t-storage">入库标签短描述</span></template>
+                    </el-table-column>
+                  </el-table-column>
+
+                  <el-table-column label="质量与生产要求" header-align="center" label-class-name="h-quality">
+                    <el-table-column prop="qualityReq" width="180" show-overflow-tooltip>
+                      <template #header><span class="t-quality">质量要求点</span></template>
+                    </el-table-column>
+                  </el-table-column>
+                </el-table>
+              </el-tab-pane>
+              <el-tab-pane label="采购信息" name="design">
+                <el-table :data="detailData.procurementList" size="small" border stripe style="width: 100%" class="business-spec-table">
+                  <el-table-column prop="materialCode" label="物料编码" width="120" fixed />
+                  
+                  <!-- 分类 1：基础归属 -->
+                  <el-table-column label="基础项" header-align="center" label-class-name="h-basic">
+                    <el-table-column prop="procurement" width="100">
+                       <template #header><span class="t-basic">采购负责人</span></template>
+                    </el-table-column>
+                  </el-table-column>
+
+                  <!-- 分类 2：成本与税项 -->
+                  <el-table-column label="成本与税项" header-align="center" label-class-name="h-ip">
+                    <el-table-column prop="priceTaxInc" width="100">
+                      <template #header><span class="t-ip">含税单价</span></template>
+                    </el-table-column>
+                    <el-table-column prop="priceTaxExc" width="110">
+                      <template #header><span class="t-ip">不含税单价</span></template>
+                    </el-table-column>
+                    <el-table-column prop="taxRate" width="70">
+                      <template #header><span class="t-ip">税率</span></template>
+                    </el-table-column>
+                    <el-table-column prop="latestPriceInc" width="140">
+                      <template #header><span class="t-ip">最新单价(含税)</span></template>
+                    </el-table-column>
+                    <el-table-column prop="latestPriceExc" width="150">
+                      <template #header><span class="t-ip">最新单价(不含税)</span></template>
+                    </el-table-column>
+                  </el-table-column>
+
+                  <!-- 分类 3：订购与周期 -->
+                  <el-table-column label="订购与周期" header-align="center" label-class-name="h-marketing">
+                    <el-table-column prop="moq" width="100">
+                      <template #header><span class="t-marketing">采购起订量</span></template>
+                    </el-table-column>
+                    <el-table-column prop="moqMemo" width="150" show-overflow-tooltip>
+                      <template #header><span class="t-marketing">起订量备注</span></template>
+                    </el-table-column>
+                    <el-table-column prop="leadTime" width="100">
+                      <template #header><span class="t-marketing">生产周期</span></template>
+                    </el-table-column>
+                  </el-table-column>
+
+                  <!-- 分类 4：首单交付 -->
+                  <el-table-column label="交付进度" header-align="center" label-class-name="h-storage">
+                    <el-table-column prop="estDelivery" width="130">
+                      <template #header><span class="t-storage">首单预估交期</span></template>
+                    </el-table-column>
+                    <el-table-column prop="actDelivery" width="130">
+                      <template #header><span class="t-storage">首单实际交期</span></template>
+                    </el-table-column>
+                  </el-table-column>
+
+                  <!-- 分类 5：开票与报关 -->
+                  <el-table-column label="开票与报关" header-align="center" label-class-name="h-params">
+                    <el-table-column prop="canInvoice" width="80">
+                      <template #header><span class="t-params">能否开票</span></template>
+                    </el-table-column>
+                    <el-table-column prop="invoiceUnit" width="80">
+                      <template #header><span class="t-params">开票单位</span></template>
+                    </el-table-column>
+                    <el-table-column prop="invoiceName" width="120">
+                      <template #header><span class="t-params">开票品名</span></template>
+                    </el-table-column>
+                    <el-table-column prop="invoiceSpecs" width="150" show-overflow-tooltip>
+                      <template #header><span class="t-params">开票规格型号</span></template>
+                    </el-table-column>
+                    <el-table-column prop="customsMaterial" width="120">
+                      <template #header><span class="t-params">报关材质</span></template>
+                    </el-table-column>
+                  </el-table-column>
+                </el-table>
+              </el-tab-pane>
+            </el-tabs>
+          </div>
+
+          <!-- 4. 提案-首单 (回归原始宽表结构) -->
+          <div class="section-card mt-16">
+            <div class="section-title">提案-首单</div>
+            <el-table :data="detailData.firstOrderList" size="small" border stripe style="width: 100%">
+              <el-table-column type="index" label="序号" width="50" fixed />
+              <el-table-column prop="proposalNo" label="提案编码" width="130" />
+              <el-table-column prop="category" label="运营大类" width="120" />
+              <el-table-column prop="productName" label="产品名称" width="150" show-overflow-tooltip />
+              <el-table-column prop="style" label="款式" width="100" />
+              <el-table-column prop="material" label="主材料" width="100" />
+              <el-table-column prop="applicable" label="适用品牌或对象" width="130" />
+              <el-table-column prop="model" label="型号" width="110" />
+              <el-table-column prop="manager" label="产品经理" width="90" />
+              <el-table-column prop="procurement" label="采购负责人" width="100" />
+              <el-table-column prop="sourcingDate" label="采集日期" width="110" />
+              <el-table-column prop="inquiryDate" label="询价完成日期" width="110" />
+              <el-table-column prop="confirmDate" label="需求确认时间" width="110" />
+              <el-table-column prop="finishDate" label="完成时间" width="110" />
+              <el-table-column prop="materialCode" label="物料编码" width="120" />
+            </el-table>
+          </div>
+        </el-col>
+      </el-row>
+
+      <!-- 5. 底部结项时效横梁 (4列并排 + 悬浮提示) -->
+      <div class="completion-schedule-bar mt-16">
+        <div class="schedule-item">
+          <div class="s-label">
+            <el-tooltip content="说明：首单预计下单日期" placement="top">
+              <el-icon class="info-btn"><InfoFilled /></el-icon>
+            </el-tooltip>
+            提案预计结项日期：
+          </div>
+          <div class="s-value">{{ detailData.estProposalDate }}</div>
+        </div>
+        <div class="schedule-item">
+          <div class="s-label">
+            <el-tooltip content="说明：首单预计入库日期" placement="top">
+              <el-icon class="info-btn"><InfoFilled /></el-icon>
+            </el-tooltip>
+            项目预计结项日期：
+          </div>
+          <div class="s-value">{{ detailData.estProjectDate }}</div>
+        </div>
+        <div class="schedule-item">
+          <div class="s-label">
+            <el-tooltip content="说明：首单实际下单日期(取值来源：金蝶采购订单首单审核时间)" placement="top">
+              <el-icon class="info-btn"><InfoFilled /></el-icon>
+            </el-tooltip>
+            提案实际结项日期：
+          </div>
+          <div class="s-value">{{ detailData.actProposalDate }}</div>
+        </div>
+        <div class="schedule-item">
+          <div class="s-label">
+            <el-tooltip content="说明：首单实际入库日期(取值来源：金蝶采购入库单首单审核时间)" placement="top">
+              <el-icon class="info-btn"><InfoFilled /></el-icon>
+            </el-tooltip>
+            项目实际结项日期：
+          </div>
+          <div class="s-value">{{ detailData.actProjectDate }}</div>
+        </div>
       </div>
     </div>
   </el-drawer>
@@ -515,6 +798,7 @@ const visible = computed({
 })
 
 const activeTab = ref('tasks')
+const finalTabActive = ref('attr')
 const historyDialogVisible = ref(false)
 
 // 模拟历史轮次数据 (增加多轮次演示)
@@ -564,16 +848,29 @@ const detailData = reactive({
   packagingMethod: 'OPP袋+彩卡',
   listingTimeOps: '2026-05-10',
   listingTimeDev: '2026-05-15',
+  marketEst: '预计月均 1500+, 细分 Top 50 占有率 12%',
+  usageScenario: '花园挂饰、庭院喂鸟器固定',
+  seasonTags: ['春季', '夏季'],
+  holidayTags: ['母亲节', '圣诞节'],
   buyQty: 20,
   unitPrice: 7.20,
   totalAmount: 144.00,
   level: 'D',
-  sellingPoints: 'Rhino Valley牧羊人挂钩 新品物料号: US250113, 防鼠挡板配件的套装，装一起 做种子链接 补给顾客;',
-  refLink: 'https://www.amazon.com/dp/B0GH4SLH8B',
-  researchFile: '种子链接-空白.xlsx',
+  sellingPoints: 'Rhino Valley牧羊人挂钩 新品物料号: US250113, 防鼠挡板配件的套装，装一起 做种子链接 补给顾客; 加厚金属杆身，承重可达 20lbs。',
+  refLinks: [
+    { label: '亚马逊竞品 A', url: 'https://www.amazon.com/dp/B0GH4SLH8B' },
+    { label: '亚马逊竞品 B', url: 'https://www.amazon.com/dp/B0DJ789123' }
+  ],
+  researchFile: '深度调研报告_2026.pdf',
+  roiFile: 'ROI利润测算表_V1.xlsx',
   mainMarket: '北美',
-  userGroup: '户外爱好者',
+  userGroup: '户外园艺爱好者',
   estFinishDate: '2026-05-15',
+  // 结项时效数据
+  estProposalDate: '2026-05-10',
+  estProjectDate: '2026-06-30',
+  actProposalDate: '-',
+  actProjectDate: '-',
   images: [
     'https://picsum.photos/200/200?random=1',
     'https://picsum.photos/200/200?random=2',
@@ -581,6 +878,65 @@ const detailData = reactive({
   ],
   tasks: [
     { name: '样品采集任务', type: '购样', user: '杨登峰', status: '进行中' }
+  ],
+  finalSpecList: [
+    {
+      materialCode: 'MT2604-G01',
+      // 基本属性
+      brand: 'Rhino Valley', pattern: '复古雕花', color: '经典黑', hasBattery: '否', isCe: '否', 
+      specs: '标准套装', pkgMethod: 'OPP袋+彩卡', pkgQty: '2 PCS/Box', colorNo: 'BK-001', 
+      subCategory: '园艺挂钩', logoReplaceable: '是', suggestLogistics: '海运直发', 
+      firstLogistics: '快船', model: 'RV-HOOK-01', materialDetail: 'ABS+碳钢', multiPackage: '否', packageCount: '1',
+      // 规格参数
+      size: '120cm', diameter: '15mm', capacity: '-', unitSize: '120*15*2.5cm', pkgSize: '125*16*5cm', pkgWeight: '1.2kg',
+      // 知识产权
+      patentDesc: '外观专利已申请', patentCert: '已上传', patentDate: '2026-01-10', copyrightDesc: '自有版权',
+      // 营销设计
+      opsLeader: '谢东桥', copyLevel: 'A', copyReq: '突出防鼠卖点', imgLevel: 'S', imgReq: '渲染3D精修图', refLink: 'https://...',
+      // 核心/仓储/质量
+      points: '防鼠挡板设计、超强承重',
+      shortDesc: '户外牧羊人挂钩-黑色',
+      qualityReq: '表面无划痕、承重测试 10kg'
+    }
+  ],
+  procurementList: [
+    {
+      materialCode: 'MT2604-G01',
+      procurement: '杨登峰',
+      priceTaxInc: 7.20,
+      priceTaxExc: 6.37,
+      taxRate: '13%',
+      latestPriceInc: 7.15,
+      latestPriceExc: 6.33,
+      moq: 500,
+      moqMemo: '首单试样支持 200pcs',
+      leadTime: '30天',
+      estDelivery: '2026-05-20',
+      actDelivery: '-',
+      canInvoice: '是',
+      invoiceUnit: '把',
+      invoiceName: '园艺金属挂钩',
+      invoiceSpecs: 'RV-HOOK-01/120cm',
+      customsMaterial: 'ABS塑料+铁'
+    }
+  ],
+  firstOrderList: [
+    {
+      proposalNo: 'TA-202604101',
+      category: '运动户外-通用',
+      productName: 'ZZ-户外牧羊人挂钩',
+      style: '防鼠挡板配件',
+      material: 'ABS+金属',
+      applicable: '户外园艺',
+      model: 'RV-HOOK-01',
+      manager: '谢东桥',
+      procurement: '杨登峰',
+      sourcingDate: '2026-04-20',
+      inquiryDate: '2026-04-22',
+      confirmDate: '2026-04-23',
+      finishDate: '-',
+      materialCode: 'MT2604-G01'
+    }
   ],
   finalSpecs: []
 })
@@ -1241,8 +1597,10 @@ defineExpose({ open })
   }
 }
 
+.mt-16 { margin-top: 16px; }
 .mt-12 { margin-top: 12px; }
 .mt-10 { margin-top: 10px; }
+.mb-16 { margin-bottom: 16px; }
 .mb-8 { margin-bottom: 8px; }
 
 .sub-label { font-size: 13px; font-weight: 500; color: #595959; }
@@ -1266,6 +1624,50 @@ defineExpose({ open })
   color: #2f54eb;
   cursor: pointer;
   &:hover { opacity: 0.8; }
+}
+
+/* 底部结项时效横梁样式 */
+.completion-schedule-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  background: #fff;
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid #e8e8e8;
+
+  .schedule-item {
+    display: flex;
+    align-items: center;
+    border: 1px solid #f0f0f0;
+    border-radius: 4px;
+    overflow: hidden;
+    height: 32px;
+
+    .s-label {
+      background-color: #f5f7fa;
+      padding: 0 10px;
+      color: #595959;
+      font-size: 12px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      border-right: 1px solid #f0f0f0;
+      white-space: nowrap;
+      
+      .el-icon { color: #8c8c8c; font-size: 14px; }
+    }
+
+    .s-value {
+      padding: 0 12px;
+      color: #262626;
+      font-size: 13px;
+      font-weight: 500;
+      flex: 1;
+      background: #fff;
+    }
+  }
 }
 
 .footer-stats {
@@ -1299,14 +1701,135 @@ defineExpose({ open })
     margin: 8px 0 0 0;
   }
   
-  .ref-link {
-    font-size: 12px;
-    word-break: break-all;
-    margin-top: 4px;
+  .multi-links {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    .link-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      .el-icon { color: #8c8c8c; }
+    }
   }
+
+  .mr-4 { margin-right: 4px; }
 }
 
 /* 提案摘要样式 */
+/* 定品对比矩阵样式 */
+/* 定品业务宽表样式优化 - 精确匹配截图配色 */
+.business-spec-table {
+  :deep(.el-table__header-wrapper) {
+    th { padding: 8px 0; }
+  }
+  
+  /* 分类表头 (第一层) */
+  :deep(.h-basic) { background-color: #e6f7ff !important; color: #1d39c4 !important; font-weight: bold; }
+  :deep(.h-params) { background-color: #f9f0ff !important; color: #531dab !important; font-weight: bold; }
+  :deep(.h-ip) { background-color: #f6ffed !important; color: #135200 !important; font-weight: bold; }
+  :deep(.h-marketing), :deep(.h-core) { background-color: #fffbe6 !important; color: #874d00 !important; font-weight: bold; }
+  :deep(.h-storage) { background-color: #f0f5ff !important; color: #003a8c !important; font-weight: bold; }
+  :deep(.h-quality) { background-color: #fff1f0 !important; color: #a8071a !important; font-weight: bold; }
+
+  /* 字段文字颜色 (第二层表头使用) */
+  .t-basic { color: #1d39c4 !important; }
+  .t-params { color: #531dab !important; }
+  .t-ip { color: #135200 !important; }
+  .t-marketing, .t-core { color: #874d00 !important; }
+  .t-storage { color: #003a8c !important; }
+  .t-quality { color: #a8071a !important; }
+
+  /* 必填星号 */
+  .req-star { color: #ff4d4f; margin-right: 4px; font-weight: bold; font-family: SimSun, sans-serif; }
+
+  /* 单元格内容胶囊块 */
+  .capsule-block {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    line-height: 1.4;
+    
+    &.core-bg { background: #fffbe6; border: 1px solid #ffe58f; color: #874d00; }
+    &.storage-bg { background: #f0f5ff; border: 1px solid #adc6ff; color: #003a8c; }
+    &.quality-bg { background: #fff1f0; border: 1px solid #ffa39e; color: #a8071a; }
+  }
+}
+
+.comparison-matrix-wrapper {
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 12px;
+
+  .matrix-scroll-container {
+    overflow-x: auto;
+    width: 100%;
+  }
+
+  .matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed; // 固定布局方便控制宽度
+
+    th, td {
+      padding: 10px 12px;
+      border: 1px solid #f0f0f0;
+      font-size: 12px;
+      text-align: left;
+      min-width: 120px;
+    }
+
+    /* 左侧属性名固定 */
+    .sticky-col {
+      position: sticky;
+      left: 0;
+      background: #fafafa;
+      font-weight: 500;
+      color: #595959;
+      width: 100px;
+      min-width: 100px;
+      z-index: 10;
+      border-right: 2px solid #e8e8e8;
+    }
+
+    .label-header {
+      background: #f0f5ff;
+      color: #1890ff;
+    }
+
+    .item-header {
+      background: #fafafa;
+      .item-code { font-weight: bold; color: #262626; }
+    }
+
+    /* 逻辑分组行样式 */
+    .group-row {
+      background: #fdfdfe;
+      td {
+        color: #1890ff;
+        font-weight: bold;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 6px 12px;
+      }
+    }
+
+    .long-text {
+      color: #8c8c8c;
+      line-height: 1.4;
+      font-size: 11px;
+      min-width: 200px; // 长文本列加宽
+    }
+    
+    tr:hover td {
+      background-color: #f5f7fa;
+    }
+  }
+}
+
 .mini-stats-card {
   .summary-list {
     display: flex;
