@@ -304,16 +304,47 @@
         <el-col :span="24">
           <div class="section-card">
             <div class="section-title">基础信息</div>
-            <el-descriptions :column="3" border size="small">
+            
+            <!-- 分组 1：管理与时效 -->
+            <div class="sub-section-title">
+              <el-icon><Management /></el-icon>管理与时效
+            </div>
+            <el-descriptions :column="3" border size="small" class="mb-16">
               <el-descriptions-item label="运营大类">{{ detailData.category }}</el-descriptions-item>
               <el-descriptions-item label="团队负责人">{{ detailData.teamLeader }}</el-descriptions-item>
               <el-descriptions-item label="产品经理">{{ detailData.manager }}</el-descriptions-item>
-              <el-descriptions-item label="SPU">{{ detailData.spu }}</el-descriptions-item>
+              
+              <el-descriptions-item label="上架时间(运营)">{{ detailData.listingTimeOps }}</el-descriptions-item>
+              <el-descriptions-item label="上架时间(开发)">{{ detailData.listingTimeDev }}</el-descriptions-item>
+              <el-descriptions-item label="-"></el-descriptions-item>
+            </el-descriptions>
+
+            <!-- 分组 2：SPU 核心属性 -->
+            <div class="sub-section-title">
+              <el-icon><List /></el-icon>SPU 核心属性
+            </div>
+            <el-descriptions :column="3" border size="small" class="mb-16">
+              <el-descriptions-item label="产品名称">{{ detailData.productName }}</el-descriptions-item>
               <el-descriptions-item label="款式">{{ detailData.style }}</el-descriptions-item>
               <el-descriptions-item label="主材料">{{ detailData.material }}</el-descriptions-item>
+              
+              <el-descriptions-item label="适用品牌/对象">{{ detailData.applicableObject }}</el-descriptions-item>
+              <el-descriptions-item label="型号">{{ detailData.model }}</el-descriptions-item>
+              <el-descriptions-item label="SPU">{{ detailData.spu }}</el-descriptions-item>
+            </el-descriptions>
+
+            <!-- 分组 3：开发与品牌 -->
+            <div class="sub-section-title">
+              <el-icon><PriceTag /></el-icon>开发与品牌
+            </div>
+            <el-descriptions :column="3" border size="small">
+              <el-descriptions-item label="产品来源">{{ detailData.productSource }}</el-descriptions-item>
               <el-descriptions-item label="开发方式">{{ detailData.devMethod }}</el-descriptions-item>
               <el-descriptions-item label="开发品牌">{{ detailData.brand }}</el-descriptions-item>
-              <el-descriptions-item label="产品包装">{{ detailData.package }}</el-descriptions-item>
+              
+              <el-descriptions-item label="初始Logo位置">{{ detailData.logoPosition }}</el-descriptions-item>
+              <el-descriptions-item label="初始包装方式">{{ detailData.packagingMethod }}</el-descriptions-item>
+              <el-descriptions-item label="-"></el-descriptions-item>
             </el-descriptions>
           </div>
 
@@ -524,9 +555,15 @@ const detailData = reactive({
   spu: 'US0218',
   style: '防鼠挡板配件',
   material: 'ABS+金属',
+  applicableObject: '户外喂鸟器挂钩',
+  model: 'RV-HOOK-01',
+  productSource: '工厂选品',
   devMethod: '全新品-现货',
   brand: 'Rhino Valley',
-  package: '袋装',
+  logoPosition: '产品正面激光镭射',
+  packagingMethod: 'OPP袋+彩卡',
+  listingTimeOps: '2026-05-10',
+  listingTimeDev: '2026-05-15',
   buyQty: 20,
   unitPrice: 7.20,
   totalAmount: 144.00,
@@ -614,6 +651,29 @@ defineExpose({ open })
       font-size: 12px;
       font-weight: normal;
       .el-icon { vertical-align: middle; margin-right: 2px; }
+    }
+  }
+
+  .sub-section-title {
+    font-size: 13px;
+    font-weight: bold;
+    color: #262626;
+    background: linear-gradient(90deg, #f0f7ff 0%, #ffffff 100%);
+    padding: 6px 12px;
+    margin-bottom: 4px; // 缩小与自身表格的间距
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    
+    // 除了第一个标题，后续标题上方都增加间距，拉开分类感
+    &:not(:first-of-type) {
+      margin-top: 20px;
+    }
+    
+    .el-icon {
+      color: #1890ff;
+      font-size: 14px;
     }
   }
 }
