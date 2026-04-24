@@ -3,7 +3,7 @@
     v-model="visible"
     title="提案详情"
     size="85%"
-    custom-class="proposal-detail-drawer"
+    class="proposal-detail-drawer"
     :destroy-on-close="true"
   >
     <template #header>
@@ -13,99 +13,110 @@
           <span class="name">{{ detailData.productName }}</span>
           <el-tag :type="getStatusType(detailData.status)" effect="dark" size="small">{{ detailData.status }}</el-tag>
         </div>
-        <div class="action-area">
-          <el-button size="small">打印提案</el-button>
-          <el-button size="small">历史记录</el-button>
-          <el-button size="small" type="primary">编辑提案</el-button>
-        </div>
       </div>
     </template>
 
     <div class="detail-container">
       <!-- 1. 顶部流程进度 (18节点阶段化流转) -->
       <div class="section-card process-section">
-        <div class="section-title">提案全生命周期追踪</div>
+        <div class="section-title">
+          <div class="title-left">提案全生命周期追踪</div>
+          <el-link type="warning" class="header-action-link" @click="showHistory">
+            <el-icon><History /></el-icon> 查看历史档案
+          </el-link>
+        </div>
         
         <!-- 阶段进度条 -->
         <!-- 宏观阶段进度条 (集成统计与悬浮详情) -->
         <div class="phase-progress-v2">
-          <!-- 阶段 1 -->
-          <div class="phase-node done">
-            <div class="p-circle">1</div>
-            <div class="p-info">
-              <div class="p-name">立项准备</div>
-              <div class="p-nodes">创建 > 编辑 > 任务</div>
-            </div>
-          </div>
-          <div class="phase-line done"></div>
-          
-          <!-- 阶段 2 (集成 Popover) -->
+          <!-- 阶段 1：立项准备 -->
           <el-popover placement="bottom" :width="340" trigger="hover" popper-class="stage-detail-popper">
             <template #reference>
               <div class="phase-node done has-tasks">
-                <div class="p-circle">2</div>
-                <div class="p-info">
-                  <div class="p-name">开发承接</div>
-                  <div class="p-nodes">承接 > 反馈 > 采纳</div>
+                <div class="p-circle-wrap">
+                  <div class="p-circle">1</div>
                 </div>
-                <div class="task-badge">2</div>
+                <div class="p-info">
+                  <div class="p-name">立项准备</div>
+                  <div class="p-nodes">创建 > 编辑 > 任务</div>
+                </div>
               </div>
             </template>
             <div class="popover-task-list">
-               <div class="pop-header">开发承接阶段 (2个采购)</div>
-               <!-- 采购卡片 B -->
-               <div class="actor-card-v2 processing mb-12">
-                  <div class="card-status-bar"></div>
-                  <div class="card-main">
-                    <div class="card-top">
-                      <span class="current-node">定制反馈</span>
-                      <span class="actor-name">@李华</span>
-                    </div>
-                    <div class="mini-graph-steps mt-12">
-                      <div class="gs-item done">
-                        <div class="gs-dot"></div>
-                        <div class="gs-lab">承接</div>
-                        <div class="gs-time">04-22 09:00</div>
+               <div class="pop-header-v2">
+                 <div class="ph-top">
+                   <span class="ph-title">立项准备阶段</span>
+                   <el-tag size="small" type="warning" effect="dark" class="round-badge">第 2 轮任务</el-tag>
+                 </div>
+               </div>
+               <div class="task-cards-container">
+                  <div class="actor-card-v2 processing">
+                      <div class="card-status-bar"></div>
+                      <div class="card-main">
+                        <div class="card-top"><span class="current-node">创建任务</span><span class="actor-name">@谢东桥</span></div>
+                        <div class="mini-graph-steps mt-12">
+                          <div class="gs-item done"><div class="gs-dot"></div><div class="gs-lab">创建</div><div class="gs-time">04-20</div></div>
+                          <div class="gs-line done"></div>
+                          <div class="gs-item done"><div class="gs-dot"></div><div class="gs-lab">编辑</div><div class="gs-time">04-20</div></div>
+                          <div class="gs-line done"></div>
+                          <div class="gs-item done"><div class="gs-dot"></div><div class="gs-lab">任务</div><div class="gs-time">04-21</div></div>
+                        </div>
                       </div>
-                      <div class="gs-line done"></div>
-                      <div class="gs-item active">
-                        <div class="gs-dot"></div>
-                        <div class="gs-lab">反馈</div>
-                        <div class="gs-time">进行中...</div>
-                      </div>
-                      <div class="gs-line"></div>
-                      <div class="gs-item wait">
-                        <div class="gs-dot"></div>
-                        <div class="gs-lab">采纳</div>
-                        <div class="gs-time">-</div>
-                      </div>
-                    </div>
-                    <div class="card-footer mt-12">
-                      <el-icon><Timer /></el-icon> 正在寻找工厂打样中...
-                    </div>
                   </div>
                </div>
-               <!-- 采购卡片 C -->
-               <div class="actor-card-v2 pending">
-                  <div class="card-status-bar"></div>
-                  <div class="card-main">
-                    <div class="card-top">
-                      <span class="current-node">任务承接</span>
-                      <span class="actor-name">@赵敏</span>
-                    </div>
-                    <div class="mini-graph-steps mt-12">
-                      <div class="gs-item active">
-                        <div class="gs-dot"></div>
-                        <div class="gs-lab">承接</div>
-                        <div class="gs-time">04-23 10:15</div>
+            </div>
+          </el-popover>
+          
+          <div class="phase-line done"></div>
+          
+          <!-- 阶段 2：采购承接 -->
+          <el-popover placement="bottom" :width="340" trigger="hover" popper-class="stage-detail-popper">
+            <template #reference>
+              <div class="phase-node done has-tasks">
+                <div class="p-circle-wrap">
+                  <div class="p-circle">2</div>
+                  <div class="task-badge">2</div>
+                </div>
+                <div class="p-info">
+                  <div class="p-name">采购承接</div>
+                  <div class="p-nodes">承接 > 反馈 > 采纳</div>
+                </div>
+              </div>
+            </template>
+            <div class="popover-task-list">
+               <div class="pop-header-v2">
+                 <div class="ph-top">
+                   <span class="ph-title">采购承接阶段</span>
+                   <el-tag size="small" type="warning" effect="dark" class="round-badge">第 2 轮任务</el-tag>
+                 </div>
+               </div>
+
+               <div class="task-cards-container">
+                  <div class="actor-card-v2 processing">
+                      <div class="card-status-bar"></div>
+                      <div class="card-main">
+                        <div class="card-top"><span class="current-node">定制反馈</span><span class="actor-name">@李华</span></div>
+                        <div class="mini-graph-steps mt-12">
+                          <div class="gs-item done"><div class="gs-dot"></div><div class="gs-lab">承接</div><div class="gs-time">04-22</div></div>
+                          <div class="gs-line done"></div>
+                          <div class="gs-item active"><div class="gs-dot"></div><div class="gs-lab">反馈</div><div class="gs-time">进行中</div></div>
+                          <div class="gs-line"></div>
+                          <div class="gs-item wait"><div class="gs-dot"></div><div class="gs-lab">采纳</div><div class="gs-time">-</div></div>
+                        </div>
                       </div>
-                      <div class="gs-line"></div>
-                      <div class="gs-item wait">
-                        <div class="gs-dot"></div>
-                        <div class="gs-lab">反馈</div>
-                        <div class="gs-time">-</div>
+                  </div>
+                  <div class="actor-card-v2 processing">
+                      <div class="card-status-bar"></div>
+                      <div class="card-main">
+                        <div class="card-top"><span class="current-node">任务承接</span><span class="actor-name">@赵敏</span></div>
+                        <div class="mini-graph-steps mt-12">
+                          <div class="gs-item active"><div class="gs-dot"></div><div class="gs-lab">承接</div><div class="gs-time">04-23</div></div>
+                          <div class="gs-line"></div>
+                          <div class="gs-item wait"><div class="gs-dot"></div><div class="gs-lab">反馈</div><div class="gs-time">-</div></div>
+                          <div class="gs-line"></div>
+                          <div class="gs-item wait"><div class="gs-dot"></div><div class="gs-lab">采纳</div><div class="gs-time">-</div></div>
+                        </div>
                       </div>
-                    </div>
                   </div>
                </div>
             </div>
@@ -113,50 +124,113 @@
           
           <div class="phase-line done"></div>
 
-          <!-- 阶段 3 -->
+          <!-- 阶段 3：样品采买 -->
           <el-popover placement="bottom" :width="340" trigger="hover" popper-class="stage-detail-popper">
             <template #reference>
               <div class="phase-node active has-tasks">
-                <div class="p-circle">3</div>
+                <div class="p-circle-wrap">
+                  <div class="p-circle">3</div>
+                  <div class="task-badge danger">1</div>
+                </div>
                 <div class="p-info">
-                  <div class="p-name">购样支付</div>
+                  <div class="p-name">样品采买</div>
                   <div class="p-nodes">申请 > 审核 > 研发费 > 支付</div>
                 </div>
-                <div class="task-badge danger">1</div>
               </div>
             </template>
             <div class="popover-task-list">
-               <div class="pop-header">购样支付阶段 (1个采购)</div>
-               <div class="actor-card-v2 advanced">
-                  <div class="card-status-bar"></div>
-                  <div class="card-main">
-                    <div class="card-top">
-                      <span class="current-node">购样申请</span>
-                      <el-tag size="mini" type="danger" effect="plain">关键节点</el-tag>
-                      <span class="actor-name">@王强</span>
-                    </div>
-                    <div class="mini-graph-steps mt-12">
-                      <div class="gs-item done">
-                        <div class="gs-dot"></div>
-                        <div class="gs-lab">采纳</div>
-                        <div class="gs-time">04-22 16:30</div>
-                      </div>
-                      <div class="gs-line done"></div>
-                      <div class="gs-item active">
-                        <div class="gs-dot"></div>
-                        <div class="gs-lab">申请</div>
-                        <div class="gs-time">进行中...</div>
-                      </div>
-                      <div class="gs-line"></div>
-                      <div class="gs-item wait">
-                        <div class="gs-dot"></div>
-                        <div class="gs-lab">审核</div>
-                        <div class="gs-time">-</div>
+               <div class="pop-header-v2">
+                 <div class="ph-top">
+                   <span class="ph-title">样品采买阶段</span>
+                   <el-tag size="small" type="warning" effect="dark" class="round-badge">第 2 轮任务</el-tag>
+                 </div>
+               </div>
+               <div class="task-cards-container">
+                 <div class="actor-card-v2 advanced">
+                    <div class="card-status-bar"></div>
+                    <div class="card-main">
+                      <div class="card-top"><span class="current-node">购样申请</span><span class="actor-name">@王强</span></div>
+                      <div class="mini-graph-steps mt-12">
+                        <div class="gs-item done"><div class="gs-dot"></div><div class="gs-lab">申请</div><div class="gs-time">04-22</div></div>
+                        <div class="gs-line done"></div>
+                        <div class="gs-item active"><div class="gs-dot"></div><div class="gs-lab">审核</div><div class="gs-time">进行中</div></div>
+                        <div class="gs-line"></div>
+                        <div class="gs-item wait"><div class="gs-dot"></div><div class="gs-lab">研发费</div><div class="gs-time">-</div></div>
+                        <div class="gs-line"></div>
+                        <div class="gs-item wait"><div class="gs-dot"></div><div class="gs-lab">支付</div><div class="gs-time">-</div></div>
                       </div>
                     </div>
-                    <div class="card-footer mt-12 highlight-text">
-                      <el-icon><Warning /></el-icon> 需在 04-25 前完成支付审批
-                    </div>
+                 </div>
+               </div>
+            </div>
+          </el-popover>
+
+          <div class="phase-line"></div>
+
+          <!-- 阶段 4：样品验证 -->
+          <el-popover placement="bottom" :width="340" trigger="hover" popper-class="stage-detail-popper">
+            <template #reference>
+              <div class="phase-node wait">
+                <div class="p-circle">4</div>
+                <div class="p-info">
+                  <div class="p-name">样品验证</div>
+                  <div class="p-nodes">登记 > 反馈</div>
+                </div>
+              </div>
+            </template>
+            <div class="popover-task-list">
+               <div class="pop-header-v2"><div class="ph-top"><span class="ph-title">样品验证阶段</span></div></div>
+               <div class="task-cards-container">
+                  <div class="actor-card-v2 pending">
+                      <div class="card-status-bar"></div>
+                      <div class="card-main">
+                        <div class="card-top"><span class="current-node">等待样品登记</span></div>
+                        <div class="mini-graph-steps mt-12">
+                          <div class="gs-item wait"><div class="gs-dot"></div><div class="gs-lab">登记</div><div class="gs-time">-</div></div>
+                          <div class="gs-line"></div>
+                          <div class="gs-item wait"><div class="gs-dot"></div><div class="gs-lab">反馈</div><div class="gs-time">-</div></div>
+                        </div>
+                      </div>
+                  </div>
+               </div>
+            </div>
+          </el-popover>
+          
+          <div class="phase-line"></div>
+
+          <!-- 阶段 5：首单准备 -->
+          <el-popover placement="bottom" :width="340" trigger="hover" popper-class="stage-detail-popper">
+            <template #reference>
+              <div class="phase-node wait">
+                <div class="p-circle">5</div>
+                <div class="p-info">
+                  <div class="p-name">首单准备</div>
+                  <div class="p-nodes">补充 > 采集 > 询价 > 确认</div>
+                </div>
+              </div>
+            </template>
+            <div class="popover-task-list">
+               <div class="pop-header-v2">
+                 <div class="ph-top">
+                   <span class="ph-title">首单准备阶段</span>
+                   <el-tag size="small" type="warning" effect="dark" class="round-badge">第 2 轮任务</el-tag>
+                 </div>
+               </div>
+               <div class="task-cards-container">
+                  <div class="actor-card-v2 pending">
+                      <div class="card-status-bar"></div>
+                      <div class="card-main">
+                        <div class="card-top"><span class="current-node">等待信息补充</span></div>
+                        <div class="mini-graph-steps mt-12">
+                          <div class="gs-item wait"><div class="gs-dot"></div><div class="gs-lab">补充</div><div class="gs-time">-</div></div>
+                          <div class="gs-line"></div>
+                          <div class="gs-item wait"><div class="gs-dot"></div><div class="gs-lab">采集</div><div class="gs-time">-</div></div>
+                          <div class="gs-line"></div>
+                          <div class="gs-item wait"><div class="gs-dot"></div><div class="gs-lab">询价</div><div class="gs-time">-</div></div>
+                          <div class="gs-line"></div>
+                          <div class="gs-item wait"><div class="gs-dot"></div><div class="gs-lab">确认</div><div class="gs-time">-</div></div>
+                        </div>
+                      </div>
                   </div>
                </div>
             </div>
@@ -164,25 +238,43 @@
 
           <div class="phase-line"></div>
 
-          <!-- 阶段 4 -->
-          <div class="phase-node wait">
-            <div class="p-circle">4</div>
-            <div class="p-info">
-              <div class="p-name">样品验证</div>
-              <div class="p-nodes">登记 > 反馈</div>
+          <!-- 阶段 6：定品结项 -->
+          <el-popover placement="bottom" :width="400" trigger="hover" popper-class="stage-detail-popper">
+            <template #reference>
+              <div class="phase-node wait">
+                <div class="p-circle">6</div>
+                <div class="p-info">
+                  <div class="p-name">定品结项</div>
+                  <div class="p-nodes">定品 > 审核 > 审批 > 归档</div>
+                </div>
+              </div>
+            </template>
+            <div class="popover-task-list">
+               <div class="pop-header-v2">
+                 <div class="ph-top">
+                   <span class="ph-title">定品结项阶段</span>
+                   <el-tag size="small" type="warning" effect="dark" class="round-badge">第 2 轮任务</el-tag>
+                 </div>
+               </div>
+               <div class="task-cards-container">
+                  <div class="actor-card-v2 pending">
+                      <div class="card-status-bar"></div>
+                      <div class="card-main">
+                        <div class="card-top"><span class="current-node">等待定品申请</span></div>
+                        <div class="mini-graph-steps mt-12">
+                          <div class="gs-item wait"><div class="gs-dot"></div><div class="gs-lab">定品</div><div class="gs-time">-</div></div>
+                          <div class="gs-line"></div>
+                          <div class="gs-item wait"><div class="gs-dot"></div><div class="gs-lab">审核</div><div class="gs-time">-</div></div>
+                          <div class="gs-line"></div>
+                          <div class="gs-item wait"><div class="gs-dot"></div><div class="gs-lab">审批</div><div class="gs-time">-</div></div>
+                          <div class="gs-line"></div>
+                          <div class="gs-item wait"><div class="gs-dot"></div><div class="gs-lab">归档</div><div class="gs-time">-</div></div>
+                        </div>
+                      </div>
+                  </div>
+               </div>
             </div>
-          </div>
-          
-          <div class="phase-line"></div>
-
-          <!-- 阶段 5 -->
-          <div class="phase-node wait">
-            <div class="p-circle">5</div>
-            <div class="p-info">
-              <div class="p-name">定品结项</div>
-              <div class="p-nodes">补充 > 定品 > 归档</div>
-            </div>
-          </div>
+          </el-popover>
         </div>
       </div>
 
@@ -209,7 +301,7 @@
       <!-- 3. 核心信息卡片组 -->
       <el-row :gutter="16">
         <!-- 左侧：基础与调研 -->
-        <el-col :span="16">
+        <el-col :span="24">
           <div class="section-card">
             <div class="section-title">基础信息</div>
             <el-descriptions :column="3" border size="small">
@@ -276,34 +368,6 @@
             </div>
           </div>
         </el-col>
-
-        <!-- 右侧：由于市场信息移走，这里可以放一些辅助信息或调整布局 -->
-        <el-col :span="8">
-          <div class="section-card full-height mini-stats-card">
-            <div class="section-title">提案摘要</div>
-            <div class="summary-list">
-              <div class="summary-item">
-                <div class="s-label">预计结项</div>
-                <div class="s-value">{{ detailData.estFinishDate }}</div>
-              </div>
-              <div class="summary-item">
-                <div class="s-label">当前待办</div>
-                <div class="s-value">杨登峰</div>
-              </div>
-              <div class="summary-item">
-                <div class="s-label">已耗时</div>
-                <div class="s-value">7 (天)</div>
-              </div>
-            </div>
-            
-            <el-divider border-style="dashed" />
-            
-            <div class="memo-area">
-              <div class="sub-label mb-8">备注信息：</div>
-              <div class="memo-text">暂无更多补充备注...</div>
-            </div>
-          </div>
-        </el-col>
       </el-row>
 
       <!-- 4. 任务与定品 (Tab 化处理) -->
@@ -359,14 +423,95 @@
       </div>
     </div>
   </el-drawer>
+
+  <!-- 历史档案对话框 -->
+  <el-dialog
+    v-model="historyDialogVisible"
+    title="历史任务档案追踪"
+    width="600px"
+    append-to-body
+    custom-class="history-records-dialog"
+  >
+    <div class="history-timeline-wrapper">
+      <el-timeline>
+        <el-timeline-item
+          v-for="(record, index) in historyRecords"
+          :key="index"
+          :timestamp="record.endDate"
+          placement="top"
+          type="danger"
+        >
+          <div class="history-round-card">
+            <div class="h-card-header">
+              <span class="h-round-no">{{ record.round }} 整体关闭</span>
+              <el-tag size="mini" type="info">归档</el-tag>
+            </div>
+            <div class="h-card-reason mt-8">
+              <strong>关闭原因：</strong>{{ record.reason }}
+            </div>
+            <el-divider border-style="dashed" class="my-12" />
+            <div class="h-card-actors">
+              <div v-for="actor in record.actors" :key="actor.name" class="h-actor-row">
+                <span class="ha-name">{{ actor.name }}</span>
+                <span class="ha-res">{{ actor.result }}</span>
+                <el-icon class="ha-status"><CircleCloseFilled /></el-icon>
+              </div>
+            </div>
+          </div>
+        </el-timeline-item>
+      </el-timeline>
+    </div>
+  </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { Document, CircleCheckFilled, Check } from '@element-plus/icons-vue'
+import { ref, reactive, computed } from 'vue'
+import { Document, CircleCheckFilled, Check, InfoFilled, Timer, ArrowRight, Warning, CoffeeCup, CircleClose } from '@element-plus/icons-vue'
 
-const visible = ref(false)
+const props = defineProps({
+  modelValue: Boolean,
+  detailData: {
+    type: Object,
+    default: () => ({})
+  }
+})
+
+const emit = defineEmits(['update:modelValue'])
+
+const visible = computed({
+  get: () => props.modelValue,
+  set: (val) => emit('update:modelValue', val)
+})
+
 const activeTab = ref('tasks')
+const historyDialogVisible = ref(false)
+
+// 模拟历史轮次数据 (增加多轮次演示)
+const historyRecords = reactive([
+  {
+    round: 'R2',
+    endDate: '2026-04-22',
+    reason: '样品验证环节不通过：款式细节与品牌定位存在偏差，需重新寻样',
+    actors: [
+      { name: '王强', result: '样品材质手感偏硬', status: 'closed' },
+      { name: '李华', result: '工厂打样周期过长', status: 'closed' }
+    ]
+  },
+  {
+    round: 'R1',
+    endDate: '2026-04-21',
+    reason: '采购承接环节整体不匹配：首轮采购反馈均不匹配需求或单价过高',
+    actors: [
+      { name: '王强', result: '工厂单价超出预算', status: 'closed' },
+      { name: '李华', result: '工厂无法提供ABS+金属复合材质', status: 'closed' },
+      { name: '赵敏', result: '样品款式与提案描述不符', status: 'closed' }
+    ]
+  }
+])
+
+const showHistory = () => {
+  historyDialogVisible.value = true
+}
 
 // 模拟详情数据 (根据截图还原)
 const detailData = reactive({
@@ -418,7 +563,7 @@ defineExpose({ open })
 
 <style lang="scss" scoped>
 .detail-container {
-  padding: 0 12px 20px 12px;
+  padding: 10px 12px 20px 12px; // 增加顶部 10px 间距
   background-color: #f8f9fb;
 }
 
@@ -437,6 +582,10 @@ defineExpose({ open })
   }
 }
 
+:deep(.el-drawer__header) {
+  margin-bottom: 26px !important;
+}
+
 .section-card {
   background: #fff;
   padding: 16px;
@@ -450,6 +599,7 @@ defineExpose({ open })
     margin-bottom: 16px;
     display: flex;
     align-items: center;
+    
     &::before {
       content: '';
       width: 4px;
@@ -458,14 +608,20 @@ defineExpose({ open })
       margin-right: 8px;
       border-radius: 2px;
     }
+    
+    .header-action-link {
+      margin-left: auto; // 推向右侧
+      font-size: 12px;
+      font-weight: normal;
+      .el-icon { vertical-align: middle; margin-right: 2px; }
+    }
   }
 }
 
 /* 顶部进度条优化 */
 .process-section {
-  margin-top: -10px;
-  border-radius: 0 0 8px 8px;
-  padding-top: 24px;
+  border-radius: 8px;
+  padding-top: 16px;
 }
 
 .phase-progress {
@@ -531,7 +687,7 @@ defineExpose({ open })
 .phase-progress-v2 {
   display: flex;
   align-items: center;
-  padding: 20px 10px 30px 10px; // 底部留空给 Popover
+  padding: 12px 10px 20px 10px; // 缩小整体内边距
   
   .phase-node {
     display: flex;
@@ -540,6 +696,10 @@ defineExpose({ open })
     position: relative;
     cursor: default;
     
+    .p-circle-wrap {
+      position: relative;
+    }
+
     .p-circle {
       width: 24px;
       height: 24px;
@@ -566,19 +726,19 @@ defineExpose({ open })
     /* 数字气泡 */
     .task-badge {
       position: absolute;
-      top: -8px;
-      right: -8px;
+      top: -10px; 
+      right: -12px; 
       background: #1890ff;
       color: #fff;
       font-size: 10px;
-      min-width: 16px;
-      height: 16px;
-      border-radius: 8px;
+      min-width: 14px; // 缩小尺寸
+      height: 14px;
+      border-radius: 7px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 4px;
-      border: 2px solid #fff;
+      padding: 0 3px;
+      border: 1px solid #fff; // 减薄边框
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       
       &.danger { background: #f5222d; }
@@ -608,15 +768,71 @@ defineExpose({ open })
 
 /* Popover 内部样式 */
 .popover-task-list {
-  .pop-header {
-    font-size: 12px;
-    font-weight: bold;
-    color: #595959;
-    margin-bottom: 12px;
-    padding-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  
+  .pop-header-v2 {
+    padding-bottom: 10px;
     border-bottom: 1px solid #f0f0f0;
+    margin-bottom: 4px; // 增加与列表的微调间距
+    .ph-top { display: flex; align-items: center; gap: 10px; .ph-title { font-size: 14px; font-weight: bold; color: #262626; } }
+    .ph-context { font-size: 11px; color: #fa8c16; display: flex; align-items: center; gap: 4px; line-height: 1.4; }
+  }
+
+  .task-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; // 缩小间距
+  }
+
+  .pop-footer {
+    padding-top: 8px;
+    border-top: 1px solid #f5f5f5;
+    text-align: right;
   }
 }
+
+/* 历史档案对话框样式 */
+.history-timeline-wrapper {
+  padding: 10px 20px;
+  max-height: 500px;
+  overflow-y: auto;
+  
+  .history-round-card {
+    background: #fcfcfd;
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+    padding: 16px;
+    
+    .h-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      .h-round-no { font-size: 14px; font-weight: bold; color: #262626; }
+    }
+    
+    .h-card-reason { font-size: 12px; color: #595959; line-height: 1.6; }
+    
+    .h-card-actors {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      
+      .h-actor-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 12px;
+        .ha-name { width: 60px; color: #262626; font-weight: 500; }
+        .ha-res { flex: 1; color: #8c8c8c; }
+        .ha-status { color: #ff4d4f; font-size: 14px; }
+      }
+    }
+  }
+}
+
+.my-12 { margin-top: 12px; margin-bottom: 12px; }
 
 /* 执行看板增强样式 */
 .execution-kanban {
@@ -706,8 +922,36 @@ defineExpose({ open })
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
+    
+    .node-with-round {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      .round-tag { font-family: monospace; font-weight: bold; border-radius: 4px; padding: 0 4px; }
+    }
+    
     .current-node { font-size: 15px; font-weight: bold; color: #262626; }
     .actor-name { font-size: 12px; color: #8c8c8c; margin-left: auto; }
+  }
+
+  /* 多轮次历史简述样式 */
+  .history-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #fdfdfe;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px dashed #e8e8e8;
+    
+    .h-item {
+      font-size: 10px;
+      white-space: nowrap;
+      
+      &.done { color: #8c8c8c; text-decoration: line-through rgba(0,0,0,0.1); .el-icon { vertical-align: middle; color: #ff4d4f; } }
+      &.active { color: #1890ff; font-weight: 500; }
+    }
+    .h-arrow { font-size: 10px; color: #d9d9d9; }
   }
 
   .card-footer {
@@ -720,6 +964,7 @@ defineExpose({ open })
     padding: 6px 10px;
     border-radius: 4px;
     .el-icon { font-size: 14px; }
+    .footer-msg.warn { color: #fa8c16; display: flex; align-items: center; gap: 4px; font-weight: 500; }
   }
 
   /* 状态色定义 */
@@ -917,7 +1162,7 @@ defineExpose({ open })
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-  margin: 16px 0;
+  margin: 12px 0;
   
   .dash-item {
     background: #fff;
@@ -936,8 +1181,8 @@ defineExpose({ open })
   }
 }
 
-.mt-16 { margin-top: 16px; }
 .mt-12 { margin-top: 12px; }
+.mt-10 { margin-top: 10px; }
 .mb-8 { margin-bottom: 8px; }
 
 .sub-label { font-size: 13px; font-weight: 500; color: #595959; }
@@ -1028,5 +1273,15 @@ defineExpose({ open })
   background-color: #fafafa !important;
   font-weight: 500;
   width: 100px;
+}
+</style>
+
+<style lang="scss">
+/* 全局覆盖：解决 el-drawer 样式在 scoped 下无法修改的问题 */
+.proposal-detail-drawer {
+  .el-drawer__header {
+    margin-bottom: -22px !important; 
+    padding: 16px 20px !important;
+  }
 }
 </style>
