@@ -447,7 +447,7 @@
           </div>
 
           <!-- 4. 提案-定品 (多级表头与业务分类) -->
-          <div class="section-card mt-16">
+          <div class="section-card mt-16" id="final-spec-section">
             <div class="section-title">提案-定品</div>
             <el-tabs v-model="finalTabActive" class="inner-tabs">
               <el-tab-pane label="属性信息" name="attr">
@@ -457,6 +457,7 @@
                   border 
                   class="business-spec-table"
                   style="width: 100%"
+                  :row-class-name="tableRowClassName"
                 >
                   <!-- 固定列 -->
                   <el-table-column prop="materialCode" label="物料编码" width="120" fixed />
@@ -597,7 +598,15 @@
                 </el-table>
               </el-tab-pane>
               <el-tab-pane label="采购信息" name="design">
-                <el-table :data="detailData.procurementList" size="small" border stripe style="width: 100%" class="business-spec-table">
+                <el-table 
+                  :data="detailData.procurementList" 
+                  size="small" 
+                  border 
+                  stripe 
+                  style="width: 100%" 
+                  class="business-spec-table"
+                  :row-class-name="tableRowClassName"
+                >
                   <el-table-column prop="materialCode" label="物料编码" width="120" fixed />
                   
                   <!-- 分类 1：基础归属 -->
@@ -672,25 +681,84 @@
             </el-tabs>
           </div>
 
-          <!-- 4. 提案-首单 (回归原始宽表结构) -->
+          <!-- 4. 提案-首单 (结构化业务表) -->
           <div class="section-card mt-16">
             <div class="section-title">提案-首单</div>
-            <el-table :data="detailData.firstOrderList" size="small" border stripe style="width: 100%">
+            <el-table :data="detailData.firstOrderList" :span-method="firstOrderSpanMethod" size="small" border stripe style="width: 100%" class="business-spec-table">
               <el-table-column type="index" label="序号" width="50" fixed />
-              <el-table-column prop="proposalNo" label="提案编码" width="130" />
-              <el-table-column prop="category" label="运营大类" width="120" />
-              <el-table-column prop="productName" label="产品名称" width="150" show-overflow-tooltip />
-              <el-table-column prop="style" label="款式" width="100" />
-              <el-table-column prop="material" label="主材料" width="100" />
-              <el-table-column prop="applicable" label="适用品牌或对象" width="130" />
-              <el-table-column prop="model" label="型号" width="110" />
-              <el-table-column prop="manager" label="产品经理" width="90" />
-              <el-table-column prop="procurement" label="采购负责人" width="100" />
-              <el-table-column prop="sourcingDate" label="采集日期" width="110" />
-              <el-table-column prop="inquiryDate" label="询价完成日期" width="110" />
-              <el-table-column prop="confirmDate" label="需求确认时间" width="110" />
-              <el-table-column prop="finishDate" label="完成时间" width="110" />
-              <el-table-column prop="materialCode" label="物料编码" width="120" />
+
+              <!-- 分类 1：基础项 -->
+              <el-table-column label="基础归属" header-align="center" label-class-name="h-basic">
+                <el-table-column prop="materialCode" width="120">
+                  <template #header><span class="t-basic">物料编码</span></template>
+                  <template #default="{ row }">
+                    <el-popover placement="right" :width="300" trigger="hover" popper-class="spec-preview-popper">
+                      <template #reference>
+                        <el-link type="primary" :underline="false" class="jump-link" @click="jumpToSpec(row.materialCode)">
+                          {{ row.materialCode }}
+                        </el-link>
+                      </template>
+                      <div class="spec-preview-card">
+                        <div class="p-title">规格预览：{{ row.materialCode }}</div>
+                        <div class="p-content">
+                          <div class="p-row"><span class="p-l">公司品牌：</span><span class="p-v">{{ getSpecByCode(row.materialCode).brand }}</span></div>
+                          <div class="p-row"><span class="p-l">图案：</span><span class="p-v">{{ getSpecByCode(row.materialCode).pattern }}</span></div>
+                          <div class="p-row"><span class="p-l">颜色：</span><span class="p-v">{{ getSpecByCode(row.materialCode).color }}</span></div>
+                          <div class="p-row"><span class="p-l">尺码：</span><span class="p-v">{{ getSpecByCode(row.materialCode).size }}</span></div>
+                          <div class="p-row"><span class="p-l">规格：</span><span class="p-v">{{ getSpecByCode(row.materialCode).specs }}</span></div>
+                          <div class="p-row"><span class="p-l">包装数量：</span><span class="p-v">{{ getSpecByCode(row.materialCode).pkgQty }}</span></div>
+                          <div class="p-row"><span class="p-l">包装方式：</span><span class="p-v">{{ getSpecByCode(row.materialCode).pkgMethod }}</span></div>
+                          <div class="p-row"><span class="p-l">材质明细：</span><span class="p-v">{{ getSpecByCode(row.materialCode).materialDetail }}</span></div>
+                          <div class="p-row"><span class="p-l">单品尺寸：</span><span class="p-v">{{ getSpecByCode(row.materialCode).unitSize }}</span></div>
+                          <div class="p-row"><span class="p-l">单品重量：</span><span class="p-v">-</span></div>
+                          <div class="p-row"><span class="p-l">包装尺寸：</span><span class="p-v">{{ getSpecByCode(row.materialCode).pkgSize }}</span></div>
+                          <div class="p-row"><span class="p-l">包装重量：</span><span class="p-v">{{ getSpecByCode(row.materialCode).pkgWeight }}</span></div>
+                        </div>
+                        <div class="p-footer">点击编码可跳转至完整定品表</div>
+                      </div>
+                    </el-popover>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="procurement" width="100">
+                  <template #header><span class="t-basic">采购负责人</span></template>
+                </el-table-column>
+              </el-table-column>
+
+              <!-- 分类 2：流程时效 -->
+              <el-table-column label="流程时效" header-align="center" label-class-name="h-marketing">
+                <el-table-column prop="sourcingDate" width="120">
+                  <template #header><span class="t-marketing">首单采集日期</span></template>
+                </el-table-column>
+                <el-table-column prop="inquiryDate" width="120">
+                  <template #header><span class="t-marketing">询价完成日期</span></template>
+                </el-table-column>
+              </el-table-column>
+
+              <!-- 分类 3：需求详情 -->
+              <el-table-column label="需求详情" header-align="center" label-class-name="h-params">
+                <el-table-column prop="reqTeam" width="130">
+                  <template #header><span class="t-params">需求Team</span></template>
+                </el-table-column>
+                <el-table-column prop="requester" width="100">
+                  <template #header><span class="t-params">需求人</span></template>
+                </el-table-column>
+                <el-table-column prop="actualQty" width="110">
+                  <template #header>
+                    <el-tooltip content="运营确认后的数量" placement="top">
+                      <span class="t-params">
+                        实际需求数量
+                        <el-icon class="header-hint-icon"><QuestionFilled /></el-icon>
+                      </span>
+                    </el-tooltip>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="confirmDate" min-width="120">
+                  <template #header><span class="t-params">需求确认日期</span></template>
+                </el-table-column>
+                <el-table-column prop="changeMemo" min-width="200" show-overflow-tooltip>
+                  <template #header><span class="t-params">需求变更说明</span></template>
+                </el-table-column>
+              </el-table-column>
             </el-table>
           </div>
         </el-col>
@@ -800,6 +868,35 @@ const visible = computed({
 const activeTab = ref('tasks')
 const finalTabActive = ref('attr')
 const historyDialogVisible = ref(false)
+const highlightedCode = ref('')
+
+// 根据物料编码获取定品规格详情
+const getSpecByCode = (code: string) => {
+  return detailData.finalSpecList.find(item => item.materialCode === code) || {}
+}
+
+// 快速跳转至定品规格/采购信息并高亮
+const jumpToSpec = (code: string, tabName: string = 'attr') => {
+  highlightedCode.value = code
+  finalTabActive.value = tabName // 自动切换页签
+  
+  const target = document.getElementById('final-spec-section')
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+  // 3秒后自动取消高亮
+  setTimeout(() => {
+    highlightedCode.value = ''
+  }, 3000)
+}
+
+// 表格行高亮逻辑
+const tableRowClassName = ({ row }: { row: any }) => {
+  if (highlightedCode.value && row.materialCode === highlightedCode.value) {
+    return 'highlight-row'
+  }
+  return ''
+}
 
 // 模拟历史轮次数据 (增加多轮次演示)
 const historyRecords = reactive([
@@ -882,64 +979,109 @@ const detailData = reactive({
   finalSpecList: [
     {
       materialCode: 'MT2604-G01',
-      // 基本属性
       brand: 'Rhino Valley', pattern: '复古雕花', color: '经典黑', hasBattery: '否', isCe: '否', 
       specs: '标准套装', pkgMethod: 'OPP袋+彩卡', pkgQty: '2 PCS/Box', colorNo: 'BK-001', 
       subCategory: '园艺挂钩', logoReplaceable: '是', suggestLogistics: '海运直发', 
       firstLogistics: '快船', model: 'RV-HOOK-01', materialDetail: 'ABS+碳钢', multiPackage: '否', packageCount: '1',
-      // 规格参数
       size: '120cm', diameter: '15mm', capacity: '-', unitSize: '120*15*2.5cm', pkgSize: '125*16*5cm', pkgWeight: '1.2kg',
-      // 知识产权
       patentDesc: '外观专利已申请', patentCert: '已上传', patentDate: '2026-01-10', copyrightDesc: '自有版权',
-      // 营销设计
       opsLeader: '谢东桥', copyLevel: 'A', copyReq: '突出防鼠卖点', imgLevel: 'S', imgReq: '渲染3D精修图', refLink: 'https://...',
-      // 核心/仓储/质量
-      points: '防鼠挡板设计、超强承重',
-      shortDesc: '户外牧羊人挂钩-黑色',
-      qualityReq: '表面无划痕、承重测试 10kg'
+      points: '防鼠挡板设计、超强承重', shortDesc: '户外牧羊人挂钩-黑色', qualityReq: '表面无划痕、承重测试 10kg'
+    },
+    {
+      materialCode: 'MT2604-G02',
+      brand: 'Rhino Valley', pattern: '纯平磨砂', color: '象牙白', hasBattery: '否', isCe: '否', 
+      specs: '加高版', pkgMethod: '彩盒装', pkgQty: '1 PC/Box', colorNo: 'WH-002', 
+      subCategory: '园艺挂钩', logoReplaceable: '是', suggestLogistics: '海运直发', 
+      firstLogistics: '空运', model: 'RV-HOOK-02', materialDetail: '不锈钢+烤漆', multiPackage: '否', packageCount: '1',
+      size: '150cm', diameter: '18mm', capacity: '-', unitSize: '150*15*2.5cm', pkgSize: '155*16*5cm', pkgWeight: '1.5kg',
+      patentDesc: '-', patentCert: '-', patentDate: '-', copyrightDesc: '公版',
+      opsLeader: '谢东桥', copyLevel: 'B', copyReq: '强调极简风格', imgLevel: 'A', imgReq: '实拍图', refLink: 'https://...',
+      points: '不锈钢不生锈、安装简单', shortDesc: '户外牧羊人挂钩-白色', qualityReq: '漆面均匀无气泡'
+    },
+    {
+      materialCode: 'MT2604-G03',
+      brand: 'Rhino Valley', pattern: '太阳能灯', color: '古铜色', hasBattery: '是', isCe: '是', 
+      specs: '带灯款', pkgMethod: '电商飞机盒', pkgQty: '4 PCS/Set', colorNo: 'BR-003', 
+      subCategory: '园艺亮化', logoReplaceable: '否', suggestLogistics: '空运', 
+      firstLogistics: '空运', model: 'RV-HOOK-LT', materialDetail: '铁艺+玻璃', multiPackage: '是', packageCount: '2',
+      size: '110cm', diameter: '12mm', capacity: '600mAh', unitSize: '110*10*10cm', pkgSize: '60*25*15cm', pkgWeight: '2.8kg',
+      patentDesc: '实用新型专利', patentCert: '审核中', patentDate: '-', copyrightDesc: '自有版权',
+      opsLeader: '周亮亮', copyLevel: 'S', copyReq: '突出智能感应', imgLevel: 'S', imgReq: '夜景氛围视频', refLink: 'https://...',
+      points: '自动感应亮灯、复古质感', shortDesc: '太阳能挂钩灯-古铜', qualityReq: 'IP65防水测试、电池容量实测'
     }
   ],
   procurementList: [
     {
-      materialCode: 'MT2604-G01',
-      procurement: '杨登峰',
-      priceTaxInc: 7.20,
-      priceTaxExc: 6.37,
-      taxRate: '13%',
-      latestPriceInc: 7.15,
-      latestPriceExc: 6.33,
-      moq: 500,
-      moqMemo: '首单试样支持 200pcs',
-      leadTime: '30天',
-      estDelivery: '2026-05-20',
-      actDelivery: '-',
-      canInvoice: '是',
-      invoiceUnit: '把',
-      invoiceName: '园艺金属挂钩',
-      invoiceSpecs: 'RV-HOOK-01/120cm',
-      customsMaterial: 'ABS塑料+铁'
+      materialCode: 'MT2604-G01', procurement: '杨登峰', priceTaxInc: 7.20, priceTaxExc: 6.37, taxRate: '13%', 
+      latestPriceInc: 7.15, latestPriceExc: 6.33, moq: 500, moqMemo: '首单试样支持 200pcs', leadTime: '30天', 
+      estDelivery: '2026-05-20', actDelivery: '-', canInvoice: '是', invoiceUnit: '把', 
+      invoiceName: '园艺金属挂钩', invoiceSpecs: 'RV-HOOK-01/120cm', customsMaterial: 'ABS塑料+铁'
+    },
+    {
+      materialCode: 'MT2604-G02', procurement: '杨登峰', priceTaxInc: 9.50, priceTaxExc: 8.41, taxRate: '13%', 
+      latestPriceInc: 9.50, latestPriceExc: 8.41, moq: 300, moqMemo: '起订量较硬', leadTime: '45天', 
+      estDelivery: '2026-05-25', actDelivery: '-', canInvoice: '是', invoiceUnit: '把', 
+      invoiceName: '不锈钢挂钩', invoiceSpecs: 'RV-HOOK-02/150cm', customsMaterial: '不锈钢'
+    },
+    {
+      materialCode: 'MT2604-G03', procurement: '李小龙', priceTaxInc: 24.80, priceTaxExc: 21.95, taxRate: '13%', 
+      latestPriceInc: 24.00, latestPriceExc: 21.24, moq: 1000, moqMemo: '模具分摊费已含', leadTime: '55天', 
+      estDelivery: '2026-06-10', actDelivery: '-', canInvoice: '是', invoiceUnit: '套', 
+      invoiceName: '太阳能园艺灯', invoiceSpecs: 'RV-HOOK-LT/4只装', customsMaterial: '铁+玻璃'
     }
   ],
   firstOrderList: [
     {
-      proposalNo: 'TA-202604101',
-      category: '运动户外-通用',
-      productName: 'ZZ-户外牧羊人挂钩',
-      style: '防鼠挡板配件',
-      material: 'ABS+金属',
-      applicable: '户外园艺',
-      model: 'RV-HOOK-01',
-      manager: '谢东桥',
-      procurement: '杨登峰',
-      sourcingDate: '2026-04-20',
-      inquiryDate: '2026-04-22',
-      confirmDate: '2026-04-23',
-      finishDate: '-',
-      materialCode: 'MT2604-G01'
+      materialCode: 'MT2604-G01', procurement: '杨登峰', sourcingDate: '2026-04-20', inquiryDate: '2026-04-22', 
+      confirmDate: '2026-04-23', reqTeam: '北美A组', requester: '谢东桥', actualQty: 1200, 
+      changeMemo: '首单增加备货'
+    },
+    {
+      materialCode: 'MT2604-G01', procurement: '杨登峰', sourcingDate: '2026-04-20', inquiryDate: '2026-04-22', 
+      confirmDate: '2026-04-23', reqTeam: '欧洲B组', requester: '李华', actualQty: 500, 
+      changeMemo: '同步铺货'
+    },
+    {
+      materialCode: 'MT2604-G02', procurement: '杨登峰', sourcingDate: '2026-04-21', inquiryDate: '2026-04-24', 
+      confirmDate: '2026-04-25', reqTeam: '日本组', requester: '张三', actualQty: 800, 
+      changeMemo: '改为白色烤漆'
+    },
+    {
+      materialCode: 'MT2604-G03', procurement: '李小龙', sourcingDate: '2026-04-22', inquiryDate: '2026-04-26', 
+      confirmDate: '2026-04-28', reqTeam: '东南亚组', requester: '李四', actualQty: 2000, 
+      changeMemo: '含电池'
     }
   ],
   finalSpecs: []
 })
+
+// 计算首单表格单元格合并逻辑
+const firstOrderSpanMethod = ({ row, column, rowIndex, columnIndex }: any) => {
+  // 需要合并的列索引：序号(0), 物料编码(1), 采购负责人(2), 首单采集日期(3), 询价完成日期(4)
+  // 需求详情中的项(5, 6, 7, 8, 9)不合并
+  const mergeIndices = [0, 1, 2, 3, 4]
+  if (mergeIndices.includes(columnIndex)) {
+    const list = detailData.firstOrderList
+    const currentCode = row.materialCode
+    
+    // 判断当前行是否是该物料的第一行
+    if (rowIndex > 0 && list[rowIndex - 1].materialCode === currentCode) {
+      return { rowspan: 0, colspan: 0 }
+    } else {
+      // 计算后续有多少行是相同的
+      let rows = 1
+      for (let i = rowIndex + 1; i < list.length; i++) {
+        if (list[i].materialCode === currentCode) {
+          rows++
+        } else {
+          break
+        }
+      }
+      return { rowspan: rows, colspan: 1 }
+    }
+  }
+}
 
 const getStatusType = (status: string) => {
   if (status === '已完结') return 'success'
@@ -1689,6 +1831,37 @@ defineExpose({ open })
   font-size: 13px;
 }
 
+.jump-link {
+  font-weight: bold;
+  text-decoration: underline !important;
+  cursor: pointer;
+}
+
+/* 行高亮动画 */
+:deep(.highlight-row) {
+  background-color: #fff7e6 !important;
+  transition: background-color 0.5s;
+  td { border-top: 1px solid #ffa940; border-bottom: 1px solid #ffa940; }
+}
+
+/* 规格预览气泡卡片 */
+.spec-preview-card {
+  padding: 8px;
+  .p-title { font-weight: bold; color: #1890ff; margin-bottom: 12px; border-bottom: 1px solid #f0f0f0; padding-bottom: 4px; }
+  .p-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    .p-row { 
+      font-size: 12px; 
+      display: flex; 
+      .p-l { color: #8c8c8c; width: 100px; flex-shrink: 0; } 
+      .p-v { color: #262626; flex: 1; } 
+    }
+  }
+  .p-footer { margin-top: 12px; font-size: 11px; color: #fa8c16; font-style: italic; text-align: right; }
+}
+
 /* 调研深度信息样式优化 */
 .research-content {
   .content-text {
@@ -1863,8 +2036,13 @@ defineExpose({ open })
 /* 全局覆盖：解决 el-drawer 样式在 scoped 下无法修改的问题 */
 .proposal-detail-drawer {
   .el-drawer__header {
-    margin-bottom: -22px !important; 
+    margin-bottom: 0 !important; // 移除负边距
     padding: 16px 20px !important;
+    border-bottom: 1px solid #f0f0f0; // 增加一条极细的分界线，视觉更清晰
+    z-index: 10;
+  }
+  .el-drawer__body {
+    padding: 0 !important; // 让主体容器自己控制内边距
   }
 }
 </style>
