@@ -50,10 +50,14 @@
                  </div>
                </div>
                <div class="task-cards-container">
-                  <div class="actor-card-v2 processing">
+                  <div class="actor-card-v2 processing" @click="handleViewTaskDetail({ name: '创建任务', user: '谢东桥', status: '进行中', priority: 'P1', no: 'TK20260420001', deadline: '2026-04-25', type: '调研' })">
                       <div class="card-status-bar"></div>
                       <div class="card-main">
-                        <div class="card-top"><span class="current-node">创建任务</span><span class="actor-name">@谢东桥</span></div>
+                        <div class="card-top">
+                          <span class="current-node">创建任务</span>
+                          <span class="actor-name">@谢东桥</span>
+                          <el-link type="primary" :underline="false" class="ml-8">详情</el-link>
+                        </div>
                         <div class="mini-graph-steps mt-12">
                           <div class="gs-item done"><div class="gs-dot"></div><div class="gs-lab">创建</div><div class="gs-time">04-20</div></div>
                           <div class="gs-line done"></div>
@@ -92,10 +96,14 @@
                </div>
 
                <div class="task-cards-container">
-                  <div class="actor-card-v2 processing">
+                  <div class="actor-card-v2 processing" @click="handleViewTaskDetail({ name: '定制反馈', user: '李华', status: '进行中', priority: 'P0', no: 'TK20260420002', deadline: '2026-04-26', type: '购样' })">
                       <div class="card-status-bar"></div>
                       <div class="card-main">
-                        <div class="card-top"><span class="current-node">定制反馈</span><span class="actor-name">@李华</span></div>
+                        <div class="card-top">
+                          <span class="current-node">定制反馈</span>
+                          <span class="actor-name">@李华</span>
+                          <el-link type="primary" :underline="false" class="ml-8">详情</el-link>
+                        </div>
                         <div class="mini-graph-steps mt-12">
                           <div class="gs-item done"><div class="gs-dot"></div><div class="gs-lab">承接</div><div class="gs-time">04-22</div></div>
                           <div class="gs-line done"></div>
@@ -105,10 +113,14 @@
                         </div>
                       </div>
                   </div>
-                  <div class="actor-card-v2 processing">
+                  <div class="actor-card-v2 processing" @click="handleViewTaskDetail({ name: '任务承接', user: '赵敏', status: '进行中', priority: 'P1', no: 'TK20260420003', deadline: '2026-04-27', type: '调研' })">
                       <div class="card-status-bar"></div>
                       <div class="card-main">
-                        <div class="card-top"><span class="current-node">任务承接</span><span class="actor-name">@赵敏</span></div>
+                        <div class="card-top">
+                          <span class="current-node">任务承接</span>
+                          <span class="actor-name">@赵敏</span>
+                          <el-link type="primary" :underline="false" class="ml-8">详情</el-link>
+                        </div>
                         <div class="mini-graph-steps mt-12">
                           <div class="gs-item active"><div class="gs-dot"></div><div class="gs-lab">承接</div><div class="gs-time">04-23</div></div>
                           <div class="gs-line"></div>
@@ -146,10 +158,14 @@
                  </div>
                </div>
                <div class="task-cards-container">
-                 <div class="actor-card-v2 advanced">
+                 <div class="actor-card-v2 advanced" @click="handleViewTaskDetail({ name: '购样申请', user: '王强', status: '进行中', priority: 'P0', no: 'TK20260420004', deadline: '2026-04-28', type: '购样' })">
                     <div class="card-status-bar"></div>
                     <div class="card-main">
-                      <div class="card-top"><span class="current-node">购样申请</span><span class="actor-name">@王强</span></div>
+                      <div class="card-top">
+                        <span class="current-node">购样申请</span>
+                        <span class="actor-name">@王强</span>
+                        <el-link type="primary" :underline="false" class="ml-8">详情</el-link>
+                      </div>
                       <div class="mini-graph-steps mt-12">
                         <div class="gs-item done"><div class="gs-dot"></div><div class="gs-lab">申请</div><div class="gs-time">04-22</div></div>
                         <div class="gs-line done"></div>
@@ -427,21 +443,95 @@
               </el-row>
             </div>
           </div>
-          <!-- 3. 提案-任务 -->
-          <div class="section-card mt-16">
+          <!-- 3. 提案-任务 (精修版) -->
+          <div class="section-card mt-16 task-section-v3">
             <div class="section-title">提案-任务</div>
-            <el-table :data="detailData.tasks" size="small" border stripe>
-              <el-table-column type="index" label="序号" width="50" />
-              <el-table-column prop="name" label="任务名称" />
-              <el-table-column prop="type" label="拿样方式" width="100" />
-              <el-table-column prop="user" label="承接人" width="100" />
-              <el-table-column prop="status" label="状态" width="100">
+            <el-table :data="detailData.tasks" size="small" stripe class="modern-task-table">
+              <el-table-column type="index" label="#" width="40" align="center" />
+              
+              <el-table-column label="任务信息" min-width="220">
                 <template #default="{ row }">
-                  <el-badge is-dot :type="row.status === '已完成' ? 'success' : 'warning'" /> {{ row.status }}
+                  <div class="task-info-v3">
+                    <div class="t-name-wrap">
+                      <span class="t-name">{{ row.name }}</span>
+                      <el-tag size="mini" :type="getPriorityType(row.priority)" effect="dark" class="priority-dot">{{ row.priority }}</el-tag>
+                    </div>
+                    <div class="t-sub-info">
+                      <span class="t-no">{{ row.no }}</span>
+                      <span class="divider">|</span>
+                      <span class="t-method"><el-icon><CoffeeCup /></el-icon> {{ row.samplingMethod }}</span>
+                    </div>
+                  </div>
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="80">
-                <template #default><el-link type="primary" :underline="false">详情</el-link></template>
+
+              <el-table-column label="发布时间" width="140" align="center">
+                <template #default="{ row }">
+                  <div class="release-time-v3">{{ row.releaseTime }}</div>
+                </template>
+              </el-table-column>
+
+              <el-table-column width="170">
+                <template #header>
+                  <div class="header-with-hint">
+                    <span>反馈截止/倒计时</span>
+                    <el-tooltip content="此为采购反馈截止时间" placement="top">
+                      <el-icon class="header-hint-icon"><QuestionFilled /></el-icon>
+                    </el-tooltip>
+                  </div>
+                </template>
+                <template #default="{ row }">
+                  <div class="deadline-group-v3">
+                    <div class="d-time">{{ row.feedbackDeadline }}</div>
+                    <div v-if="row.status !== '已完成' && row.feedbackCountdown !== '-'" 
+                         class="d-countdown" 
+                         :class="{ 'urgent': row.feedbackCountdown.includes('h') }">
+                      剩余 {{ row.feedbackCountdown }}
+                    </div>
+                    <div v-else-if="row.status === '已完成'" class="d-done">已反馈</div>
+                    <div v-else class="d-done">-</div>
+                  </div>
+                </template>
+              </el-table-column>
+
+              <el-table-column label="任务截止/倒计时" width="170">
+                <template #default="{ row }">
+                  <div class="deadline-group-v3">
+                    <div class="d-time">{{ row.deadline }}</div>
+                    <div v-if="row.status !== '已完成' && row.taskCountdown !== '-'" class="d-countdown">剩余 {{ row.taskCountdown }}</div>
+                    <div v-else-if="row.status === '已完成'" class="d-done">已结项</div>
+                    <div v-else class="d-done">-</div>
+                  </div>
+                </template>
+              </el-table-column>
+
+              <el-table-column label="承接详情" width="160">
+                <template #default="{ row }">
+                  <div class="assignee-info-v3">
+                    <div class="a-user">
+                      <el-avatar :size="20" class="a-avatar">{{ row.user.charAt(0) }}</el-avatar>
+                      <span class="a-name">{{ row.user }}</span>
+                    </div>
+                    <div class="a-time">{{ row.acceptanceTime === '-' ? '未承接' : row.acceptanceTime }}</div>
+                  </div>
+                </template>
+              </el-table-column>
+
+              <el-table-column label="状态" width="90" align="center">
+                <template #default="{ row }">
+                  <div class="status-indicator" :class="row.status">
+                    <span class="s-dot"></span>
+                    <span class="s-text">{{ row.status }}</span>
+                  </div>
+                </template>
+              </el-table-column>
+
+              <el-table-column label="操作" width="70" align="center" fixed="right">
+                <template #default="{ row }">
+                  <el-button type="primary" link @click="handleViewTaskDetail(row)" class="btn-detail-v3">
+                    详情<el-icon class="el-icon--right"><ArrowRight /></el-icon>
+                  </el-button>
+                </template>
               </el-table-column>
             </el-table>
           </div>
@@ -844,11 +934,15 @@
       </el-timeline>
     </div>
   </el-dialog>
+
+  <!-- 任务执行详情抽屉 -->
+  <TaskDetailDrawer ref="taskDetailRef" />
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
-import { Document, CircleCheckFilled, Check, InfoFilled, Timer, ArrowRight, Warning, CoffeeCup, CircleClose } from '@element-plus/icons-vue'
+import { Document, CircleCheckFilled, Check, InfoFilled, Timer, ArrowRight, Warning, CoffeeCup, CircleClose, Clock, Management, List, PriceTag, Monitor, Guide, Film, Link, DataAnalysis, QuestionFilled } from '@element-plus/icons-vue'
+import TaskDetailDrawer from './TaskDetailDrawer.vue'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -869,6 +963,12 @@ const activeTab = ref('tasks')
 const finalTabActive = ref('attr')
 const historyDialogVisible = ref(false)
 const highlightedCode = ref('')
+const taskDetailRef = ref()
+
+// 打开任务详情
+const handleViewTaskDetail = (row: any) => {
+  taskDetailRef.value?.open(row)
+}
 
 // 根据物料编码获取定品规格详情
 const getSpecByCode = (code: string) => {
@@ -974,7 +1074,54 @@ const detailData = reactive({
     'https://picsum.photos/200/200?random=3'
   ],
   tasks: [
-    { name: '样品采集任务', type: '购样', user: '杨登峰', status: '进行中' }
+    { 
+      no: 'TK2026042001',
+      name: '样品采集与外观确认', 
+      samplingMethod: '1688采买',
+      releaseTime: '2026-04-20 10:00',
+      feedbackDeadline: '2026-04-22 18:00',
+      feedbackCountdown: '18h 25m',
+      deadline: '2026-04-25 18:00',
+      taskCountdown: '3d 4h',
+      user: '杨登峰', 
+      acceptanceTime: '2026-04-20 10:30',
+      status: '进行中', 
+      priority: 'P0',
+      progress: 65,
+      remark: '关注ABS材质耐磨性'
+    },
+    { 
+      no: 'TK2026041803',
+      name: '供应商资质初审', 
+      samplingMethod: '线下寄样',
+      releaseTime: '2026-04-18 09:00',
+      feedbackDeadline: '2026-04-19 18:00',
+      feedbackCountdown: '-',
+      deadline: '2026-04-20 18:00',
+      taskCountdown: '-',
+      user: '李华', 
+      acceptanceTime: '2026-04-18 09:15',
+      status: '已完成', 
+      priority: 'P1',
+      progress: 100,
+      remark: '3家工厂均符合ISO认证'
+    },
+    { 
+      no: 'TK2026042105',
+      name: '成本利润初步核算', 
+      samplingMethod: '无需拿样',
+      releaseTime: '2026-04-21 14:00',
+      feedbackDeadline: '2026-04-22 12:00',
+      feedbackCountdown: '1h 10m',
+      deadline: '2026-04-24 18:00',
+      taskCountdown: '2d 6h',
+      user: '周亮亮', 
+      acceptanceTime: '-',
+      status: '待开始', 
+      priority: 'P2',
+      progress: 0,
+      remark: '需结合最新海运费报价'
+    }
   ],
   finalSpecList: [
     {
@@ -1087,6 +1234,16 @@ const getStatusType = (status: string) => {
   if (status === '已完结') return 'success'
   if (status === '待设计') return 'danger'
   return 'warning'
+}
+
+const getPriorityType = (priority: string) => {
+  const map: any = { 'P0': 'danger', 'P1': 'warning', 'P2': 'info' }
+  return map[priority] || 'info'
+}
+
+const getTaskStatusType = (status: string) => {
+  const map: any = { '已完成': 'success', '进行中': 'primary', '待开始': 'info' }
+  return map[status] || 'info'
 }
 
 const open = () => {
@@ -1462,6 +1619,7 @@ defineExpose({ open })
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.02);
   transition: all 0.3s;
+  cursor: pointer;
 
   &:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
 
@@ -2029,6 +2187,245 @@ defineExpose({ open })
   background-color: #fafafa !important;
   font-weight: 500;
   width: 100px;
+}
+
+/* 任务列表增强样式 */
+.task-table {
+  margin-top: 8px;
+  :deep(.el-table__row) {
+    height: 64px; // 增加行高以容纳双行内容
+  }
+}
+
+.task-info-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  .task-name-row {
+    display: flex;
+    align-items: center;
+    .task-name {
+      font-weight: 600;
+      color: #262626;
+      font-size: 13px;
+    }
+  }
+  .task-no-sub {
+    font-size: 11px;
+    color: #bfbfbf;
+    font-family: monospace;
+  }
+}
+
+/* 任务列表 V2 样式优化 */
+.task-table-v2 {
+  :deep(.el-table__row) {
+    height: 54px;
+  }
+  
+  .task-main-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    .t-title { font-weight: 600; color: #262626; font-size: 13px; }
+    .t-no { font-size: 11px; color: #bfbfbf; font-family: monospace; }
+  }
+
+  .time-info-v2 {
+    font-size: 12px;
+    color: #595959;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  }
+
+  .cd-value {
+    font-size: 13px;
+    font-weight: bold;
+    color: #1890ff;
+    background: #e6f7ff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    
+    &.cd-warn {
+      color: #f5222d;
+      background: #fff1f0;
+    }
+  }
+
+  .cd-done {
+    color: #bfbfbf;
+  }
+
+  .assignee-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 13px;
+    .el-avatar { background-color: #1890ff; font-weight: bold; font-size: 10px; }
+  }
+}
+
+/* 任务列表 V3 精修样式 */
+.task-section-v3 {
+  overflow: visible; // 允许倒计时胶囊轻微溢出
+}
+
+.modern-task-table {
+  --el-table-header-bg-color: #fcfcfd;
+  
+  :deep(.el-table__header) {
+    th { color: #8c8c8c; font-weight: 600; font-size: 12px; }
+  }
+
+  :deep(.el-table__row) {
+    transition: all 0.3s;
+    &:hover {
+      background-color: #f0f7ff !important;
+      transform: scale(1.002);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+  }
+
+  .header-with-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    .header-hint-icon { color: #bfbfbf; font-size: 14px; cursor: help; &:hover { color: #1890ff; } }
+  }
+
+  /* 任务信息列 */
+  .task-info-v3 {
+    .t-name-wrap {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+      .t-name { font-weight: 700; color: #262626; font-size: 14px; }
+      .priority-dot { height: 16px; line-height: 14px; padding: 0 4px; border-radius: 4px; font-size: 10px; border: none; }
+    }
+    .t-sub-info {
+      display: flex; align-items: center; gap: 8px; font-size: 11px; color: #bfbfbf;
+      .divider { color: #f0f0f0; }
+      .t-method { display: flex; align-items: center; gap: 4px; color: #8c8c8c; .el-icon { font-size: 12px; } }
+    }
+  }
+
+  /* 发布/反馈时效列 */
+  .time-group-v3 {
+    display: flex; flex-direction: column; gap: 2px;
+    .time-item {
+      display: flex; align-items: center; gap: 6px; font-size: 12px; color: #8c8c8c;
+      .val { font-family: 'Helvetica Neue', Arial, sans-serif; }
+      .icon-pub { color: #d9d9d9; }
+      &.deadline { .val { color: #595959; font-weight: 500; } .icon-deadline { color: #faad14; } }
+    }
+  }
+
+  /* 倒计时胶囊器 */
+  .cd-pill-v3 {
+    display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 20px;
+    background: #fff; border: 1px solid #e8e8e8;
+    .cd-dot { width: 6px; height: 6px; border-radius: 50%; background: #1890ff; animation: breathe-v3 2s infinite; }
+    .cd-text { font-size: 12px; font-weight: 700; font-family: monospace; }
+    
+    &.normal { color: #1890ff; border-color: #91d5ff; background: #e6f7ff; }
+    &.urgent { color: #f5222d; border-color: #ffa39e; background: #fff1f0; .cd-dot { background: #f5222d; } }
+  }
+  .cd-done-v3 { color: #bfbfbf; }
+
+  /* 发布时间列 */
+  .release-time-v3 {
+    font-size: 12px;
+    color: #8c8c8c;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  /* 截止日期列 (通用) */
+  .deadline-group-v3 {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    .d-time { font-size: 12px; color: #595959; font-weight: 600; }
+    .d-countdown { 
+      font-size: 11px; 
+      color: #1890ff; 
+      font-weight: 700; 
+      background: #e6f7ff; 
+      display: inline-block; 
+      padding: 0 8px; 
+      border-radius: 4px;
+      width: fit-content;
+      font-family: monospace;
+
+      &.urgent {
+        color: #f5222d;
+        background: #fff1f0;
+        animation: breathe-v3 2s infinite;
+      }
+    }
+    .d-done { font-size: 11px; color: #bfbfbf; }
+  }
+
+  /* 承接详情列 */
+  .assignee-info-v3 {
+    .a-user {
+      display: flex; align-items: center; gap: 6px; margin-bottom: 4px;
+      .a-avatar { background: #1890ff; border: 1px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-weight: bold; }
+      .a-name { font-size: 13px; font-weight: 600; color: #262626; }
+    }
+    .a-time { font-size: 11px; color: #bfbfbf; }
+  }
+
+  /* 状态指示器 */
+  .status-indicator {
+    display: flex; align-items: center; gap: 6px; justify-content: center;
+    .s-dot { width: 6px; height: 6px; border-radius: 50%; background: #bfbfbf; }
+    .s-text { font-size: 12px; font-weight: 500; }
+    
+    &.进行中 { .s-dot { background: #1890ff; } .s-text { color: #1890ff; } }
+    &.已完成 { .s-dot { background: #52c41a; } .s-text { color: #52c41a; } }
+    &.待开始 { .s-dot { background: #d9d9d9; } .s-text { color: #8c8c8c; } }
+  }
+
+  .btn-detail-v3 {
+    font-size: 13px; font-weight: 600;
+    &:hover { transform: translateX(2px); }
+  }
+}
+
+@keyframes breathe-v3 {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.5; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  .el-avatar {
+    background-color: #1890ff;
+    font-size: 10px;
+    font-weight: bold;
+  }
+}
+
+.time-range {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  .time-item {
+    font-size: 11px;
+    color: #595959;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    .el-icon { color: #bfbfbf; font-size: 12px; }
+  }
+  .time-item-sep {
+    font-size: 10px;
+    color: #bfbfbf;
+    padding-left: 16px;
+    line-height: 1;
+  }
 }
 </style>
 
