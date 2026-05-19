@@ -1,23 +1,25 @@
 // Colors
-$--color-primary: #005bf5;
-$--color-success: #00b42a;
-$--color-warning: #ff9500;
-$--color-danger: #f53f3f;
+$--color-primary: #1890ff;
+$--color-primary-hover: #40a9ff;
+$--color-primary-active: #096dd9;
+$--color-success: #52c41a;
+$--color-warning: #faad14;
+$--color-danger: #ff4d4f;
 
 // Page & Container
 $--color-bg-page: #f0f2f5;
 $--color-bg-container: #fff;
 
 // Shell (Deep Navy)
-$--sidebar-bg: #071c3d;
-$--sidebar-sub-bg: #0f1a33;
+$--sidebar-bg: #001529;
+$--sidebar-sub-bg: #000c17;
 $--sidebar-text: rgba(255, 255, 255, 0.65);
-$--sidebar-hover: rgba(255, 255, 255, 0.2);
-$--navbar-bg: #071c3d;
+$--sidebar-hover: rgba(255, 255, 255, 0.15);
+$--navbar-bg: #001529;
 
 // Typography
 $--font-size-base: 12px;
-$--font-family: Verdana, PingFang SC, Microsoft YaHei, Arial, sans-serif;
+$--font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
 // CSS Variables
 :root {
@@ -33,10 +35,18 @@ $--font-family: Verdana, PingFang SC, Microsoft YaHei, Arial, sans-serif;
   --sidebar-text: #{$--sidebar-text};
   --sidebar-hover: #{$--sidebar-hover};
   --navbar-bg: #{$--navbar-bg};
+
+  // Element Plus Theme Overrides
+  --el-color-primary: #{$--color-primary};
+  --el-color-primary-light-3: #69c0ff;
+  --el-color-primary-light-5: #91d5ff;
+  --el-color-primary-light-7: #bae7ff;
+  --el-color-primary-light-8: #d9f7be;
+  --el-color-primary-light-9: #e6f7ff;
+  --el-color-primary-dark-2: #096dd9;
 }
 
 html.dark {
   --color-bg-page: #141414;
   --color-bg-container: #1d1d1d;
-  // dark tokens to be added...
 }

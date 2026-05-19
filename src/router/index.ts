@@ -25,6 +25,24 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '提案管理', icon: 'Edit' }
       },
       {
+        path: 'product/settings',
+        name: 'ProductSettings',
+        component: () => import('@/views/product/settings/index.vue'),
+        meta: { title: '设置', icon: 'Setting' }
+      },
+      {
+        path: 'product/proposal/sample-manage',
+        name: 'SampleManage',
+        component: () => import('@/views/sample/manage.vue'),
+        meta: { title: '开发样管理', icon: 'Memo' }
+      },
+      {
+        path: 'sample/manage',
+        name: 'SampleMainList',
+        component: () => import('@/views/sample/manage.vue'),
+        meta: { title: '样品主列表', icon: 'Memo' }
+      },
+      {
         path: 'product/:pathMatch(.*)*',
         name: 'ProductPlaceholder',
         component: () => import('@/views/example/standard-list.vue'),

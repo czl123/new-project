@@ -17,6 +17,14 @@ export default defineConfig({
   server: {
     port: 9001,
     proxy: {
+      '/api/print': {
+        target: 'http://localhost:3001',
+        changeOrigin: true
+      },
+      '/bsc-cloud-product': {
+        target: 'http://jcerp.jcintergl.com',
+        changeOrigin: true
+      },
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
