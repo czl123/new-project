@@ -25,6 +25,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '提案管理', icon: 'Edit' }
       },
       {
+        path: 'product/proposal/sample-task',
+        name: 'SampleTask',
+        component: () => import('@/views/product/proposal/sample-task.vue'),
+        meta: { title: '开发样拿样任务', icon: 'List' }
+      },
+      {
         path: 'product/settings',
         name: 'ProductSettings',
         component: () => import('@/views/product/settings/index.vue'),

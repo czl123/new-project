@@ -1,7 +1,7 @@
 export const SAMPLE_STATUS = [
   { label: '待提交', value: '1', type: 'info', color: '#8c8c8c' },
   { label: '领用中', value: '2', type: 'primary', color: '#1890ff' },
-  { label: '归还中', value: '3', type: 'warning', color: '#faad14' },
+  { label: '待领用', value: '3', type: 'warning', color: '#faad14' },
   { label: '已归还', value: '4', type: 'success', color: '#52c41a' },
   { label: '已封存', value: '5', type: 'info', color: '#595959' },
   { label: '已销毁', value: '6', type: 'danger', color: '#ff4d4f' },
@@ -37,6 +37,7 @@ export const INITIAL_QUERY_PARAMS = {
   sampleName: '',
   round: '',
   source: '',
+  sampleType: '',
   status: '',
   dateRange: []
 }

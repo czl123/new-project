@@ -1,104 +1,218 @@
 <template>
-  <div class="timeline-container">
-    <el-timeline>
-      <el-timeline-item
-        v-for="(activity, index) in activities"
-        :key="index"
-        :type="activity.type"
-        :color="activity.color"
-        :size="activity.size"
-        :timestamp="activity.timestamp"
-      >
-        <div class="activity-content">
-          <div class="activity-node">
-            <span class="node-label">{{ activity.content }}</span>
-            <el-tag v-if="activity.status" size="small" :type="activity.statusType" class="node-status">
-              {{ activity.status }}
-            </el-tag>
+  <div class="operation-log-container">
+    <div class="log-scroll-box">
+      <el-timeline v-if="data && data.length > 0">
+        <el-timeline-item
+          v-for="(log, index) in data"
+          :key="index"
+          :timestamp="log.timestamp"
+          placement="top"
+          class="custom-timeline-item"
+        >
+          <!-- 自定义节点样式 -->
+          <template #node>
+            <div class="custom-node" :class="[log.type || 'info']" :style="{ backgroundColor: log.color }">
+              <div class="inner-dot"></div>
+            </div>
+          </template>
+
+          <div class="log-item-card" :class="[log.type || 'info']">
+            <!-- 左侧装饰色条 -->
+            <div class="status-indicator"></div>
+            
+            <div class="card-body">
+              <div class="log-header">
+                <span class="log-content">{{ log.content }}</span>
+                <div class="log-operator-pill">
+                  <el-icon><User /></el-icon>
+                  <span>{{ log.operator }}</span>
+                </div>
+              </div>
+              
+              <div v-if="log.remark" class="log-remark">
+                <div class="remark-quote"></div>
+                <div class="remark-text">{{ log.remark }}</div>
+              </div>
+            </div>
           </div>
-          <div class="activity-meta">
-            <span class="operator"><el-icon><User /></el-icon> {{ activity.operator }}</span>
-            <span v-if="activity.remark" class="remark">备注：{{ activity.remark }}</span>
-          </div>
-        </div>
-      </el-timeline-item>
-    </el-timeline>
+        </el-timeline-item>
+      </el-timeline>
+      <div v-else class="empty-state">
+        <el-empty description="暂无操作日志记录" :image-size="80" />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { User } from '@element-plus/icons-vue'
 
-const props = defineProps<{
+defineProps<{
   data: any[]
 }>()
-
-const activities = computed(() => {
-  if (!props.data || props.data.length === 0) {
-    // 默认示例数据
-    return [
-      {
-        content: '提交测试: 升级为确认样',
-        timestamp: '2026-05-09 14:20',
-        operator: '张三',
-        type: 'primary',
-        size: 'large',
-        status: '合格',
-        statusType: 'success',
-        remark: '样品各项指标均符合大货生产要求。'
-      },
-      {
-        content: '样品入库',
-        timestamp: '2026-05-08 10:00',
-        operator: '系统自动',
-        remark: '调研样自动同步入库'
-      },
-      {
-        content: '开发样登记',
-        timestamp: '2026-05-08 09:30',
-        operator: '李四'
-      }
-    ]
-  }
-  return props.data
-})
 </script>
 
-<style scoped>
-.timeline-container {
-  padding: 10px 5px;
+<style scoped lang="scss">
+.operation-log-container {
+  padding: 10px 0;
 }
-.activity-content {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+
+.log-scroll-box {
+  max-height: 450px;
+  overflow-y: auto;
+  padding: 0 20px 10px 10px;
+  
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 4px;
+  }
 }
-.activity-node {
+
+/* 1. 自定义时间轴项间距 */
+.custom-timeline-item {
+  padding-bottom: 25px;
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+/* 2. 自定义节点样式：双层圆环 */
+.custom-node {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 0 0 3px #fff;
+
+  .inner-dot {
+    width: 6px;
+    height: 6px;
+    background: #fff;
+    border-radius: 50%;
+  }
+
+  &.info { background-color: #94a3b8; }
+  &.primary { background-color: #3b82f6; box-shadow: 0 0 0 3px #fff, 0 0 8px rgba(59, 130, 246, 0.4); }
+  &.success { background-color: #10b981; }
+  &.warning { background-color: #f59e0b; }
+  &.danger { background-color: #ef4444; }
 }
-.node-label {
-  font-weight: 600;
-  color: #303133;
-  font-size: 14px;
-}
-.activity-meta {
-  font-size: 12px;
-  color: #909399;
+
+/* 3. 卡片精修 */
+.log-item-card {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #edf2f7;
+  border-radius: 8px;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+
+  &:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-color: #e2e8f0;
+  }
+
+  /* 状态指示条 */
+  .status-indicator {
+    width: 4px;
+    background: #94a3b8;
+    flex-shrink: 0;
+  }
+
+  &.primary .status-indicator { background: #3b82f6; }
+  &.success .status-indicator { background: #10b981; }
+  &.warning .status-indicator { background: #f59e0b; }
+  &.danger .status-indicator { background: #ef4444; }
+
+  .card-body {
+    flex: 1;
+    padding: 12px 16px;
+  }
 }
-.operator {
+
+/* 4. 日志内容排版 */
+.log-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 4px;
+  margin-bottom: 8px;
+
+  .log-content {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+    letter-spacing: -0.01em;
+  }
+
+  .log-operator-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 2px 10px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+  }
 }
-.remark {
-  background-color: #f4f4f5;
-  padding: 4px 8px;
+
+/* 5. 备注样式优化 */
+.log-remark {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  
+  .remark-quote {
+    width: 2px;
+    background: #cbd5e1;
+    border-radius: 1px;
+    flex-shrink: 0;
+  }
+
+  .remark-text {
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.6;
+    font-style: italic;
+  }
+}
+
+/* 6. 时间戳优化 */
+:deep(.el-timeline-item__timestamp) {
+  font-family: 'JetBrains Mono', 'Menlo', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-bottom: 10px;
+  display: inline-block;
+  background: #f8fafc;
+  padding: 2px 8px;
   border-radius: 4px;
-  color: #606266;
+  text-transform: uppercase;
+}
+
+/* 7. 空状态 */
+.empty-state {
+  padding: 40px 0;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px dashed #e2e8f0;
+}
+
+/* 调整时间轴主线颜色 */
+:deep(.el-timeline-item__tail) {
+  border-left: 2px solid #f1f5f9;
 }
 </style>

@@ -6,13 +6,10 @@
         <el-form-item label="样品编号">
           <el-input v-model="queryParams.sampleNo" placeholder="请输入编号" clearable style="width: 150px" />
         </el-form-item>
-        <el-form-item label="轮次">
-          <el-input v-model="queryParams.round" placeholder="轮次" clearable style="width: 80px" />
-        </el-form-item>
         <el-form-item label="样品名称">
           <el-input v-model="queryParams.sampleName" placeholder="请输入名称" clearable style="width: 180px" />
         </el-form-item>
-        <el-form-item label="样品来源">
+        <el-form-item label="拿样渠道">
           <el-select v-model="queryParams.source" placeholder="请选择" clearable style="width: 120px">
             <el-option v-for="s in SAMPLE_SOURCE" :key="s.value" :label="s.label" :value="s.value" />
           </el-select>
@@ -60,6 +57,29 @@
             @click="handleBatchPrint"
           >批量打标</el-button>
         </el-button-group>
+
+        <el-dropdown 
+          trigger="click" 
+          @command="handleBatchStatusChange"
+          :disabled="!selectedRows?.length"
+          style="margin-left: 12px"
+        >
+          <el-button size="small" type="warning" plain icon="Operation" :disabled="!selectedRows?.length">
+            批量变更状态<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="2">转为领用中</el-dropdown-item>
+              <el-dropdown-item command="4">转为已归还</el-dropdown-item>
+              <el-dropdown-item command="5">转为已封存</el-dropdown-item>
+              <el-dropdown-item command="6">转为已销毁</el-dropdown-item>
+              <el-dropdown-item command="7">转为已遗失</el-dropdown-item>
+              <el-dropdown-item command="8">转为已内购</el-dropdown-item>
+              <el-dropdown-item command="12">转为已退仓</el-dropdown-item>
+              <el-dropdown-item command="13">转为已退供</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
 
         <span v-if="selectedRows?.length" class="selection-info">
           已选 <b class="count">{{ selectedRows.length }}</b> 项
@@ -153,7 +173,7 @@
                 size="small"
                 value-format="YYYY-MM-DD"
                 style="width: 110px"
-                @change="(val) => handleDateUpdate(row, val)"
+                @change="(val: any) => handleDateUpdate(row, val)"
               />
               <div v-if="isComparisonDateDelayed(row)" class="warning-text-mini">
                 <el-icon><Warning /></el-icon> 登记已超15天未填
@@ -174,7 +194,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="渠道" width="85" align="center">
+        <el-table-column label="拿样渠道" width="85" align="center">
           <template #default="{ row }">
             <span class="source-tag">{{ getSourceLabel(row.source) }}</span>
           </template>
@@ -212,52 +232,30 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="状态" width="120" align="center" fixed="right">
+        <el-table-column label="状态" width="100" align="center" fixed="right">
           <template #default="{ row }">
-            <el-dropdown trigger="click" @command="(command) => handleStatusChange(row, command)" :disabled="getAvailableStatus(row).length === 0">
-              <div class="status-cell" :class="[`status-${row.status}`, { clickable: getAvailableStatus(row).length > 0 }]" :style="{ cursor: getAvailableStatus(row).length === 0 ? 'default' : 'pointer' }">
-                <span class="status-dot" :style="{ background: STATUS_MAP[row.status]?.color }"></span>
-                <span class="status-label">{{ getStatusLabel(row.status) }}</span>
-                <el-icon v-if="getAvailableStatus(row).length > 0" class="dropdown-icon"><CaretBottom /></el-icon>
-              </div>
-              <template #dropdown>
-                <el-dropdown-menu class="p-dropdown">
-                  <el-dropdown-item 
-                    v-for="status in getAvailableStatus(row)" 
-                    :key="status.value" 
-                    :command="status.value"
-                  >
-                    <span class="status-dot" :style="{ background: status.color, marginRight: '8px', width: '6px', height: '6px', borderRadius: '50%', display: 'inline-block' }"></span>
-                    {{ status.label }}
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+            <div class="status-cell" :class="[`status-${row.status}`]">
+              <span class="status-dot" :style="{ background: STATUS_MAP[row.status]?.color }"></span>
+              <span class="status-label">{{ getStatusLabel(row.status) }}</span>
+            </div>
           </template>
         </el-table-column>
         
-        <el-table-column label="操作" width="130" fixed="right" align="center">
+        <el-table-column label="操作" width="160" fixed="right" align="center">
           <template #default="{ row }">
             <div class="action-cell-modern">
               <el-button link type="primary" size="small" @click="handleDetail(row)">详情</el-button>
               
               <template v-if="row.status === '1'">
                 <el-divider direction="vertical" />
+                <el-button type="primary" size="small" link @click="handleEdit(row)">编辑</el-button>
+                <el-divider direction="vertical" />
                 <el-button type="danger" size="small" link @click="handleDelete(row)">删除</el-button>
               </template>
               
               <template v-else>
                 <el-divider direction="vertical" />
-                <el-dropdown trigger="click">
-                  <el-button link type="primary" size="small">更多</el-button>
-                  <template #dropdown>
-                    <el-dropdown-menu class="p-dropdown">
-                      <el-dropdown-item icon="Refresh">重新打样</el-dropdown-item>
-                      <el-dropdown-item icon="Printer" @click="handlePrint(row)">打印标签</el-dropdown-item>
-                      <el-dropdown-item icon="List">流转历史</el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
+                <el-button type="primary" size="small" link @click="handlePrint(row)">打印标签</el-button>
               </template>
             </div>
           </template>
@@ -285,23 +283,286 @@
     <el-drawer
       v-model="detailVisible"
       title="样品详情"
-      size="600px"
+      size="1400px"
       destroy-on-close
+      class="premium-detail-drawer"
     >
-      <div v-if="currentRow" class="detail-content">
-        <el-descriptions :column="2" border size="small" title="基础信息">
-          <el-descriptions-item label="样品编号">{{ currentRow.sampleNo }}</el-descriptions-item>
-          <el-descriptions-item label="当前状态">
-             <el-tag :type="getStatusType(currentRow.status)" size="small">{{ getStatusLabel(currentRow.status) }}</el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="样品名称">{{ currentRow.sampleName }}</el-descriptions-item>
-          <el-descriptions-item label="样品来源">{{ getSourceLabel(currentRow.source) }}</el-descriptions-item>
-          <el-descriptions-item label="供应商" :span="2">{{ currentRow.supplier || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="规格描述" :span="2">{{ currentRow.spec || '-' }}</el-descriptions-item>
-        </el-descriptions>
+      <div v-if="currentRow" class="detail-drawer-content">
+        <!-- Section 1: Basic Info (1:1 with Registration) -->
+        <div class="p-section-card">
+          <div class="p-section-header">
+            <el-icon class="p-section-icon"><Box /></el-icon>
+            <span>样品基础信息</span>
+          </div>
 
-        <div class="section-divider">流转时间轴</div>
-        <SampleTimeline :data="timelineData" />
+          <!-- Row 1: Responsibility & Linking -->
+          <div class="p-grid-row responsibility-row">
+            <el-row :gutter="20">
+              <el-col :span="4">
+                <div class="p-detail-item">
+                  <span class="p-label" style="width: 80px;">关联提案</span>
+                  <span class="p-value"><el-tag :type="currentRow.isLinkedToProposal ? 'success' : 'info'" size="small">{{ currentRow.isLinkedToProposal ? '是' : '否' }}</el-tag></span>
+                </div>
+              </el-col>
+              <el-col :span="currentRow.isLinkedToProposal ? 8 : 0">
+                <div v-if="currentRow.isLinkedToProposal" class="p-detail-item">
+                  <span class="p-label">对应提案项目</span>
+                  <span class="p-value highlight">{{ currentRow.proposalNo }}</span>
+                </div>
+              </el-col>
+              <el-col :span="currentRow.isLinkedToProposal ? 6 : 10">
+                <div class="p-detail-item">
+                  <span class="p-label">产品经理</span>
+                  <span class="p-value">{{ currentRow.productManager }}</span>
+                </div>
+              </el-col>
+              <el-col :span="currentRow.isLinkedToProposal ? 6 : 10">
+                <div class="p-detail-item">
+                  <span class="p-label">采购员</span>
+                  <span class="p-value">{{ currentRow.purchaser }}</span>
+                </div>
+              </el-col>
+            </el-row>
+          </div>
+
+          <!-- Row 2: Core Identity -->
+          <div class="p-grid-row">
+            <el-row :gutter="32">
+              <el-col :span="6">
+                <div class="p-detail-item">
+                  <span class="p-label">样品名称</span>
+                  <span class="p-value">{{ currentRow.sampleName }}</span>
+                </div>
+              </el-col>
+              <el-col :span="6">
+                <div class="p-detail-item">
+                  <span class="p-label">款式</span>
+                  <span class="p-value">{{ currentRow.style }}</span>
+                </div>
+              </el-col>
+              <el-col :span="6">
+                <div class="p-detail-item">
+                  <span class="p-label">主材料</span>
+                  <span class="p-value">{{ currentRow.mainMaterial }}</span>
+                </div>
+              </el-col>
+              <el-col :span="6">
+                <div class="p-detail-item">
+                  <span class="p-label">适用品牌或对象</span>
+                  <span class="p-value">{{ currentRow.applicableTo }}</span>
+                </div>
+              </el-col>
+            </el-row>
+          </div>
+
+          <!-- Row 3: Source & Origin -->
+          <div class="p-grid-row">
+            <el-row :gutter="32">
+              <el-col :span="6">
+                <div class="p-detail-item">
+                  <span class="p-label">样品类型</span>
+                  <span class="p-value">{{ getTypeLabel(currentRow.sampleType) }}</span>
+                </div>
+              </el-col>
+              <el-col :span="6">
+                <div class="p-detail-item">
+                  <span class="p-label">样品接收日期</span>
+                  <span class="p-value">{{ currentRow.receiveDate }}</span>
+                </div>
+              </el-col>
+              <el-col :span="6">
+                <div class="p-detail-item">
+                  <span class="p-label">对比结束日期</span>
+                  <span class="p-value">{{ currentRow.comparisonEndDate || '-' }}</span>
+                </div>
+              </el-col>
+              <el-col :span="6">
+                <div class="p-detail-item">
+                  <span class="p-label">样品费</span>
+                  <span class="p-value price">¥{{ currentRow.sampleFee?.toFixed(2) }}</span>
+                </div>
+              </el-col>
+            </el-row>
+          </div>
+
+          <!-- Row 4: Source Details -->
+          <div class="p-grid-row">
+            <el-row :gutter="32">
+              <el-col :span="6">
+                <div class="p-detail-item">
+                  <span class="p-label">拿样渠道</span>
+                  <span class="p-value">{{ getSourceLabel(currentRow.source) }}</span>
+                </div>
+              </el-col>
+              <el-col :span="currentRow.source === '1' ? 6 : 0">
+                <div v-if="currentRow.source === '1'" class="p-detail-item">
+                  <span class="p-label">供应商类型</span>
+                  <span class="p-value">{{ currentRow.supplierType === '1' ? '正式' : '临时' }}</span>
+                </div>
+              </el-col>
+              <el-col :span="currentRow.source === '1' ? 12 : 18">
+                <div class="p-detail-item">
+                  <span class="p-label">{{ currentRow.source === '1' ? '供应商名称' : '购买链接' }}</span>
+                  <span class="p-value">{{ currentRow.source === '1' ? (currentRow.supplier || '-') : currentRow.purchaseUrl }}</span>
+                </div>
+              </el-col>
+            </el-row>
+          </div>
+
+          <!-- Row 5: Packaging & Characteristics -->
+          <div class="p-grid-row">
+            <el-row :gutter="32">
+              <el-col :span="6">
+                <div class="p-detail-item">
+                  <span class="p-label">包装方式</span>
+                  <span class="p-value">{{ currentRow.packagingMethod || '-' }}</span>
+                </div>
+              </el-col>
+              <el-col :span="6">
+                <div class="p-detail-item">
+                  <span class="p-label">包装数量</span>
+                  <span class="p-value">{{ currentRow.packagingQuantity || '-' }}</span>
+                </div>
+              </el-col>
+              <el-col :span="6">
+                <div class="p-detail-item">
+                  <span class="p-label">是否带电</span>
+                  <span class="p-value">{{ currentRow.hasBattery ? '是' : '否' }}</span>
+                </div>
+              </el-col>
+              <el-col :span="6">
+                <div class="p-detail-item">
+                  <span class="p-label">是否CE类</span>
+                  <span class="p-value">{{ currentRow.isCE ? '是' : '否' }}</span>
+                </div>
+              </el-col>
+            </el-row>
+          </div>
+
+          <!-- Row 6: Commercial -->
+          <div class="p-grid-row">
+            <el-row :gutter="32">
+              <el-col :span="6">
+                <div class="p-detail-item">
+                  <span class="p-label">初次报价</span>
+                  <span class="p-value">¥{{ currentRow.initialQuote?.toFixed(2) }}</span>
+                </div>
+              </el-col>
+              <el-col :span="6">
+                <div class="p-detail-item">
+                  <span class="p-label">税率</span>
+                  <span class="p-value">{{ currentRow.taxRate }}%</span>
+                </div>
+              </el-col>
+              <el-col :span="6">
+                <div class="p-detail-item">
+                  <span class="p-label">起订量</span>
+                  <span class="p-value">{{ currentRow.moq }}</span>
+                </div>
+              </el-col>
+              <el-col :span="6">
+                <div class="p-detail-item">
+                  <span class="p-label">生产周期</span>
+                  <span class="p-value">{{ currentRow.productionCycle }}天</span>
+                </div>
+              </el-col>
+            </el-row>
+          </div>
+
+          <!-- Row 7: Notes -->
+          <div class="p-grid-row">
+            <el-row :gutter="32">
+              <el-col :span="24">
+                <div class="p-detail-item">
+                  <span class="p-label">样品说明</span>
+                  <span class="p-value">{{ currentRow.description || '-' }}</span>
+                </div>
+              </el-col>
+            </el-row>
+          </div>
+        </div>
+
+        <!-- Section 2: Table (1:1 with Registration) -->
+        <div id="section-table" class="p-section-card no-padding">
+          <div class="p-section-header" style="padding: 12px 12px 8px;">
+            <el-icon class="p-section-icon"><Setting /></el-icon>
+            <span>样品规格信息</span>
+          </div>
+
+          <div class="p-data-grid">
+            <el-table :data="currentRow.details" class="p-table" :border="false" style="width: 100%">
+              <el-table-column label="图片" width="100" align="center">
+                <template #default="scope">
+                  <div class="p-cell-img-preview">
+                    <el-image 
+                      v-if="scope.row.images?.length"
+                      :src="scope.row.images[0]" 
+                      :preview-src-list="scope.row.images"
+                      class="p-img-main"
+                      fit="cover"
+                      preview-teleported
+                    />
+                    <div v-else class="p-img-empty mini"><el-icon><Picture /></el-icon></div>
+                  </div>
+                </template>
+              </el-table-column>
+              
+              <el-table-column label="图案" prop="pattern" min-width="100" align="center" />
+              <el-table-column label="颜色" prop="color" min-width="100" align="center" />
+              <el-table-column label="规格" prop="spec" min-width="100" align="center" />
+              
+              <el-table-column label="样品尺寸" min-width="160" align="center">
+                <template #default="scope">
+                  {{ scope.row.length }} × {{ scope.row.width }} × {{ scope.row.height }} {{ scope.row.sampleSizeUnit }}
+                </template>
+              </el-table-column>
+
+              <el-table-column label="净重" width="100" align="center">
+                <template #default="scope">
+                  {{ scope.row.netWeight }}{{ scope.row.netWeightUnit }}
+                </template>
+              </el-table-column>
+
+              <el-table-column label="包装尺寸" min-width="160" align="center">
+                <template #default="scope">
+                  <span v-if="scope.row.pLength">
+                    {{ scope.row.pLength }} × {{ scope.row.pWidth }} × {{ scope.row.pHeight }} {{ scope.row.packagingSizeUnit }}
+                  </span>
+                  <span v-else class="text-secondary">-</span>
+                </template>
+              </el-table-column>
+
+              <el-table-column label="包装重量" width="100" align="center">
+                <template #default="scope">
+                  {{ scope.row.packagingWeight ? scope.row.packagingWeight + scope.row.packagingWeightUnit : '-' }}
+                </template>
+              </el-table-column>
+
+              <el-table-column label="尺码" prop="size" width="80" align="center" />
+              <el-table-column label="直径" width="100" align="center">
+                <template #default="scope">
+                  {{ scope.row.diameter ? scope.row.diameter + scope.row.diameterUnit : '-' }}
+                </template>
+              </el-table-column>
+              <el-table-column label="容量" width="100" align="center">
+                <template #default="scope">
+                  {{ scope.row.capacity ? scope.row.capacity + scope.row.capacityUnit : '-' }}
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </div>
+
+        <!-- Section 3: Timeline -->
+        <div class="p-section-card">
+          <div class="p-section-header">
+            <el-icon class="p-section-icon"><List /></el-icon>
+            <span>流转时间轴</span>
+          </div>
+          <div style="padding: 10px 20px;">
+            <SampleTimeline :data="timelineData" :current-status="currentRow.status" />
+          </div>
+        </div>
       </div>
     </el-drawer>
 
@@ -311,6 +572,12 @@
       v-model="testVisible" 
       :sample-data="currentRow" 
       @refresh="handleQuery" 
+    />
+    <BatchStatusDialog
+      v-model="batchStatusVisible"
+      :target-status="targetStatus"
+      :selected-count="selectedRows.length"
+      @confirm="handleBatchStatusConfirm"
     />
   </div>
 </template>
@@ -323,6 +590,7 @@ import { useTableHeight } from '@/hooks/useTableHeight'
 import { SAMPLE_STATUS, SAMPLE_SOURCE, SAMPLE_TYPE, INITIAL_QUERY_PARAMS, STATUS_MAP } from './constants'
 import RegistrationDialog from './components/RegistrationDialog.vue'
 import TestEvaluationDialog from './components/TestEvaluationDialog.vue'
+import BatchStatusDialog from './components/BatchStatusDialog.vue'
 import SampleTimeline from './components/SampleTimeline.vue'
 
 const tableHeight = useTableHeight(190)
@@ -334,8 +602,11 @@ const total = ref(5)
 const multipleTableRef = ref()
 const regVisible = ref(false)
 const testVisible = ref(false)
+const batchStatusVisible = ref(false)
+const targetStatus = ref('')
 const detailVisible = ref(false)
 const currentRow = ref<any>(null)
+const editRow = ref<any>(null)
 const selectedRows = ref<any[]>([])
 
 const handleSelectionChange = (val: any[]) => {
@@ -353,6 +624,25 @@ const handleBatchExport = () => {
 const handleBatchPrint = () => {
   if (!selectedRows.value.length) return
   doPrint(selectedRows.value)
+}
+
+const handleBatchStatusChange = (status: string) => {
+  targetStatus.value = status
+  batchStatusVisible.value = true
+}
+
+const handleBatchStatusConfirm = (formData: any) => {
+  // 模拟更新本地数据
+  selectedRows.value.forEach(row => {
+    const item = allData.value.find(d => d.id === row.id)
+    if (item) {
+      item.status = formData.status
+      item.updateTime = new Date().toLocaleString()
+    }
+  })
+  
+  clearSelection()
+  handleQuery()
 }
 
 const handlePrint = (row: any) => {
@@ -419,7 +709,7 @@ const allData = ref([
     images: ['/uploads/img_cu3utr_1779162736788.jpg']
   },
   { 
-    id: '1006', sampleNo: 'YP-202605006', sampleName: '瑜伽垫-归还中', proposalNo: 'TA-20260506', productManager: '李经理', purchaser: '小王',
+    id: '1006', sampleNo: 'YP-202605006', sampleName: '瑜伽垫-待领用', proposalNo: 'TA-20260506', productManager: '李经理', purchaser: '小王',
     style: '加厚款', mainMaterial: 'TPE', applicableTo: '女性',
     sampleType: '2', source: '2', round: 1, sampleFee: 35.00, receiveDate: '2026-05-10', comparisonEndDate: '-',
     status: '3', expireDate: '2026-11-20', updateTime: '2026-05-18 11:00:00', supplier: '义乌工厂', spec: '紫色，8mm',
@@ -582,44 +872,6 @@ const isNearExpire = (dateStr: string) => {
   return false
 }
 
-// 模拟状态流转规则：基于当前状态和样品类型返回可流转的下一个状态
-const getAvailableStatus = (row: any) => {
-  const all = SAMPLE_STATUS
-  const currentStatus = row.status
-  const type = row.sampleType
-
-  // 1. 基础物理流转逻辑
-  if (currentStatus === '1') return all.filter(s => ['2', '6'].includes(s.value)) // 待提交 -> 领用中, 已销毁
-  if (currentStatus === '2') return all.filter(s => ['3', '7'].includes(s.value)) // 领用中 -> 归还中, 已遗失
-  if (currentStatus === '3') return all.filter(s => ['4'].includes(s.value))      // 归还中 -> 已归还
-  
-  // 2. 基于样品类型的最终处置逻辑 (当样品已归还或处于稳定态时)
-  if (['4', '2'].includes(currentStatus)) {
-    switch(type) {
-      case '5': // 确认样
-        return all.filter(s => ['5', '13'].includes(s.value)) // 已封存, 已退供
-      case '1': // 推荐样
-      case '2': // 首版样
-      case '3': // 修改样
-      case '6': // 二供对比样
-        return all.filter(s => ['5', '6', '13'].includes(s.value)) // 已封存, 已销毁, 已退供
-      case '7': // 库存对比样
-        return all.filter(s => ['12', '6'].includes(s.value)) // 已退仓, 已销毁
-      case '8': // 大货对比样
-        return all.filter(s => ['13', '8', '6'].includes(s.value)) // 已退供, 已内购, 已销毁
-    }
-  }
-
-  return []
-}
-
-const handleStatusChange = (row: any, newStatus: string) => {
-  // 模拟接口调用更新状态
-  row.status = newStatus
-  row.updateTime = new Date().toLocaleString().replace(/\//g, '-')
-  ElMessage.success(`已将样品 ${row.sampleNo} 状态更新为：${getStatusLabel(newStatus)}`)
-}
-
 const handleQuery = () => {
   console.log('查询参数：', queryParams)
 }
@@ -630,8 +882,71 @@ const resetQuery = () => {
 }
 
 const handleDetail = (row: any) => {
-  currentRow.value = row
+  // 注入丰富的模拟数据，确保详情页（预览模式）内容完整
+  currentRow.value = {
+    ...row,
+    isLinkedToProposal: !!row.proposalNo,
+    supplierType: '1',
+    purchaseUrl: row.source !== '1' ? 'https://detail.1688.com/offer/12345678.html' : '',
+    packagingMethod: '盒装',
+    packagingQuantity: '1pack',
+    hasBattery: false,
+    isCE: true,
+    initialQuote: row.sampleFee ? row.sampleFee * 0.8 : 0,
+    taxRate: 13,
+    moq: 500,
+    productionCycle: 20,
+    description: '此样品为高精密材质打造，专为高端市场设计。经过第一轮内部评估，其耐用性和外观质感均达到行业领先水平。建议作为本季主推款式。',
+    details: [
+      {
+        images: row.images || [],
+        pattern: '哑光/拉丝',
+        color: '碳黑/银灰',
+        spec: '通用',
+        length: 24, width: 18, height: 12, sampleSizeUnit: 'cm',
+        netWeight: 850, netWeightUnit: 'g',
+        pLength: 26, pWidth: 20, pHeight: 14, packagingSizeUnit: 'cm',
+        packagingWeight: 1050, packagingWeightUnit: 'g',
+        size: 'Standard',
+        diameter: 0, diameterUnit: 'cm',
+        capacity: 0, capacityUnit: 'ml'
+      }
+    ]
+  }
+  
+  // 模拟流转时间轴数据
+  const mockTimelines: any = {
+    '1': [
+      { content: '待提交', timestamp: row.updateTime, operator: row.purchaser, type: 'info' }
+    ],
+    '2': [
+      { content: '领用中', timestamp: row.updateTime, operator: '业务部-小王', type: 'primary', status: '进行中', statusType: 'warning' },
+      { content: '样品入库', timestamp: '2026-05-10 10:00', operator: '仓储组', remark: '质检合格，准予入库' },
+      { content: '开发样登记', timestamp: row.receiveDate + ' 09:00', operator: row.purchaser }
+    ],
+    '3': [
+      { content: '待领用', timestamp: row.updateTime, operator: '仓储组', type: 'warning', remark: '样品已归还，等待下次领用' },
+      { content: '领用结束', timestamp: '2026-05-15 16:00', operator: '业务部-小王', status: '已归还', statusType: 'success' },
+      { content: '样品入库', timestamp: '2026-05-10 10:00', operator: '仓储组' }
+    ],
+    '4': [
+      { content: '已归还', timestamp: row.updateTime, operator: '仓储组', type: 'success' },
+      { content: '样品入库', timestamp: '2026-05-06 14:00', operator: '仓储组' },
+      { content: '开发样登记', timestamp: row.receiveDate + ' 10:00', operator: row.purchaser }
+    ]
+  }
+
+  timelineData.value = mockTimelines[row.status] || [
+    { content: getStatusLabel(row.status), timestamp: row.updateTime, operator: '系统', type: getStatusType(row.status) },
+    { content: '样品入库', timestamp: row.receiveDate + ' 10:00', operator: '仓储组' }
+  ]
+
   detailVisible.value = true
+}
+
+const handleEdit = (row: any) => {
+  editRow.value = row
+  regVisible.value = true
 }
 
 const handleDelete = (row: any) => {
@@ -654,6 +969,23 @@ const handleDelete = (row: any) => {
 const timelineData = ref([])
 
 </script>
+
+<style lang="scss">
+/* 强力全局覆盖 */
+.el-drawer.premium-detail-drawer {
+  .el-drawer__header {
+    margin-bottom: 0 !important;
+    padding: 12px 20px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    
+    & > span {
+      font-size: 15px !important;
+      font-weight: 700 !important;
+      color: #1e293b !important;
+    }
+  }
+}
+</style>
 
 <style lang="scss" scoped>
 @import './style.scss';

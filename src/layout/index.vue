@@ -148,14 +148,13 @@ const productSubMenu = {
     [
       { title: '产品规划', icon: 'Document', items: [{ title: 'SPU管理', path: '/product/spu' }, { title: '产品线管理', path: '/product/line' }] },
       { title: '产品预案', icon: 'Calendar', items: [{ title: '开发预案', path: '/product/pre-plan/develop' }, { title: '需求预案', path: '/product/pre-plan/demand' }, { title: '推样预案', path: '/product/pre-plan/sample' }, { title: '预案反馈', path: '/product/pre-plan/feedback' }] },
-      { title: '产品提案', icon: 'Edit', items: [{ title: '提案管理', path: '/product/proposal/manage' }, { title: '开发样争样任务', path: '/product/proposal/sample-task' }, { title: '开发样处置', path: '/product/proposal/sample-disposal' }, { title: '开发样管理', path: '/product/proposal/sample-manage' }] },
+      { title: '产品提案', icon: 'Edit', items: [{ title: '提案管理', path: '/product/proposal/manage' }, { title: '开发样拿样任务', path: '/product/proposal/sample-task' }, { title: '开发样管理', path: '/product/proposal/sample-manage' }] },
       { title: '设置', icon: 'Setting', items: [{ title: '基础设置', path: '/product/settings' }] },
       { title: '产品运营', icon: 'PieChart', items: [{ title: '首单采购需求', path: '/product/operation/first-order-demand' }, { title: '首单采购管理', path: '/product/operation/first-order-manage' }, { title: '拓新首单管理', path: '/product/operation/new-first-order-manage' }, { title: '拓新首单需求', path: '/product/operation/new-first-order-demand' }] }
     ],
     [
       { title: '研发管理', icon: 'Connection', items: [{ title: '预案指派', path: '/product/rd/assign' }, { title: '预案审核', path: '/product/rd/audit' }, { title: '预案一级审批', path: '/product/rd/approve1' }, { title: '预案二级审批', path: '/product/rd/approve2' }, { title: '定品审核', path: '/product/rd/product-audit' }, { title: '定品一级审批', path: '/product/rd/product-approve1' }, { title: '定品二级审批', path: '/product/rd/product-approve2' }, { title: '拓新定品审批', path: '/product/rd/new-product-approve' }] },
       { title: '研发费管理', icon: 'Money', items: [{ title: '研发费支付', path: '/product/rd-fee/payment' }, { title: '研发费审批', path: '/product/rd-fee/approve' }, { title: '尾款支付管理', path: '/product/rd-fee/final-payment' }] },
-      { title: '样品管理', icon: 'Memo', items: [{ title: '样品主列表', path: '/sample/manage' }] },
       { title: '物料', icon: 'Box', items: [{ title: '物料商检复核', path: '/product/material/inspection' }, { title: '物料管理', path: '/product/material/manage' }, { title: '物料拓新', path: '/product/material/new' }, { title: '物料修改审核', path: '/product/material/edit-audit' }, { title: '组合物料', path: '/product/material/combo' }, { title: '多码物料管理', path: '/product/material/multi-code' }] },
       { title: '大货样管理', icon: 'Files', items: [{ title: '大货样争样管理', path: '/product/bulk-sample/task' }, { title: '大货样DQE测试', path: '/product/bulk-sample/dqe' }, { title: '大货样样品管理', path: '/product/bulk-sample/manage' }] }
     ]
