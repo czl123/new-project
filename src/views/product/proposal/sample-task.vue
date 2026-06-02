@@ -253,7 +253,7 @@
                   <template #default="{ row }">
                     <template v-if="['待提交', '已驳回'].includes(row.status)">
                       <el-button type="primary" link size="small">编辑</el-button>
-                      <el-button type="danger" link size="small">删除</el-button>
+                      <el-button type="danger" link size="small" @click="handleDeleteFeedback(row)">删除</el-button>
                     </template>
                     <template v-if="row.status === '已采纳'">
                       <el-button v-if="row.feeAmount === '¥ 0.00'" type="primary" link size="small" @click="handleSampleRegistration(row)">样品登记</el-button>
@@ -277,6 +277,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Clock, CopyDocument, Check, Plus, Document, Management } from '@element-plus/icons-vue'
 import CustomFeedbackDialog from './components/CustomFeedbackDialog.vue'
 import PurchaseApplyDialog from './components/PurchaseApplyDialog.vue'
@@ -450,6 +451,21 @@ const handlePurchaseApply = (row?: any) => {
   } else {
     console.error('purchaseApplyRef is not initialized')
   }
+}
+
+const handleDeleteFeedback = (row: any) => {
+  ElMessageBox.confirm(`确定要删除反馈方案 ${row.code} 吗？`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+    buttonSize: 'small'
+  }).then(() => {
+    const index = feedbackListData.value.findIndex(i => i.code === row.code)
+    if (index !== -1) {
+      feedbackListData.value.splice(index, 1)
+      ElMessage.success('方案已删除')
+    }
+  }).catch(() => {})
 }
 
 const handleSampleRegistration = (taskData?: any) => {

@@ -23,9 +23,9 @@
       >
         <el-tab-pane
           v-for="(item, index) in form.items"
-          :key="index"
+          :key="item.id"
           :label="'购样方案 ' + (index + 1)"
-          :name="index"
+          :name="item.id"
           :closable="form.items.length > 1"
         >
           <el-form :model="form" ref="formRef" label-position="left" label-width="100px" class="feedback-form custom-form">
@@ -167,6 +167,9 @@
                     <div class="p-upload-grid">
                       <div v-for="(img, i) in item.sampleImages" :key="i" class="p-upload-item">
                         <img :src="img" />
+                        <div class="p-upload-mask" @click.stop="removeImage(item, 'sampleImages', i)">
+                          <el-icon><Delete /></el-icon>
+                        </div>
                       </div>
                       <div class="p-upload-add">
                         <el-icon><Picture /></el-icon>
@@ -188,6 +191,9 @@
                     <div class="p-upload-grid">
                       <div v-for="(img, i) in item.orderScreenshots" :key="i" class="p-upload-item">
                         <img :src="img" />
+                        <div class="p-upload-mask" @click.stop="removeImage(item, 'orderScreenshots', i)">
+                          <el-icon><Delete /></el-icon>
+                        </div>
                       </div>
                       <div class="p-upload-add">
                         <el-icon><Camera /></el-icon>
@@ -288,11 +294,10 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
-import { Plus, InfoFilled, Picture, Camera } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, InfoFilled, Picture, Camera, Delete } from '@element-plus/icons-vue'
 
 const visible = ref(false)
-const activeTab = ref(0)
 const formRef = ref<any>(null)
 const emit = defineEmits(['submit'])
 
@@ -323,7 +328,12 @@ const handleImageSuccess = (file: any, item: any, field: 'sampleImages' | 'order
   }
 }
 
+const removeImage = (item: any, field: 'sampleImages' | 'orderScreenshots', index: number) => {
+  item[field].splice(index, 1)
+}
+
 const createEmptyItem = (data?: any) => ({
+  id: Date.now() + Math.random().toString(36).substring(2, 9),
   channel: data?.source === '1688' || data?.source === '淘宝' ? data.source : '供应商',
   supplierType: '临时',
   supplier: '',
@@ -347,19 +357,33 @@ const form = ref({
   items: [createEmptyItem()]
 })
 
+const activeTab = ref(form.value.items[0].id)
+
 const addItem = () => {
-  form.value.items.push(createEmptyItem())
-  activeTab.value = form.value.items.length - 1
+  const newItem = createEmptyItem()
+  form.value.items.push(newItem)
+  activeTab.value = newItem.id
 }
 
-const removeItemByTab = (targetName: number) => {
+const removeItemByTab = (targetName: string | number) => {
   const items = form.value.items
   if (items.length <= 1) return
   
-  items.splice(targetName, 1)
-  if (activeTab.value >= items.length) {
-    activeTab.value = items.length - 1
-  }
+  const index = items.findIndex(item => item.id === targetName)
+  if (index === -1) return
+
+  ElMessageBox.confirm('确定要删除该购样方案吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+    buttonSize: 'small'
+  }).then(() => {
+    items.splice(index, 1)
+    if (activeTab.value === targetName) {
+      activeTab.value = items[Math.max(0, index - 1)].id
+    }
+    ElMessage.success('方案已删除')
+  }).catch(() => {})
 }
 
 const handleSave = () => {
@@ -377,8 +401,9 @@ const handleSubmit = async () => {
 
 const open = (taskData?: any) => {
   visible.value = true
-  form.value.items = [createEmptyItem(taskData)]
-  activeTab.value = 0
+  const initialItem = createEmptyItem(taskData)
+  form.value.items = [initialItem]
+  activeTab.value = initialItem.id
 }
 
 defineExpose({ open })
@@ -595,12 +620,27 @@ defineExpose({ open })
   gap: 8px;
 }
 .p-upload-item {
+  position: relative;
   width: 60px;
   height: 60px;
   border-radius: 4px;
   overflow: hidden;
   border: 1px solid #e2e8f0;
   img { width: 100%; height: 100%; object-fit: cover; }
+  
+  &:hover .p-upload-mask { opacity: 1; }
+}
+.p-upload-mask {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  cursor: pointer;
+  .el-icon { color: #fff; font-size: 16px; &:hover { color: var(--el-color-danger); } }
 }
 .p-upload-add {
   width: 60px;

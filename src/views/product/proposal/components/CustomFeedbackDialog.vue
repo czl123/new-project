@@ -23,9 +23,9 @@
       >
         <el-tab-pane
           v-for="(item, index) in form.items"
-          :key="index"
+          :key="item.id"
           :label="'反馈方案 ' + (index + 1)"
-          :name="index"
+          :name="item.id"
           :closable="form.items.length > 1"
         >
           <el-form :model="form" ref="formRef" label-position="left" label-width="100px" class="feedback-form custom-form">
@@ -204,14 +204,14 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, InfoFilled } from '@element-plus/icons-vue'
 
 const visible = ref(false)
-const activeTab = ref(0)
 const formRef = ref<any>(null)
 
 const createEmptyItem = () => ({
+  id: Date.now() + Math.random().toString(36).substring(2, 9),
   source: '',
   feeType: 'mold_fee',
   moldFee: '',
@@ -236,25 +236,40 @@ const form = ref({
   items: [createEmptyItem()]
 })
 
+const activeTab = ref(form.value.items[0].id)
+
 const open = () => {
   visible.value = true
-  form.value.items = [createEmptyItem()]
-  activeTab.value = 0
+  const initialItem = createEmptyItem()
+  form.value.items = [initialItem]
+  activeTab.value = initialItem.id
 }
 
 const addItem = () => {
-  form.value.items.push(createEmptyItem())
-  activeTab.value = form.value.items.length - 1
+  const newItem = createEmptyItem()
+  form.value.items.push(newItem)
+  activeTab.value = newItem.id
 }
 
-const removeItemByTab = (targetName: number) => {
+const removeItemByTab = (targetName: string | number) => {
   const items = form.value.items
   if (items.length <= 1) return
   
-  items.splice(targetName, 1)
-  if (activeTab.value >= items.length) {
-    activeTab.value = items.length - 1
-  }
+  const index = items.findIndex(item => item.id === targetName)
+  if (index === -1) return
+
+  ElMessageBox.confirm('确定要删除该反馈方案吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+    buttonSize: 'small'
+  }).then(() => {
+    items.splice(index, 1)
+    if (activeTab.value === targetName) {
+      activeTab.value = items[Math.max(0, index - 1)].id
+    }
+    ElMessage.success('方案已删除')
+  }).catch(() => {})
 }
 
 const handleSave = () => {
