@@ -222,6 +222,46 @@
               <el-icon class="icon"><Management /></el-icon>
               <span>任务执行</span>
             </div>
+
+            <!-- 定制反馈列表 -->
+            <div class="feedback-list-container">
+              <div class="list-header">
+                <span class="title">定制反馈列表</span>
+                <el-button type="primary" link icon="Plus" @click="handleCustomFeedback">添加反馈</el-button>
+              </div>
+              <el-table :data="feedbackListData" border stripe size="small" class="custom-table">
+                <el-table-column label="反馈编号" prop="code" width="140" fixed="left" />
+                <el-table-column label="货源地" prop="source" width="120" />
+                <el-table-column label="费用类型" prop="feeType" width="100" />
+                <el-table-column label="费用金额" prop="feeAmount" width="100" />
+                <el-table-column label="模具归属" prop="moldOwnership" width="100" />
+                <el-table-column label="定制用时" prop="customDuration" width="100" />
+                <el-table-column label="初次报价" prop="initialQuote" width="100" />
+                <el-table-column label="生产周期" prop="productionCycle" width="100" />
+                <el-table-column label="起订量" prop="moq" width="80" />
+                <el-table-column label="是否可退款" prop="isRefundable" width="100" />
+                <el-table-column label="退款方式" prop="refundMethod" width="100" />
+                <el-table-column label="退款条件" prop="refundCondition" min-width="150" show-overflow-tooltip />
+                <el-table-column label="附加条件" prop="additionalConditions" min-width="150" show-overflow-tooltip />
+                <el-table-column label="状态" width="100" fixed="right">
+                  <template #default="{ row }">
+                    <el-tag :type="row.statusType" size="small">{{ row.status }}</el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="160" fixed="right">
+                  <template #default="{ row }">
+                    <template v-if="['待提交', '已驳回'].includes(row.status)">
+                      <el-button type="primary" link size="small">编辑</el-button>
+                      <el-button type="danger" link size="small">删除</el-button>
+                    </template>
+                    <template v-if="row.status === '已采纳'">
+                      <el-button v-if="row.feeAmount === '¥ 0.00'" type="primary" link size="small">样品登记</el-button>
+                      <el-button v-else type="primary" link size="small">购样申请</el-button>
+                    </template>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
           </div>
         </div>
       </main>
@@ -329,6 +369,111 @@ const getStepStatus = (index: number) => {
 const handleCustomFeedback = () => {
   customFeedbackRef.value?.open()
 }
+
+const feedbackListData = ref([
+  {
+    code: 'FA-20260520-01',
+    source: '1688-广州某工厂',
+    feeType: '开模费',
+    feeAmount: '¥ 5,000.00',
+    moldOwnership: '公司',
+    customDuration: '15天',
+    initialQuote: '¥ 85.00',
+    productionCycle: '25天',
+    moq: '1000',
+    isRefundable: '是',
+    refundMethod: '返现金',
+    refundCondition: '首单满1万',
+    additionalConditions: '含彩盒包装',
+    status: '待开发反馈',
+    statusType: 'primary'
+  },
+  {
+    code: 'FA-20260520-02',
+    source: '线下-深圳供应商',
+    feeType: '打样费',
+    feeAmount: '¥ 50.00',
+    moldOwnership: '-',
+    customDuration: '7天',
+    initialQuote: '¥ 78.00',
+    productionCycle: '20天',
+    moq: '500',
+    isRefundable: '否',
+    refundMethod: '-',
+    refundCondition: '-',
+    additionalConditions: '无',
+    status: '已采纳',
+    statusType: 'success'
+  },
+  {
+    code: 'FA-20260520-03',
+    source: '阿里国际-义乌供应商',
+    feeType: '打样费',
+    feeAmount: '¥ 150.00',
+    moldOwnership: '-',
+    customDuration: '5天',
+    initialQuote: '¥ 92.00',
+    productionCycle: '30天',
+    moq: '2000',
+    isRefundable: '是',
+    refundMethod: '抵扣货款',
+    refundCondition: '起订量翻倍',
+    additionalConditions: '运费自理',
+    status: '未采纳',
+    statusType: 'info'
+  },
+  {
+    code: 'FA-20260521-04',
+    source: '东莞某五金厂',
+    feeType: '开模费',
+    feeAmount: '¥ 12,000.00',
+    moldOwnership: '共有',
+    customDuration: '30天',
+    initialQuote: '¥ 65.00',
+    productionCycle: '45天',
+    moq: '5000',
+    isRefundable: '否',
+    refundMethod: '-',
+    refundCondition: '-',
+    additionalConditions: '模具寿命20万模',
+    status: '已驳回',
+    statusType: 'danger'
+  },
+  {
+    code: 'FA-20260521-05',
+    source: '线下-苏州电子',
+    feeType: '开模费',
+    feeAmount: '¥ 8,000.00',
+    moldOwnership: '供应商',
+    customDuration: '20天',
+    initialQuote: '¥ 110.00',
+    productionCycle: '35天',
+    moq: '1500',
+    isRefundable: '是',
+    refundMethod: '抵扣首单',
+    refundCondition: '满5万退',
+    additionalConditions: '含两轮功能验证',
+    status: '待提交',
+    statusType: 'warning'
+  },
+  {
+    code: 'FA-20260522-06',
+    source: '长期合作-惠州工厂',
+    feeType: '打样费',
+    feeAmount: '¥ 0.00',
+    moldOwnership: '-',
+    customDuration: '3天',
+    initialQuote: '¥ 62.00',
+    productionCycle: '15天',
+    moq: '300',
+    isRefundable: '否',
+    refundMethod: '-',
+    refundCondition: '-',
+    additionalConditions: '样机免费寄送',
+    status: '已采纳',
+    statusType: 'success'
+  }
+])
 </script>
 
 <style lang="scss" scoped>
@@ -396,7 +541,7 @@ const handleCustomFeedback = () => {
   }
 }
 
-.content-body { flex: 1; padding: 12px 16px; overflow-y: auto; background: #f0f2f5;
+.content-body { flex: 1; padding: 12px 16px 60px; overflow-y: auto; background: #f0f2f5;
   .info-cards-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
   .info-card { 
     background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1px 20px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);
@@ -489,5 +634,17 @@ const handleCustomFeedback = () => {
 .mb-12 { margin-bottom: 12px; }
 .ml-8 { margin-left: 8px; }
 .ml-4 { margin-left: 4px; }
+
+.feedback-list-container {
+  margin-top: 16px; border-top: 1px dashed #e2e8f0; padding-top: 16px;
+  .list-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+    .title { font-size: 13px; font-weight: 700; color: #475569; }
+  }
+  .price-info { font-size: 11px; line-height: 1.5; color: #64748b; .amt { color: #f59e0b; font-weight: 600; } }
+  .custom-table {
+    :deep(.el-table__header) { th { background-color: #f8fafc; color: #475569; font-weight: 700; } }
+  }
+}
 .custom-scrollbar { &::-webkit-scrollbar { width: 4px; } &::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 2px; } }
 </style>
