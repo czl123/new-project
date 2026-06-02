@@ -83,6 +83,7 @@
           <div class="header-actions">
             <template v-if="currentTask.sampleMethodText === '定制拿样'">
               <el-button type="primary" class="action-btn blue" @click="handleCustomFeedback">定制反馈</el-button>
+              <el-button type="primary" icon="Plus" class="action-btn blue" @click="handleSampleRegistration()">样品登记</el-button>
               <el-button class="action-btn plain">转移任务</el-button>
             </template>
             <template v-else-if="currentTask.sampleMethodText === '现货拿样'">
@@ -122,24 +123,24 @@
                 <div class="item"><label>团队负责人</label><span>廖飞飞</span></div>
                 <div class="item"><label>产品经理</label><span>{{ currentTask.pm }}</span></div>
                 <div class="item"><label>产品名称</label><span>{{ currentTask.productName }}</span></div>
-                <div class="item"><label>款式</label><span>亚克力透明款</span></div>
-                <div class="item"><label>型号</label><span>JK-2026-X1</span></div>
-                <div class="item"><label>主材料</label><span>亚克力 + LED</span></div>
-                <div class="item"><label>适用品牌</label><span>通用 / 通用</span></div>
-                <div class="item"><label>SPU</label><span>SPU882910</span></div>
+                <div class="item"><label>款式</label><span>{{ currentTask.style || '亚克力透明款' }}</span></div>
+                <div class="item"><label>型号</label><span>{{ currentTask.model || 'JK-2026-X1' }}</span></div>
+                <div class="item"><label>主材料</label><span>{{ currentTask.material || '亚克力 + LED' }}</span></div>
+                <div class="item"><label>适用品牌</label><span>{{ currentTask.applicableTo || '通用 / 通用' }}</span></div>
+                <div class="item"><label>SPU</label><span>{{ currentTask.spu || 'SPU882910' }}</span></div>
               </div>
             </div>
 
             <div class="info-card">
               <h3 class="card-title">提案-拿样要求</h3>
               <div class="card-grid grid-2">
-                <div class="item flex-row"><label>开发方式</label><el-tag size="small" class="custom-tag">全新品-定制</el-tag></div>
-                <div class="item"><label>开发品牌</label><span>MoKo</span></div>
-                <div class="item"><label>初始Logo位置</label><span>无</span></div>
-                <div class="item"><label>初始包装方式</label><span>盒装</span></div>
-                <div class="item"><label>首单采购数量</label><span>500</span></div>
-                <div class="item"><label>首单采购总金额</label><span>¥ 115,000.00</span></div>
-                <div class="item"><label>上架时间要求</label><span>2026-07-15</span></div>
+                <div class="item flex-row"><label>开发方式</label><el-tag size="small" class="custom-tag">{{ currentTask.devMethod || '全新品-定制' }}</el-tag></div>
+                <div class="item"><label>开发品牌</label><span>{{ currentTask.brand || 'MoKo' }}</span></div>
+                <div class="item"><label>初始Logo位置</label><span>{{ currentTask.logoPosition || '无' }}</span></div>
+                <div class="item"><label>初始包装方式</label><span>{{ currentTask.packagingMethod || '盒装' }}</span></div>
+                <div class="item"><label>首单采购数量</label><span>{{ currentTask.buyQty || '500' }}</span></div>
+                <div class="item"><label>首单采购总金额</label><span>¥ {{ currentTask.totalAmount || '115,000.00' }}</span></div>
+                <div class="item"><label>上架时间要求</label><span>{{ currentTask.launchTime || '2026-07-15' }}</span></div>
               </div>
             </div>
 
@@ -308,6 +309,17 @@ const tableData = ref([
     category: '家居装饰',
     remainingDays: 7,
     isUrgent: true,
+    style: '透明款',
+    material: '亚克力',
+    model: 'DIY-001',
+    applicableTo: '通用',
+    spu: 'SPU001',
+    brand: 'MoKo',
+    logoPosition: '侧面',
+    packagingMethod: '盒装',
+    buyQty: '100',
+    totalAmount: '2,000.00',
+    launchTime: '2026-06-30'
   },
   {
     image: 'https://picsum.photos/100/100?random=11',
@@ -318,6 +330,17 @@ const tableData = ref([
     category: '数码配件',
     remainingDays: 5,
     isUrgent: true,
+    style: '加厚版',
+    material: '铝合金',
+    model: 'NB-ST01',
+    applicableTo: '笔记本电脑',
+    spu: 'SPU002',
+    brand: 'MoKo',
+    logoPosition: '面板',
+    packagingMethod: '盒装',
+    buyQty: '200',
+    totalAmount: '8,000.00',
+    launchTime: '2026-07-10'
   },
   {
     image: 'https://picsum.photos/200/200?random=25',
@@ -328,6 +351,17 @@ const tableData = ref([
     category: '智能硬件',
     remainingDays: 11,
     isUrgent: false,
+    style: '墨水屏Pro版',
+    material: '复合塑胶 + 电子墨水屏',
+    model: 'EP-2026-V1',
+    applicableTo: '商务人士',
+    spu: 'SPU882910',
+    brand: 'MoKo',
+    logoPosition: '背面',
+    packagingMethod: '礼盒装',
+    buyQty: '500',
+    totalAmount: '115,000.00',
+    launchTime: '2026-07-15'
   },
   {
     image: 'https://picsum.photos/200/200?random=22',
@@ -338,6 +372,17 @@ const tableData = ref([
     category: '户外运动',
     remainingDays: 11,
     isUrgent: false,
+    style: '多功能款',
+    material: 'ABS',
+    model: 'CP-L01',
+    applicableTo: '露营爱好者',
+    spu: 'SPU004',
+    brand: 'MoKo',
+    logoPosition: '顶部',
+    packagingMethod: '彩盒',
+    buyQty: '300',
+    totalAmount: '5,000.00',
+    launchTime: '2026-08-01'
   },
   {
     image: 'https://picsum.photos/200/200?random=24',
@@ -348,6 +393,17 @@ const tableData = ref([
     category: '生活电器',
     remainingDays: 13,
     isUrgent: false,
+    style: '极简版',
+    material: 'PP',
+    model: 'HM-D01',
+    applicableTo: '通用',
+    spu: 'SPU005',
+    brand: 'MoKo',
+    logoPosition: '正面',
+    packagingMethod: '白盒',
+    buyQty: '1000',
+    totalAmount: '12,000.00',
+    launchTime: '2026-09-01'
   },
   {
     image: 'https://picsum.photos/200/200?random=26',
@@ -358,6 +414,17 @@ const tableData = ref([
     category: '数码配件',
     remainingDays: 12,
     isUrgent: false,
+    style: '复古款',
+    material: 'PBT',
+    model: 'KB-R01',
+    applicableTo: '电脑用户',
+    spu: 'SPU006',
+    brand: 'MoKo',
+    logoPosition: '底部',
+    packagingMethod: '礼盒',
+    buyQty: '150',
+    totalAmount: '15,000.00',
+    launchTime: '2026-10-15'
   }
 ])
 
@@ -388,7 +455,13 @@ const handlePurchaseApply = (row?: any) => {
 const handleSampleRegistration = (taskData?: any) => {
   console.log('Opening Sample Registration Dialog', taskData)
   if (sampleRegistrationRef.value) {
-    sampleRegistrationRef.value.open(taskData || currentTask.value)
+    // 这里的 taskData 可能是反馈列表中的某一行，也可能为空（点击顶部按钮）
+    // 为了同步规格信息，我们需要确保传给弹窗的数据包含 currentTask 的基础信息
+    const syncData = {
+      ...(currentTask.value || {}),
+      ...(taskData || {})
+    }
+    sampleRegistrationRef.value.open(syncData)
   } else {
     console.error('sampleRegistrationRef is not initialized')
   }
