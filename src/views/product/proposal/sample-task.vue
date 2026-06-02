@@ -150,7 +150,7 @@
                 <div class="time-row"><label>反馈截止时间</label><span>05-22 18:00</span></div>
                 <div class="time-row"><label>任务截止时间</label><span>05-31 18:00</span></div>
               </div>
-              <el-divider border-style="dotted" class="card-divider" />
+              <div class="custom-dotted-divider"></div>
               <div class="card-countdown">
                 <div class="cd-box feedback">
                   <div class="val">02<small>d</small>14<small>h</small></div>
@@ -422,12 +422,18 @@ const handleCustomFeedback = () => {
       }
     }
     
-    .card-divider { margin: 12px 0; border-color: #f0f0f0; }
+    .custom-dotted-divider { 
+      height: 1px; width: 100%; margin: 12px 0;
+      background-image: linear-gradient(to right, #94a3b8 40%, rgba(255,255,255,0) 0%);
+      background-position: bottom;
+      background-size: 6px 1px;
+      background-repeat: repeat-x;
+    }
     
     .card-countdown {
-      display: flex; gap: 8px; margin: 0 -20px -20px; padding: 16px 20px; background: #f8fafc; border-radius: 0 0 8px 8px; border-top: 1px solid #edf2f7;
+      display: flex; gap: 12px; margin-top: 12px;
       .cd-box {
-        flex: 1; text-align: center; background: #fff; border-radius: 6px; padding: 10px 0; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        flex: 1; text-align: center; background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #eef2f6; border-radius: 6px; padding: 12px 0;
         .val { font-size: 18px; font-weight: 700; margin-bottom: 2px; small { font-size: 11px; margin-left: 1px; font-weight: 400; } }
         .lab { font-size: 11px; color: #8c8c8c; }
         &.feedback { .val { color: #fa8c16; } }
