@@ -228,7 +228,7 @@
             </el-row>
 
             <el-row :gutter="24" v-if="item.channel === '供应商'">
-              <el-col :span="4">
+              <el-col :span="6">
                 <el-form-item class="refundable-item">
                   <template #label>
                     <el-checkbox v-model="item.isRefundable">是否可退款</el-checkbox>
@@ -256,7 +256,7 @@
                     <el-input v-model="item.refundCondition" placeholder="请输入" />
                   </el-form-item>
                 </el-col>
-                <el-col :span="8">
+                <el-col :span="6">
                   <div class="refund-tip-wrapper" v-if="item.refundMethod">
                     <div class="refund-tip">
                       <el-icon class="mr-4"><InfoFilled /></el-icon>

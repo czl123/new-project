@@ -141,7 +141,7 @@
               </el-col>
               <template v-if="item.isRefundable">
                 <el-col :span="6">
-                  <el-form-item label="退款方式：">
+                  <el-form-item label="退款方式" required>
                     <el-select v-model="item.refundType" placeholder="请选择" class="w-full">
                       <el-option label="首单退款" value="first_order" />
                       <el-option label="订单量退款" value="order_volume" />
@@ -151,7 +151,8 @@
                 </el-col>
                 <el-col :span="6">
                   <el-form-item 
-                    label="退款条件：" 
+                    label="退款条件" 
+                    required
                     :prop="'items.' + index + '.refundCondition'"
                     :rules="[
                       { required: ['order_volume', 'order_amount'].includes(item.refundType), message: '请输入退款条件', trigger: 'blur' }
@@ -175,7 +176,7 @@
               <el-input
                 v-model="item.additionalNotes"
                 type="textarea"
-                :rows="4"
+                :rows="3"
                 placeholder="请输入方案特殊说明"
                 maxlength="500"
                 show-word-limit
@@ -188,7 +189,9 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <div></div>
+        <div class="footer-left">
+          <span class="batch-info">共计 {{ form.items.length }} 个反馈方案</span>
+        </div>
         <div class="footer-right">
           <el-button @click="visible = false">取 消</el-button>
           <el-button type="primary" plain @click="handleSave">保 存</el-button>
@@ -202,7 +205,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Delete, Plus, InfoFilled } from '@element-plus/icons-vue'
+import { Plus, InfoFilled } from '@element-plus/icons-vue'
 
 const visible = ref(false)
 const activeTab = ref(0)
@@ -249,15 +252,14 @@ const removeItemByTab = (targetName: number) => {
   if (items.length <= 1) return
   
   items.splice(targetName, 1)
-  // 调整 activeTab
   if (activeTab.value >= items.length) {
     activeTab.value = items.length - 1
   }
 }
 
 const handleSave = () => {
-  console.log('Saved Feedbacks:', form.value.items)
   ElMessage.success('保存成功')
+  visible.value = false
 }
 
 const handleSubmit = async () => {
@@ -265,7 +267,6 @@ const handleSubmit = async () => {
   
   await formRef.value.validate((valid: boolean) => {
     if (valid) {
-      console.log('Submitted Multiple Feedbacks:', form.value.items)
       ElMessage.success(`成功提交 ${form.value.items.length} 个反馈方案`)
       visible.value = false
     } else {
@@ -278,20 +279,9 @@ defineExpose({ open })
 </script>
 
 <style lang="scss" scoped>
-.custom-header {
-  display: flex;
-  align-items: center;
-  
-  .title-text {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1f2937;
-  }
-}
-
 .feedback-instruction {
-  margin: 0 20px 20px;
-  padding: 10px 16px;
+  margin: 0 20px 8px;
+  padding: 6px 16px;
   background: #f0f9ff;
   border: 1px solid #bae6fd;
   border-radius: 6px;
@@ -309,178 +299,190 @@ defineExpose({ open })
 .feedback-tabs {
   border: 1px solid #e2e8f0 !important;
   border-radius: 8px !important;
-  box-shadow: none !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02) !important;
+  overflow: hidden;
   
   :deep(.el-tabs__header) {
     background-color: #f8fafc !important;
     margin: 0 !important;
     border-bottom: 1px solid #e2e8f0 !important;
-    border-radius: 8px 8px 0 0 !important;
     display: flex;
     align-items: center;
+    padding: 0 4px;
   }
 
   :deep(.el-tabs__nav-wrap) {
-    margin-bottom: 0 !important;
-    flex: 0 1 auto;
+    margin-bottom: -1px !important;
+    &::after { display: none; }
+  }
+
+  :deep(.el-tabs__item) {
+    height: 36px !important;
+    line-height: 36px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #64748b !important;
+    border: none !important;
+    transition: all 0.2s;
+    margin: 0 2px;
     
-    &::after {
-      display: none;
+    &.is-active {
+      color: var(--el-color-primary) !important;
+      background: #fff !important;
+      font-weight: 600 !important;
+      border-left: 1px solid #e2e8f0 !important;
+      border-right: 1px solid #e2e8f0 !important;
+      position: relative;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: var(--el-color-primary);
+      }
+    }
+    
+    &:hover:not(.is-active) {
+      color: var(--el-color-primary) !important;
     }
   }
 
   :deep(.el-tabs__new-tab) {
-    position: static !important;
     margin-left: 12px !important;
-    margin-right: 12px !important;
-    background: var(--el-color-primary) !important;
-    color: #fff !important;
-    border-radius: 4px;
-    width: auto !important;
-    height: 28px !important;
-    padding: 0 12px !important;
+    background: transparent !important;
     border: none !important;
+    color: var(--el-color-primary) !important;
+    width: auto !important;
+    height: 36px !important;
+    padding: 0 8px !important;
     display: inline-flex !important;
     align-items: center;
     justify-content: center;
-    float: none !important;
+    transition: all 0.2s;
+    cursor: pointer;
     
-    .el-icon {
-      margin: 0 !important;
-      color: #fff !important;
+    .el-icon { 
+      margin: 0 !important; 
       font-weight: bold;
+      font-size: 14px;
     }
-    
-    &::after {
-      content: '新增方案';
-      margin-left: 6px;
-      font-size: 12px;
-      font-weight: 500;
-      white-space: nowrap;
+    &::after { 
+      content: '新增方案'; 
+      margin-left: 4px; 
+      font-size: 12px; 
+      font-weight: 500; 
     }
     
     &:hover {
-      background: var(--el-color-primary-light-3) !important;
-      color: #fff !important;
+      opacity: 0.8;
+      background: transparent !important;
     }
   }
 
   :deep(.el-tabs__content) {
-    padding: 32px 24px !important;
+    padding: 12px 24px !important;
     background: #fff !important;
-    border-radius: 0 0 8px 8px !important;
   }
 }
 
 .custom-form {
-  :deep(.el-form-item) {
-    margin-bottom: 20px !important;
-    display: flex;
-    align-items: center;
+  :deep(.el-form-item) { 
+    margin-bottom: 12px !important; 
+    display: flex; 
+    align-items: center; 
   }
   
-  :deep(.el-form-item__label) {
-    height: 36px !important;
-    display: inline-flex;
-    align-items: center;
+  :deep(.el-form-item__label) { 
+    font-weight: 600;
+    color: #475569;
+    padding-right: 8px !important;
     line-height: 1.2 !important;
-    padding-bottom: 0 !important;
+    height: auto !important;
+    display: flex;
+    align-items: center;
+    font-size: 12px;
   }
 
   :deep(.el-input__wrapper),
-  :deep(.el-select .el-input__wrapper) {
-    height: 36px !important;
-    box-sizing: border-box;
+  :deep(.el-select__wrapper),
+  :deep(.el-input-number__wrapper) {
+    background-color: #ffffff !important;
+    box-shadow: 0 0 0 1px #e5e7eb inset !important;
+    border-radius: 4px !important;
+    padding: 2px 10px !important;
+    height: 30px !important;
+    font-size: 12px !important;
+    transition: all 0.15s ease;
+    
+    &:hover {
+      box-shadow: 0 0 0 1px #cbd5e1 inset !important;
+    }
+    
+    &.is-focus, &.is-focused {
+      background-color: #ffffff !important;
+      box-shadow: 0 0 0 1px #1890ff inset, 0 0 0 2px rgba(24, 144, 255, 0.05) !important;
+    }
   }
 
   :deep(.el-input-group__append) {
-    height: 36px !important;
-    box-sizing: border-box;
-    padding: 0 8px !important;
-    min-width: 0 !important;
-    width: auto !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    background-color: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-left: none;
+    font-size: 11px;
+    color: #64748b;
+    padding: 0 8px;
+  }
+
+  :deep(.el-textarea__inner) {
+    font-size: 12px;
+    border-radius: 4px;
+    box-shadow: 0 0 0 1px #e5e7eb inset !important;
+    &:focus {
+      box-shadow: 0 0 0 1px #1890ff inset !important;
+    }
   }
 }
 
 .refund-tip-wrapper {
   display: flex;
   align-items: center;
-  height: 32px;
+  height: 30px;
 }
-
 .refund-tip {
   display: flex;
   align-items: center;
   font-size: 11px;
   color: #0369a1;
   background: #f0f9ff;
-  padding: 2px 8px;
+  padding: 2px 10px;
   border-radius: 4px;
   border: 1px solid #bae6fd;
   line-height: 1.3;
-  
-  :deep(.el-icon) {
-    font-size: 12px;
-  }
+  .el-icon { font-size: 13px; margin-right: 4px; }
 }
 
 :deep(.refundable-item) {
-  margin-bottom: 18px !important;
-  .el-form-item__label {
-    width: 100px !important;
-    justify-content: flex-start;
-  }
-}
-
-.mr-4 { margin-right: 4px; }
-.mr-8 { margin-right: 8px; }
-.w-full {
-  width: 100%;
-}
-
-.mr-12 { margin-right: 12px; }
-.mt-16 { margin-top: 16px; }
-
-:deep(.el-form-item) {
-  margin-bottom: 18px;
-}
-
-:deep(.el-form-item__label) {
-  font-size: 13px;
-  color: #475569;
-  font-weight: 500;
-  
-  &::before {
-    margin-right: 4px !important;
-  }
+  margin-bottom: 0 !important;
+  .el-form-item__label { width: 100px !important; justify-content: flex-start; }
 }
 
 .dialog-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
-  border-top: 1px solid #f1f5f9;
+  padding: 0 24px;
+  height: 44px;
+  box-sizing: border-box;
+  
+  .batch-info { font-size: 13px; color: #64748b; }
   
   .footer-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    :deep(.el-button) {
-      height: 32px;
-      padding: 0 20px;
-      font-size: 13px;
-      border-radius: 4px;
-    }
+    display: flex; gap: 8px;
+    :deep(.el-button) { height: 32px; padding: 0 20px; font-size: 13px; border-radius: 4px; }
   }
 }
 
-.custom-scrollbar {
-  &::-webkit-scrollbar { width: 6px; }
-  &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-}
+.mr-8 { margin-right: 8px; }
+.w-full { width: 100%; }
 </style>
