@@ -1,332 +1,229 @@
 <template>
-  <div class="page-wrapper">
-    <!-- 1. 顶部管理看板 (仅在管理模式显示) -->
-    <div v-if="viewMode === 'table'" class="manager-dashboard modern-card mb-12">
-      <div class="dash-item">
-        <div class="d-label">当前待处理</div>
-        <div class="d-value">125 <small>项</small></div>
-      </div>
-      <div class="dash-item urgent">
-        <div class="d-label">逾期/紧急</div>
-        <div class="d-value">8 <small>项</small></div>
-      </div>
-      <div class="dash-item">
-        <div class="d-label">平均拿样周期</div>
-        <div class="d-value">5.4 <small>天</small></div>
-      </div>
-      <div class="dash-item">
-        <div class="d-label">本月已完成</div>
-        <div class="d-value">482 <small>项</small></div>
-      </div>
-    </div>
-
-    <!-- 2. 视图切换主容器 -->
-    <div class="workbench-container" v-if="viewMode === 'workbench'">
-      <!-- 左侧任务导航列表 -->
-      <div class="list-side">
+  <div class="sample-task-page">
+    <div class="workbench-layout">
+      <!-- 左侧任务导航 -->
+      <aside class="side-panel">
         <div class="side-header">
-          <div class="filter-bar">
-            <el-input v-model="searchQuery" placeholder="搜索编号/产品" prefix-icon="Search" size="small" clearable />
-            <el-tooltip content="切换至管理大表模式" placement="top">
-              <el-button icon="Operation" size="small" circle @click="viewMode = 'table'" />
-            </el-tooltip>
+          <div class="search-box">
+            <el-input v-model="searchQuery" placeholder="搜索编号/产品" prefix-icon="Search" size="small" />
           </div>
           
-          <div class="side-stats-mini">
-            <div class="s-item urgent"><span>急需</span><b>5</b></div>
-            <div class="s-item"><span>今日</span><b>12</b></div>
-            <div class="s-item"><span>全部</span><b>125</b></div>
+          <div class="urgent-container">
+            <div class="urgent-summary-line">
+              <el-icon class="clock-icon"><Clock /></el-icon>
+              <span class="label">今日紧急处理</span>
+              <span class="count-badge">11</span>
+            </div>
+
+            <div class="urgent-card-list">
+              <div v-for="item in urgentTasks" :key="item.proposalNo" 
+                   :class="['urgent-mini-card', { active: currentTask?.proposalNo === item.proposalNo }]"
+                   @click="currentTask = item">
+                <div class="card-top">
+                  <span class="id">{{ item.proposalNo }}</span>
+                  <div class="urgent-label-tag">紧急</div>
+                </div>
+                <div class="card-main">
+                  <el-image :src="item.image" class="product-thumb" />
+                  <div class="info">
+                    <div class="title">{{ item.productName }}</div>
+                    <div class="sub">{{ item.pm }} <span class="v-line">|</span> {{ item.sampleMethodText }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div class="status-scroll-tabs">
-            <div 
-              v-for="tab in statusTabs" 
-              :key="tab.value"
-              class="mini-tab"
-              :class="{ active: activeTab === tab.value }"
-              @click="activeTab = tab.value"
-            >
-              {{ tab.label }}
+          <div class="tabs-scroll-nav">
+            <div v-for="tab in statusTabs" :key="tab.value" 
+                 :class="['tab-item', { active: activeTab === tab.value }]"
+                 @click="activeTab = tab.value">
+              {{ tab.label }}(12)
             </div>
           </div>
         </div>
 
-        <div class="side-content custom-scrollbar">
-          <div class="list-group-title" v-if="filteredSideList.some(i => i.isUrgent)">今日紧急处理</div>
-          <div 
-            v-for="item in filteredSideList.filter(i => i.isUrgent)" 
-            :key="item.proposalNo"
-            class="task-card-mini urgent-border"
-            :class="{ active: currentTask?.proposalNo === item.proposalNo }"
-            @click="currentTask = item"
-          >
+        <div class="side-body custom-scrollbar">
+          <!-- 普通任务组 -->
+          <div v-for="item in normalTasks" :key="item.proposalNo" 
+               :class="['normal-task-card', { active: currentTask?.proposalNo === item.proposalNo }]"
+               @click="currentTask = item">
             <div class="card-top">
-              <span class="no">{{ item.proposalNo }}</span>
-              <el-tag size="small" type="danger" effect="dark">紧急</el-tag>
+              <span class="id">{{ item.proposalNo }}</span>
+              <span class="days-tag">{{ item.remainingDays }}天</span>
             </div>
             <div class="card-main">
-              <el-image :src="item.image" class="mini-img" />
-              <div class="main-info">
-                <div class="name">{{ item.productName }}</div>
-                <div class="meta">
-                  <span class="pm">{{ item.pm }}</span>
-                  <el-divider direction="vertical" />
-                  <span class="type">{{ item.sampleMethodText }}</span>
-                </div>
+              <el-image :src="item.image" class="product-thumb" />
+              <div class="info">
+                <div class="title">{{ item.productName }}</div>
+                <div class="sub">{{ item.pm }} <span class="v-line">|</span> {{ item.sampleMethodText }}</div>
               </div>
             </div>
-            <div class="card-footer" v-if="activeTab !== 'unfinished'">
-              <div class="progress-mini">
-                <div class="p-track"><div class="p-bar" :style="{ width: '40%' }"></div></div>
-              </div>
-              <span class="status-text">{{ item.receiverStatus }}</span>
+            <div class="card-footer">
+              <div class="separator-line"></div>
+              <span class="status-link">已承接</span>
             </div>
           </div>
-
-          <div class="list-group-title">任务列表 ({{ filteredSideList.length }})</div>
-          <div 
-            v-for="item in filteredSideList.filter(i => !i.isUrgent)" 
-            :key="item.proposalNo"
-            class="task-card-mini"
-            :class="{ active: currentTask?.proposalNo === item.proposalNo }"
-            @click="currentTask = item"
-          >
-            <div class="card-top">
-              <span class="no">{{ item.proposalNo }}</span>
-              <el-tag size="small" type="warning" effect="plain">{{ item.remainingDays }}天</el-tag>
-            </div>
-            <div class="card-main">
-              <el-image :src="item.image" class="mini-img" />
-              <div class="main-info">
-                <div class="name">{{ item.productName }}</div>
-                <div class="meta">
-                  <span class="pm">{{ item.pm }}</span>
-                  <el-divider direction="vertical" />
-                  <span class="type">{{ item.sampleMethodText }}</span>
-                </div>
-              </div>
-            </div>
-            <div class="card-footer" v-if="activeTab !== 'unfinished'">
-              <div class="progress-mini">
-                <div class="p-track"><div class="p-bar" :style="{ width: '70%' }"></div></div>
-              </div>
-              <span class="status-text">{{ item.receiverStatus }}</span>
-            </div>
-          </div>
-          <el-empty v-if="filteredSideList.length === 0" description="暂无此类任务" />
         </div>
-      </div>
+      </aside>
 
-      <!-- 右侧沉浸式详情工作区 -->
-      <div class="detail-workspace" v-if="currentTask">
-        <div class="workspace-header">
+      <!-- 右侧详情区 -->
+      <main class="main-content" v-if="currentTask">
+        <header class="content-header">
           <div class="header-left">
-            <el-tag size="small" type="danger" effect="plain" class="mr-8">P0</el-tag>
-            <h2>{{ currentTask.productName }}</h2>
-            <span class="id-copy">{{ currentTask.proposalNo }} <el-icon><CopyDocument /></el-icon></span>
+            <el-tag size="small" type="danger" effect="plain" class="tag-p0">P0</el-tag>
+            <el-tag size="small" color="#faad14" effect="dark" class="tag-level">A级提案</el-tag>
+            <el-tag size="small" type="success" effect="plain" class="tag-method">定制拿样</el-tag>
+            <h1 class="product-name">{{ currentTask.productName }}</h1>
+            <div class="proposal-id">
+              <span>{{ currentTask.proposalNo }}</span>
+              <el-icon class="copy-btn"><CopyDocument /></el-icon>
+            </div>
           </div>
-          <div class="header-right">
-            <template v-if="currentTask.receiverStatus === '待反馈'">
-              <el-button size="small" type="primary" @click="handleAccept">承接任务</el-button>
-              <el-button size="small" type="warning" @click="handlePurchaseApply">购样申请</el-button>
-            </template>
-            <template v-else>
-              <el-button size="small">转移任务</el-button>
-              <el-button size="small" type="primary">保存反馈</el-button>
-              <el-button size="small" type="success" icon="Check">提交结论</el-button>
-            </template>
+          <div class="header-actions">
+            <el-button type="primary" class="action-btn blue">定制反馈</el-button>
+            <el-button type="primary" icon="Plus" class="action-btn blue">样品登记</el-button>
+            <el-button class="action-btn plain">转移任务</el-button>
+          </div>
+        </header>
+
+        <!-- 8步进度条 -->
+        <div class="stepper-container">
+          <div v-for="(step, index) in steps" :key="index" :class="['step-node', getStepStatus(index)]">
+            <div class="node-main">
+              <div class="circle">
+                <el-icon v-if="index < 1"><Check /></el-icon>
+                <span v-else>{{ index + 1 }}</span>
+              </div>
+              <span class="label">{{ step }}</span>
+            </div>
+            <div v-if="index < steps.length - 1" :class="['line', { completed: index < 1 }]"></div>
           </div>
         </div>
 
-        <div class="workflow-stepper">
-          <div v-for="(step, index) in steps" :key="index" class="step-item" :class="getStepClass(index)">
-            <el-popover
-              placement="bottom"
-              :width="260"
-              trigger="hover"
-              popper-style="padding: 0; border-radius: 8px; overflow: hidden;"
-              v-if="getAssigneesAtStep(index).length > 0"
-            >
-              <template #reference>
-                <div class="step-node-trigger">
-                  <div class="step-icon">
-                    <el-icon v-if="isStepFullyDone(index)"><CircleCheckFilled /></el-icon>
-                    <span v-else>{{ index + 1 }}</span>
-                  </div>
-                  <div class="step-label">{{ step }}</div>
-                  <!-- 悬浮的小头像堆叠 -->
-                  <div class="member-badges">
-                    <div 
-                      v-for="user in getAssigneesAtStep(index)" 
-                      :key="user.name"
-                      class="m-dot"
-                      :style="{ backgroundColor: user.color }"
-                    ></div>
-                  </div>
+        <div class="content-body custom-scrollbar">
+          <!-- 顶部三列卡片布局 -->
+          <div class="info-cards-row mb-16">
+            <div class="info-card">
+              <h3 class="card-title">提案-基础信息</h3>
+              <div class="card-grid">
+                <div class="item"><label>运营大类</label><span>智能硬件</span></div>
+                <div class="item"><label>团队负责人</label><span>廖飞飞</span></div>
+                <div class="item"><label>产品经理</label><span>{{ currentTask.pm }}</span></div>
+                <div class="item"><label>产品名称</label><span>{{ currentTask.productName }}</span></div>
+                <div class="item"><label>款式</label><span>亚克力透明款</span></div>
+                <div class="item"><label>型号</label><span>JK-2026-X1</span></div>
+                <div class="item"><label>主材料</label><span>亚克力 + LED</span></div>
+                <div class="item"><label>适用品牌</label><span>通用 / 通用</span></div>
+                <div class="item"><label>SPU</label><span>SPU882910</span></div>
+              </div>
+            </div>
+
+            <div class="info-card">
+              <h3 class="card-title">提案-拿样要求</h3>
+              <div class="card-grid">
+                <div class="item flex-row"><label>开发方式</label><el-tag size="small" class="custom-tag">全新品-定制</el-tag></div>
+                <div class="item"><label>开发品牌</label><span>MoKo</span></div>
+                <div class="item"><label>初始Logo位置</label><span>无</span></div>
+                <div class="item"><label>初始包装方式</label><span>盒装</span></div>
+                <div class="item"><label>首单采购数量</label><span>500</span></div>
+                <div class="item"><label>首单采购总金额</label><span>¥ 115,000.00</span></div>
+                <div class="item"><label>上架时间要求</label><span>2026-07-15</span></div>
+              </div>
+            </div>
+
+            <div class="info-card no-padding-bottom">
+              <h3 class="card-title">提案-时效要求</h3>
+              <div class="time-list">
+                <div class="time-row"><label>任务发布时间</label><span>05-20 09:00</span></div>
+                <div class="time-row"><label>反馈截止时间</label><span>05-22 18:00</span></div>
+                <div class="time-row"><label>任务截止时间</label><span>05-31 18:00</span></div>
+              </div>
+              <el-divider border-style="dotted" class="card-divider" />
+              <div class="card-countdown">
+                <div class="cd-box feedback">
+                  <div class="val">02<small>d</small>14<small>h</small></div>
+                  <div class="lab">反馈倒计时</div>
                 </div>
-              </template>
+                <div class="cd-box task">
+                  <div class="val">11<small>d</small>23<small>h</small></div>
+                  <div class="lab">任务倒计时</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. 提案-调研信息 -->
+          <div class="info-card mb-16">
+            <h3 class="card-title">提案-调研信息</h3>
+            <div class="data-grid grid-3 mb-20">
+              <div class="item"><label>产品来源</label><span>-</span></div>
+              <div class="item"><label>使用场景</label><span>室内居家、工作室</span></div>
+              <div class="item"><label>使用人群</label><span>全年龄段拼图爱好者</span></div>
               
-              <div class="popper-detail-panel">
-                <div class="p-header">成员办理进度 - {{ step }}</div>
-                <div class="p-list">
-                  <div v-for="user in getAssigneesAtStep(index)" :key="user.name" class="p-card">
-                    <div class="p-line-1">
-                      <span class="p-name">{{ user.name }}</span>
-                      <span class="p-status" :style="{ color: user.color, backgroundColor: user.color + '15' }">{{ user.status }}</span>
-                    </div>
-                    <div class="p-time">{{ user.time }}</div>
-                  </div>
-                </div>
+              <div class="item"><label>主攻市场</label><span>北美</span></div>
+              <div class="item"><label>季节标签</label><span>无</span></div>
+              <div class="item"><label>节日标签</label><span>无</span></div>
+
+              <div class="item span-2">
+                <label>卖点说明</label>
+                <span class="value-text">1.可旋转可调节高度拼图桌 2.改抽屉和腿，差评抽屉阻挡调节和旋转 放腿 3.优化腿部的结构，防止撞到小腿</span>
               </div>
-            </el-popover>
+              <div class="item"><label>市场预估</label><span>圣诞旺季产品 预估销量1000</span></div>
 
-            <div v-else class="step-node-trigger">
-              <div class="step-icon">
-                <span>{{ index + 1 }}</span>
+              <div class="item"><label>调研分析文档</label><el-link type="primary" :underline="false">空白.xls</el-link></div>
+              <div class="item flex-row">
+                <label><span class="red-star">*</span>参考链接1</label>
+                <el-link type="primary" :underline="false" class="ml-4">https://www.amazon.com/...</el-link>
               </div>
-              <div class="step-label">{{ step }}</div>
-            </div>
-            
-            <div v-if="index < steps.length - 1" class="step-line"></div>
-          </div>
-        </div>
-
-        <div class="workspace-body custom-scrollbar">
-          <div class="grid-layout">
-            <div class="info-block block-main">
-              <div class="block-title">提案基础信息</div>
-              <div class="field-group">
-                <div class="field"><label>运营大类</label><span>{{ currentTask.category }}</span></div>
-                <div class="field"><label>开发方式</label><span>{{ currentTask.devMethod }}</span></div>
-                <div class="field"><label>提案等级</label><el-tag size="small" type="warning">{{ currentTask.level }} 级</el-tag></div>
-                <div class="field"><label>产品经理</label><span>{{ currentTask.pm }}</span></div>
-                <div class="field"><label>款式</label><span>亚克力透明款</span></div>
-                <div class="field"><label>主材料</label><span>亚克力 + LED</span></div>
-              </div>
-            </div>
-
-            <div class="info-block block-time">
-              <div class="block-title">时效控制</div>
-              <div class="time-metrics" :class="{ 'is-custom': currentTask.sampleMethodText === '定制拿样' }">
-                <!-- 定制拿样特有：反馈倒计时 -->
-                <div class="metric" v-if="currentTask.sampleMethodText === '定制拿样'">
-                  <div class="m-val warning">02<small>天</small>14<small>时</small></div>
-                  <div class="m-lab">反馈倒计时</div>
-                </div>
-                
-                <div class="metric">
-                  <div class="m-val" :class="{ danger: currentTask.remainingDays <= 7 }">
-                    {{ currentTask.remainingDays }}<small>天</small>
-                  </div>
-                  <div class="m-lab">剩余拿样时间</div>
-                </div>
-
-                <div class="metric">
-                  <div class="m-val">23<small>时</small>45<small>分</small></div>
-                  <div class="m-lab">截止倒计时</div>
-                </div>
+              <div class="item flex-row align-start">
+                <label>参考图片</label>
+                <el-image :src="currentTask.image" class="ref-image-box" />
               </div>
             </div>
           </div>
 
-          <div class="info-block mt-16">
-            <div class="block-title">采购定制反馈 <el-button type="primary" link icon="Plus" size="small">添加反馈</el-button></div>
-            <el-table :data="feedbackData" size="small" border class="flat-table">
-              <el-table-column prop="no" label="反馈编号" width="150" />
-              <el-table-column prop="user" label="采购员" width="100" />
-              <el-table-column prop="moldFee" label="开模费" width="100">
-                <template #default="{ row }"><span class="price-text">¥ {{ row.moldFee }}</span></template>
-              </el-table-column>
-              <el-table-column prop="sampleFee" label="拿样费" width="100">
-                <template #default="{ row }"><span class="price-text">¥ {{ row.sampleFee }}</span></template>
-              </el-table-column>
-              <el-table-column prop="cycle" label="定制周期" width="100" align="center">
-                <template #default="{ row }">{{ row.cycle }} 天</template>
-              </el-table-column>
-              <el-table-column prop="remark" label="采购备注" min-width="200" show-overflow-tooltip />
-            </el-table>
-          </div>
+          <!-- 5. 提案-任务明细 -->
+          <div class="info-card">
+            <h3 class="card-title">提案-任务明细</h3>
+            <div class="detail-sub-title mb-12">
+              <el-icon class="icon"><Document /></el-icon>
+              <span>任务说明</span>
+            </div>
 
-          <div class="info-block mt-16">
-            <div class="block-title">样品登记信息 (SKU)</div>
-            <div class="sku-cards-container">
-              <div v-for="i in 3" :key="i" class="sku-mini-card">
-                <el-image src="https://picsum.photos/100/100?random=10" class="sku-img" />
-                <div class="sku-details">
-                  <div class="sku-row"><strong>黑色 / 通用</strong></div>
-                  <div class="sku-row"><span>净重: 0.617kg</span></div>
-                  <div class="sku-row"><span class="status-dot success">已入库</span></div>
-                </div>
+            <div class="data-grid grid-2 mb-20">
+              <div class="item">
+                <label>产品规格书</label>
+                <el-link type="primary" :underline="false">亲肤腰带-隐身薄款(市调).20260416.xlsx</el-link>
               </div>
-              <div class="sku-add-card">
-                <el-icon><Plus /></el-icon>
-                <span>登记样品</span>
+              <div class="item flex-row justify-end">
+                <label style="width: auto; margin-right: 12px;">底线采购价</label>
+                <span class="value" style="font-size: 16px; font-weight: 700; color: #262626;">32 CNY</span>
               </div>
+            </div>
+
+            <div class="supplementary-box mb-20">
+              <span class="label">补充说明</span>
+              <span class="content">请工厂重点确认魔术贴的使用寿命，以及边缘缝线是否容易脱落</span>
+            </div>
+
+            <div class="detail-sub-title mb-12">
+              <el-icon class="icon"><Management /></el-icon>
+              <span>任务执行</span>
             </div>
           </div>
         </div>
-      </div>
-      <div class="empty-workspace" v-else>
-        <el-empty description="选择左侧任务开启高效办公" />
-      </div>
-    </div>
-
-    <!-- 3. 管理员大表模式 -->
-    <div class="table-view-container" v-else>
-      <div class="table-header-bar modern-card mb-12">
-        <div class="left">
-          <el-button type="primary" size="small" icon="Operation" @click="viewMode = 'workbench'">返回工作台</el-button>
-          <el-divider direction="vertical" />
-          <el-input v-model="searchQuery" placeholder="全量任务搜索..." size="small" style="width: 250px" />
-        </div>
-        <div class="right">
-          <el-button-group>
-            <el-button size="small" icon="Download">导出全量</el-button>
-            <el-button size="small" icon="Printer">批量打印</el-button>
-          </el-button-group>
-        </div>
-      </div>
-
-      <div class="table-main-box modern-card">
-        <el-table :data="tableData" size="small" stripe border height="calc(100vh - 220px)">
-          <el-table-column type="index" label="#" width="50" fixed />
-          <el-table-column prop="proposalNo" label="提案编号" width="120" fixed />
-          <el-table-column prop="productName" label="产品名称" min-width="200" show-overflow-tooltip />
-          <el-table-column prop="pm" label="产品经理" width="100" />
-          <el-table-column prop="category" label="运营大类" width="120" />
-          <el-table-column prop="deadline" label="截止日期" width="120" sortable />
-          <el-table-column prop="remainingDays" label="剩余天数" width="100" align="center">
-            <template #default="{ row }">
-              <span :class="{ 'text-danger': row.isUrgent }">{{ row.remainingDays }} 天</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="receiverStatus" label="状态" width="100" align="center" />
-          <el-table-column label="操作" width="220" fixed="right" align="center">
-            <template #default="{ row }">
-              <el-button type="primary" link @click="switchToTask(row)">去处理</el-button>
-              <template v-if="row.receiverStatus === '待反馈'">
-                <el-button type="warning" link @click="handlePurchaseApply">购样申请</el-button>
-                <el-button type="primary" link @click="handleAccept">承接任务</el-button>
-              </template>
-              <template v-else>
-                <el-button type="info" link>转移</el-button>
-                <el-button type="success" link>结论</el-button>
-              </template>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
+      </main>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Search, CopyDocument, CircleCheckFilled, Timer, Plus, Operation, Check, Download, Printer } from '@element-plus/icons-vue'
+import { Search, Clock, CopyDocument, Check, Plus } from '@element-plus/icons-vue'
 
 const searchQuery = ref('')
-const activeTab = ref('unfinished')
-const viewMode = ref('workbench')
+const activeTab = ref('accepted')
 const currentTask = ref<any>(null)
 
 const statusTabs = [
@@ -337,686 +234,224 @@ const statusTabs = [
   { label: '样品待反馈', value: 'sample_feedback' }
 ]
 
-const steps = computed(() => {
-  if (currentTask.value?.sampleMethodText === '定制拿样') {
-    return ['任务发布', '任务承接', '定制反馈', '购样申请', '费用审批', '样品登记', '开发反馈', '任务归档']
-  }
-  return ['提案发起', '任务分配', '拿样反馈', '样品评估', '入库结案']
-})
-
-const filteredSideList = computed(() => {
-  const statusMap: Record<string, string> = {
-    unfinished: '待反馈',
-    accepted: '已承接',
-    custom_feedback: '定制反馈',
-    purchase_apply: '购样申请',
-    sample_feedback: '样品待反馈'
-  }
-  const targetStatus = statusMap[activeTab.value]
-  return tableData.value.filter(item => {
-    const isStatusMatch = item.receiverStatus === targetStatus
-    const isSearchMatch = !searchQuery.value || 
-                          item.productName.includes(searchQuery.value) || 
-                          item.proposalNo.includes(searchQuery.value)
-    return isStatusMatch && isSearchMatch
-  })
-})
+const steps = ['任务发布', '任务承接', '定制反馈', '购样申请', '费用审批', '样品登记', '开发反馈', '任务归档']
 
 const tableData = ref([
-  // 待反馈 (Status: 待反馈) - 6 items
   {
     image: 'https://picsum.photos/100/100?random=1',
     proposalNo: 'TA-202605049',
     productName: 'DIY灯光板 - 亚克力透明款',
-    devMethod: '派生品-拓新',
-    level: 'C',
     pm: '颜沙沙',
     sampleMethodText: '现货拿样',
     category: '家居装饰',
-    deadline: '2026-05-27',
     remainingDays: 7,
     isUrgent: true,
-    receiverStatus: '待反馈',
-    assignees: [{ name: '张三', status: '任务发布', step: 0, color: '#1890ff', time: '2026-05-20 09:30' }]
   },
   {
     image: 'https://picsum.photos/100/100?random=11',
-    proposalNo: 'TA-202605060',
-    productName: '智能香薰机 - 木纹版',
-    devMethod: '全新品-定制',
-    level: 'B',
-    pm: '王小明',
-    sampleMethodText: '定制拿样',
-    category: '生活电器',
-    deadline: '2026-05-28',
-    remainingDays: 8,
-    isUrgent: false,
-    receiverStatus: '待反馈',
-    assignees: [{ name: '李华', status: '任务发布', step: 0, color: '#52c41a', time: '2026-05-20 10:00' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=12',
     proposalNo: 'TA-202605061',
-    productName: '折叠笔记本支架',
-    devMethod: '现货采购',
-    level: 'A',
+    productName: '折叠笔记本支架 - 加厚版',
     pm: '赵敏',
     sampleMethodText: '现货拿样',
     category: '数码配件',
-    deadline: '2026-05-25',
     remainingDays: 5,
     isUrgent: true,
-    receiverStatus: '待反馈',
-    assignees: [{ name: '孙悟空', status: '任务发布', step: 0, color: '#faad14', time: '2026-05-20 08:45' }]
   },
   {
-    image: 'https://picsum.photos/100/100?random=13',
-    proposalNo: 'TA-202605062',
-    productName: '车载吸尘器 - 无线版',
-    devMethod: '全新品-定制',
-    level: 'C',
-    pm: '颜沙沙',
-    sampleMethodText: '定制拿样',
-    category: '汽车用品',
-    deadline: '2026-05-30',
-    remainingDays: 10,
-    isUrgent: false,
-    receiverStatus: '待反馈',
-    assignees: [{ name: '猪八戒', status: '任务发布', step: 0, color: '#ff4d4f', time: '2026-05-20 11:30' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=14',
-    proposalNo: 'TA-202605063',
-    productName: '桌面空气净化器',
-    devMethod: '派生品',
-    level: 'B',
-    pm: '周杰',
-    sampleMethodText: '现货拿样',
-    category: '生活电器',
-    deadline: '2026-05-26',
-    remainingDays: 6,
-    isUrgent: true,
-    receiverStatus: '待反馈',
-    assignees: [{ name: '沙僧', status: '任务发布', step: 0, color: '#722ed1', time: '2026-05-20 09:15' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=15',
-    proposalNo: 'TA-202605064',
-    productName: '蓝牙防丢器 - 迷你款',
-    devMethod: '拓新采购',
-    level: 'D',
-    pm: '刘德华',
-    sampleMethodText: '现货拿样',
-    category: '智能硬件',
-    deadline: '2026-06-05',
-    remainingDays: 15,
-    isUrgent: false,
-    receiverStatus: '待反馈',
-    assignees: [{ name: '郭富城', status: '任务发布', step: 0, color: '#13c2c2', time: '2026-05-20 14:00' }]
-  },
-
-  // 已承接 (Status: 已承接) - 6 items
-  {
-    image: 'https://picsum.photos/100/100?random=21',
-    proposalNo: 'TA-202605065',
-    productName: '人体工学鼠标 - 旗舰版',
-    devMethod: '全新品-定制',
-    level: 'A',
-    pm: '张学友',
-    sampleMethodText: '定制拿样',
-    category: '数码配件',
-    deadline: '2026-05-29',
-    remainingDays: 9,
-    isUrgent: true,
-    receiverStatus: '已承接',
-    assignees: [{ name: '黎明', status: '任务承接', step: 1, color: '#1890ff', time: '2026-05-20 10:30' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=22',
-    proposalNo: 'TA-202605066',
-    productName: '多功能露营灯',
-    devMethod: '派生品',
-    level: 'C',
-    pm: '颜沙沙',
-    sampleMethodText: '现货拿样',
-    category: '户外运动',
-    deadline: '2026-06-01',
-    remainingDays: 11,
-    isUrgent: false,
-    receiverStatus: '已承接',
-    assignees: [{ name: '陈奕迅', status: '任务承接', step: 1, color: '#52c41a', time: '2026-05-20 11:00' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=23',
-    proposalNo: 'TA-202605067',
-    productName: '降噪蓝牙耳机',
-    devMethod: '现货采购',
-    level: 'B',
-    pm: '周杰伦',
-    sampleMethodText: '现货拿样',
-    category: '数码配件',
-    deadline: '2026-05-27',
-    remainingDays: 7,
-    isUrgent: true,
-    receiverStatus: '已承接',
-    assignees: [{ name: '林俊杰', status: '任务承接', step: 1, color: '#faad14', time: '2026-05-20 09:45' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=24',
-    proposalNo: 'TA-202605068',
-    productName: '桌面加湿器 - 极简版',
-    devMethod: '拓新采购',
-    level: 'D',
-    pm: '邓紫棋',
-    sampleMethodText: '现货拿样',
-    category: '生活电器',
-    deadline: '2026-06-03',
-    remainingDays: 13,
-    isUrgent: false,
-    receiverStatus: '已承接',
-    assignees: [{ name: '王嘉尔', status: '任务承接', step: 1, color: '#ff4d4f', time: '2026-05-20 15:00' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=25',
+    image: 'https://picsum.photos/200/200?random=25',
     proposalNo: 'TA-202605069',
     productName: '电子墨水屏阅读器',
-    devMethod: '全新品-定制',
-    level: 'A',
     pm: '李健',
     sampleMethodText: '定制拿样',
     category: '智能硬件',
-    deadline: '2026-05-31',
     remainingDays: 11,
     isUrgent: false,
-    receiverStatus: '已承接',
-    assignees: [{ name: '毛不易', status: '任务承接', step: 1, color: '#722ed1', time: '2026-05-20 13:20' }]
   },
   {
-    image: 'https://picsum.photos/100/100?random=26',
-    proposalNo: 'TA-202605070',
-    productName: '机械键盘 - 复古款',
-    devMethod: '派生品',
-    level: 'B',
+    image: 'https://picsum.photos/200/200?random=22',
+    proposalNo: 'TA-202605066',
+    productName: '多功能露营灯',
     pm: '颜沙沙',
     sampleMethodText: '现货拿样',
-    category: '数码配件',
-    deadline: '2026-06-02',
-    remainingDays: 12,
-    isUrgent: false,
-    receiverStatus: '已承接',
-    assignees: [{ name: '肖战', status: '任务承接', step: 1, color: '#13c2c2', time: '2026-05-20 16:30' }]
-  },
-
-  // 定制反馈 (Status: 定制反馈) - 6 items
-  {
-    image: 'https://picsum.photos/100/100?random=2',
-    proposalNo: 'TA-202605051',
-    productName: '儿童画板 - 底座RGB9色灯',
-    devMethod: '全新品-定制',
-    level: 'D',
-    pm: '廖飞飞',
-    sampleMethodText: '定制拿样',
-    category: '游戏配件',
-    deadline: '2026-05-27',
-    remainingDays: 12,
-    isUrgent: false,
-    receiverStatus: '定制反馈',
-    assignees: [
-      { name: '李四', status: '定制反馈', step: 2, color: '#52c41a', time: '2026-05-19 14:20' },
-      { name: '王五', status: '任务承接', step: 1, color: '#faad14', time: '2026-05-18 11:05' }
-    ]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=31',
-    proposalNo: 'TA-202605071',
-    productName: '智能猫砂盆 - 自动清理版',
-    devMethod: '全新品-定制',
-    level: 'S',
-    pm: '严选',
-    sampleMethodText: '定制拿样',
-    category: '宠物用品',
-    deadline: '2026-06-10',
-    remainingDays: 20,
-    isUrgent: true,
-    receiverStatus: '定制反馈',
-    assignees: [{ name: '李想', status: '定制反馈', step: 2, color: '#1890ff', time: '2026-05-20 09:00' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=32',
-    proposalNo: 'TA-202605072',
-    productName: '便携式咖啡机',
-    devMethod: '派生品',
-    level: 'B',
-    pm: '颜沙沙',
-    sampleMethodText: '定制拿样',
-    category: '厨房电器',
-    deadline: '2026-06-05',
-    remainingDays: 15,
-    isUrgent: false,
-    receiverStatus: '定制反馈',
-    assignees: [{ name: '何炅', status: '定制反馈', step: 2, color: '#52c41a', time: '2026-05-20 10:45' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=33',
-    proposalNo: 'TA-202605073',
-    productName: '全息投影音箱',
-    devMethod: '拓新采购',
-    level: 'A',
-    pm: '汪涵',
-    sampleMethodText: '定制拿样',
-    category: '影音娱乐',
-    deadline: '2026-06-15',
-    remainingDays: 25,
-    isUrgent: false,
-    receiverStatus: '定制反馈',
-    assignees: [{ name: '撒贝宁', status: '定制反馈', step: 2, color: '#faad14', time: '2026-05-20 14:15' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=34',
-    proposalNo: 'TA-202605074',
-    productName: '智能健身环 - 互动版',
-    devMethod: '全新品-定制',
-    level: 'B',
-    pm: '蔡徐坤',
-    sampleMethodText: '定制拿样',
-    category: '运动器材',
-    deadline: '2026-06-08',
-    remainingDays: 18,
-    isUrgent: false,
-    receiverStatus: '定制反馈',
-    assignees: [{ name: '王一博', status: '定制反馈', step: 2, color: '#ff4d4f', time: '2026-05-20 11:30' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=35',
-    proposalNo: 'TA-202605075',
-    productName: '恒温电水壶 - 彩屏版',
-    devMethod: '派生品',
-    level: 'C',
-    pm: '赵丽颖',
-    sampleMethodText: '定制拿样',
-    category: '厨房电器',
-    deadline: '2026-06-12',
-    remainingDays: 22,
-    isUrgent: false,
-    receiverStatus: '定制反馈',
-    assignees: [{ name: '杨幂', status: '定制反馈', step: 2, color: '#722ed1', time: '2026-05-20 15:45' }]
-  },
-
-  // 购样申请 (Status: 购样申请) - 6 items
-  {
-    image: 'https://picsum.photos/100/100?random=41',
-    proposalNo: 'TA-202605076',
-    productName: '折叠电动滑板车',
-    devMethod: '拓新采购',
-    level: 'A',
-    pm: '颜沙沙',
-    sampleMethodText: '现货拿样',
-    category: '出行工具',
-    deadline: '2026-05-26',
-    remainingDays: 6,
-    isUrgent: true,
-    receiverStatus: '购样申请',
-    assignees: [{ name: '易烊千玺', status: '购样申请', step: 3, color: '#1890ff', time: '2026-05-20 09:30' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=42',
-    proposalNo: 'TA-202605077',
-    productName: '智能感应垃圾桶',
-    devMethod: '派生品',
-    level: 'B',
-    pm: '王俊凯',
-    sampleMethodText: '现货拿样',
-    category: '家居用品',
-    deadline: '2026-05-30',
-    remainingDays: 10,
-    isUrgent: false,
-    receiverStatus: '购样申请',
-    assignees: [{ name: '王源', status: '购样申请', step: 3, color: '#52c41a', time: '2026-05-20 10:00' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=43',
-    proposalNo: 'TA-202605078',
-    productName: '高速吹风机 - 负离子版',
-    devMethod: '全新品-定制',
-    level: 'A',
-    pm: '颜沙沙',
-    sampleMethodText: '定制拿样',
-    category: '个人护理',
-    deadline: '2026-05-28',
-    remainingDays: 8,
-    isUrgent: true,
-    receiverStatus: '购样申请',
-    assignees: [{ name: '迪丽热巴', status: '购样申请', step: 3, color: '#faad14', time: '2026-05-20 11:20' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=44',
-    proposalNo: 'TA-202605079',
-    productName: '多功能早餐机',
-    devMethod: '现货采购',
-    level: 'C',
-    pm: '古力娜扎',
-    sampleMethodText: '现货拿样',
-    category: '厨房电器',
-    deadline: '2026-06-04',
-    remainingDays: 14,
-    isUrgent: false,
-    receiverStatus: '购样申请',
-    assignees: [{ name: '佟丽娅', status: '购样申请', step: 3, color: '#ff4d4f', time: '2026-05-20 14:40' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=45',
-    proposalNo: 'TA-202605080',
-    productName: '智能筋膜枪 - 迷你款',
-    devMethod: '拓新采购',
-    level: 'B',
-    pm: '颜沙沙',
-    sampleMethodText: '现货拿样',
-    category: '健康保健',
-    deadline: '2026-05-27',
-    remainingDays: 7,
-    isUrgent: true,
-    receiverStatus: '购样申请',
-    assignees: [{ name: '黄渤', status: '购样申请', step: 3, color: '#722ed1', time: '2026-05-20 15:50' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=46',
-    proposalNo: 'TA-202605081',
-    productName: '颈椎按摩仪',
-    devMethod: '派生品',
-    level: 'C',
-    pm: '沈腾',
-    sampleMethodText: '现货拿样',
-    category: '健康保健',
-    deadline: '2026-06-06',
-    remainingDays: 16,
-    isUrgent: false,
-    receiverStatus: '购样申请',
-    assignees: [{ name: '贾玲', status: '购样申请', step: 3, color: '#13c2c2', time: '2026-05-20 17:10' }]
-  },
-
-  // 样品待反馈 (Status: 样品待反馈) - 6 items
-  {
-    image: 'https://picsum.photos/100/100?random=51',
-    proposalNo: 'TA-202605082',
-    productName: '猫咪自动饮水机',
-    devMethod: '现货采购',
-    level: 'B',
-    pm: '颜沙沙',
-    sampleMethodText: '现货拿样',
-    category: '宠物用品',
-    deadline: '2026-05-25',
-    remainingDays: 5,
-    isUrgent: true,
-    receiverStatus: '样品待反馈',
-    assignees: [{ name: '张子枫', status: '开发反馈', step: 6, color: '#1890ff', time: '2026-05-20 09:10' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=52',
-    proposalNo: 'TA-202605083',
-    productName: '智能感应小夜灯',
-    devMethod: '派生品',
-    level: 'D',
-    pm: '彭昱畅',
-    sampleMethodText: '现货拿样',
-    category: '家居灯饰',
-    deadline: '2026-05-29',
-    remainingDays: 9,
-    isUrgent: false,
-    receiverStatus: '样品待反馈',
-    assignees: [{ name: '张艺兴', status: '开发反馈', step: 6, color: '#52c41a', time: '2026-05-20 10:30' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=53',
-    proposalNo: 'TA-202605084',
-    productName: '多功能工具钳',
-    devMethod: '拓新采购',
-    level: 'C',
-    pm: '颜沙沙',
-    sampleMethodText: '现货拿样',
-    category: '五金工具',
-    deadline: '2026-05-28',
-    remainingDays: 8,
-    isUrgent: true,
-    receiverStatus: '样品待反馈',
-    assignees: [{ name: '黄磊', status: '开发反馈', step: 6, color: '#faad14', time: '2026-05-20 11:45' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=54',
-    proposalNo: 'TA-202605085',
-    productName: '便携式投影仪',
-    devMethod: '全新品-定制',
-    level: 'A',
-    pm: '何炅',
-    sampleMethodText: '定制拿样',
-    category: '影音娱乐',
-    deadline: '2026-06-07',
-    remainingDays: 17,
-    isUrgent: false,
-    receiverStatus: '样品待反馈',
-    assignees: [{ name: '谢娜', status: '开发反馈', step: 6, color: '#ff4d4f', time: '2026-05-20 15:15' }]
-  },
-  {
-    image: 'https://picsum.photos/100/100?random=55',
-    proposalNo: 'TA-202605086',
-    productName: '真无线降噪耳机',
-    devMethod: '拓新采购',
-    level: 'B',
-    pm: '颜沙沙',
-    sampleMethodText: '现货拿样',
-    category: '数码配件',
-    deadline: '2026-05-31',
+    category: '户外运动',
     remainingDays: 11,
     isUrgent: false,
-    receiverStatus: '样品待反馈',
-    assignees: [{ name: '维嘉', status: '开发反馈', step: 6, color: '#722ed1', time: '2026-05-20 16:40' }]
   },
   {
-    image: 'https://picsum.photos/100/100?random=56',
-    proposalNo: 'TA-202605087',
-    productName: '智能跳绳 - 计数版',
-    devMethod: '派生品',
-    level: 'C',
-    pm: '吴昕',
+    image: 'https://picsum.photos/200/200?random=24',
+    proposalNo: 'TA-202605068',
+    productName: '桌面加湿器 - 极简版',
+    pm: '邓紫棋',
     sampleMethodText: '现货拿样',
-    category: '运动器材',
-    deadline: '2026-06-03',
+    category: '生活电器',
     remainingDays: 13,
     isUrgent: false,
-    receiverStatus: '样品待反馈',
-    assignees: [{ name: '海涛', status: '开发反馈', step: 6, color: '#13c2c2', time: '2026-05-20 17:50' }]
+  },
+  {
+    image: 'https://picsum.photos/200/200?random=26',
+    proposalNo: 'TA-202605070',
+    productName: '机械键盘 - 复古款',
+    pm: '颜沙沙',
+    sampleMethodText: '现货拿样',
+    category: '数码配件',
+    remainingDays: 12,
+    isUrgent: false,
   }
 ])
 
-const feedbackData = ref([
-  { no: 'FB2026052001', user: '张三', moldFee: '1200', sampleFee: '50', cycle: '15', remark: '供应商反馈模具需重新开发' }
-])
+currentTask.value = tableData.value[2]
 
-// 设置默认选中一个“定制拿样”的任务，以便观察倒计时变化
-currentTask.value = tableData.value[1] 
+const urgentTasks = computed(() => tableData.value.filter(i => i.isUrgent))
+const normalTasks = computed(() => tableData.value.filter(i => !i.isUrgent))
 
-const getAssigneesAtStep = (index: number) => {
-  return currentTask.value?.assignees?.filter((a: any) => a.step === index) || []
-}
-
-const isStepFullyDone = (index: number) => {
-  if (!currentTask.value?.assignees) return false
-  return currentTask.value.assignees.every((a: any) => a.step > index)
-}
-
-const getStepClass = (index: number) => {
-  if (!currentTask.value?.assignees) return ''
-  const anyAtStep = currentTask.value.assignees.some((a: any) => a.step === index)
-  const allBeyondStep = currentTask.value.assignees.every((a: any) => a.step > index)
-  
-  if (allBeyondStep) return 'done'
-  if (anyAtStep) return 'active'
-  return ''
-}
-
-const switchToTask = (row: any) => {
-  currentTask.value = row
-  viewMode.value = 'workbench'
-}
-
-const handleAccept = () => {
-  if (currentTask.value) {
-    currentTask.value.receiverStatus = '已承接'
-    // 实际业务逻辑：调用接口更新状态
-  }
-}
-
-const handlePurchaseApply = () => {
-  // 实际业务逻辑：打开购样申请弹窗
-  console.log('Open Purchase Apply Dialog')
+const getStepStatus = (index: number) => {
+  if (index < 1) return 'done'
+  if (index === 1) return 'active'
+  return 'pending'
 }
 </script>
 
 <style lang="scss" scoped>
-.page-wrapper { padding: 12px; background: #f0f2f5; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-.modern-card { background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
-.mb-12 { margin-bottom: 12px; }
+.sample-task-page { height: 100vh; background: #f0f2f5; display: flex; flex-direction: column; }
+.workbench-layout { display: flex; flex: 1; overflow: hidden; }
 
-/* 管理看板 */
-.manager-dashboard {
-  display: flex; gap: 24px; padding: 16px 24px; flex-shrink: 0;
-  .dash-item {
-    flex: 1; border-right: 1px solid #f0f0f0;
-    &:last-child { border-right: none; }
-    .d-label { font-size: 12px; color: #8c8c8c; margin-bottom: 4px; }
-    .d-value { font-size: 24px; font-weight: 800; color: #262626; small { font-size: 14px; font-weight: 400; } }
-    &.urgent .d-value { color: #f5222d; }
-  }
-}
-
-.workbench-container { display: flex; flex: 1; overflow: hidden; gap: 12px; }
-
-.list-side {
-  width: 320px; background: #fff; border-radius: 8px; display: flex; flex-direction: column; flex-shrink: 0;
+// Side Panel
+.side-panel {
+  width: 320px; background: #fff; border-right: 1px solid #e8e8e8; display: flex; flex-direction: column;
   .side-header {
-    padding: 16px; border-bottom: 1px solid #f0f0f0;
-    .filter-bar { display: flex; gap: 10px; margin-bottom: 12px; }
-    .side-stats-mini {
-      display: flex; gap: 8px; margin-bottom: 12px;
-      .s-item {
-        flex: 1; background: #f5f5f5; border-radius: 4px; padding: 6px; text-align: center;
-        span { display: block; font-size: 10px; color: #8c8c8c; }
-        b { font-size: 14px; color: #262626; }
-        &.urgent { background: #fff1f0; b { color: #f5222d; } }
+    padding: 12px; border-bottom: 1px solid #f0f0f0;
+    .search-box { margin-bottom: 12px; }
+    .urgent-container {
+      background: #fafafa; border: 1px solid #f0f0f0; border-radius: 8px; padding: 12px; margin-bottom: 12px;
+      .urgent-summary-line {
+        display: flex; align-items: center; margin-bottom: 12px;
+        .clock-icon { color: #f5222d; margin-right: 8px; font-size: 14px; }
+        .label { color: #f5222d; font-size: 12px; font-weight: 600; flex: 1; }
+        .count-badge { background: #f5222d; color: #fff; font-size: 11px; padding: 1px 6px; border-radius: 10px; }
       }
-    }
-    .status-scroll-tabs {
-      display: flex; gap: 12px; overflow-x: auto;
-      .mini-tab { white-space: nowrap; font-size: 12px; color: #8c8c8c; cursor: pointer; padding-bottom: 4px;
-        &.active { color: #1890ff; font-weight: 600; border-bottom: 2px solid #1890ff; }
-      }
-    }
-  }
-  .side-content {
-    flex: 1; overflow-y: auto; padding: 12px;
-    .list-group-title { font-size: 11px; color: #bfbfbf; margin: 16px 0 8px 4px; }
-    .task-card-mini {
-      background: #fafafa; border-radius: 8px; padding: 12px; margin-bottom: 12px; cursor: pointer; border: 1px solid transparent;
-      &.active { background: #e6f7ff; border-color: #1890ff; }
-      &.urgent-border { border-left: 3px solid #f5222d; }
-      .card-top { display: flex; justify-content: space-between; margin-bottom: 8px; .no { font-size: 12px; color: #8c8c8c; } }
-      .card-main { display: flex; gap: 10px; .mini-img { width: 44px; height: 44px; border-radius: 4px; }
-        .main-info { .name { font-size: 13px; font-weight: 600; color: #262626; } .meta { font-size: 11px; color: #8c8c8c; } }
-      }
-      .card-footer { display: flex; align-items: center; gap: 8px; margin-top: 8px;
-        .progress-mini { flex: 1; height: 4px; background: #e8e8e8; border-radius: 2px; .p-bar { height: 100%; background: #1890ff; border-radius: 2px; } }
-        .status-text { font-size: 11px; color: #faad14; }
-      }
-    }
-  }
-}
-
-.detail-workspace {
-  flex: 1; background: #fff; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden;
-  .workspace-header { padding: 16px 24px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;
-    .header-left { display: flex; align-items: center; h2 { margin: 0 12px; font-size: 18px; } .id-copy { font-size: 13px; color: #8c8c8c; } }
-  }
-  .workflow-stepper {
-    padding: 30px 40px; display: flex; justify-content: space-between; border-bottom: 1px solid #f0f0f0; background: #fff;
-    .step-item {
-      flex: 1; display: flex; flex-direction: column; align-items: center; position: relative;
-      .step-node-trigger {
-        display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; z-index: 5;
-        .step-icon {
-          width: 26px; height: 26px; border-radius: 50%; border: 2px solid #d9d9d9;
-          display: flex; align-items: center; justify-content: center; font-size: 12px;
-          background: #fff; transition: all 0.3s;
-        }
-        .step-label { margin-top: 8px; font-size: 12px; color: #8c8c8c; font-weight: 500; white-space: nowrap; }
-        
-        .member-badges {
-          position: absolute; top: -6px; right: -6px; display: flex; gap: 2px;
-          .m-dot { width: 8px; height: 8px; border-radius: 50%; border: 1px solid #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+      .urgent-card-list {
+        display: flex; flex-direction: column; gap: 8px;
+        .urgent-mini-card {
+          background: #fff; border: 1px solid #f0f0f0; border-radius: 4px; padding: 10px; cursor: pointer; position: relative;
+          &.active { border-color: #1890ff; background: #f0f7ff; }
+          &::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #f5222d; }
+          .card-top { display: flex; justify-content: space-between; margin-bottom: 8px; .id { font-size: 11px; color: #8c8c8c; } .urgent-label-tag { background: #f5222d; color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 2px; } }
+          .card-main { display: flex; gap: 8px; .product-thumb { width: 36px; height: 36px; border-radius: 2px; } .info { overflow: hidden; .title { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .sub { font-size: 11px; color: #8c8c8c; } } }
         }
       }
-      .step-line {
-        position: absolute; left: calc(50% + 13px); right: calc(-50% + 13px); height: 2px;
-        background: #d9d9d9; top: 13px; z-index: 1; transition: all 0.3s;
+    }
+    .tabs-scroll-nav {
+      display: flex; gap: 16px; overflow-x: auto; padding-bottom: 4px;
+      &::-webkit-scrollbar { height: 0; }
+      .tab-item {
+        white-space: nowrap; font-size: 12px; color: #8c8c8c; cursor: pointer; padding: 8px 0; position: relative;
+        &.active { color: #1890ff; font-weight: 600; &::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: #1890ff; } }
       }
-      &.done {
-        .step-icon { border-color: #52c41a; color: #52c41a; }
-        .step-line { background: #52c41a; }
-        .step-label { color: #262626; }
-      }
-      &.active {
-        .step-icon { border-color: #1890ff; background: #1890ff; color: #fff; box-shadow: 0 0 0 4px rgba(24,144,255,0.1); }
-        .step-label { color: #1890ff; font-weight: 600; }
-      }
+    }
+  }
+  .side-body {
+    flex: 1; padding: 12px; overflow-y: auto; background: #fff;
+    .normal-task-card {
+      background: #fff; border: 1px solid #f0f0f0; border-radius: 4px; padding: 12px; margin-bottom: 12px; cursor: pointer;
+      &.active { border-color: #1890ff; background: #f0f7ff; }
+      .card-top { display: flex; justify-content: space-between; margin-bottom: 10px; .id { font-size: 12px; color: #bfbfbf; } .days-tag { font-size: 11px; color: #fa8c16; background: #fff7e6; border: 1px solid #ffd591; padding: 1px 6px; border-radius: 4px; } }
+      .card-main { display: flex; gap: 12px; .product-thumb { width: 44px; height: 44px; border-radius: 4px; } .info { overflow: hidden; .title { font-size: 13px; font-weight: 600; color: #262626; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .sub { font-size: 11px; color: #bfbfbf; .v-line { margin: 0 4px; } } } }
+      .card-footer { margin-top: 10px; text-align: right; .separator-line { height: 1px; background: #f0f0f0; margin-bottom: 8px; } .status-link { font-size: 11px; color: #bfbfbf; text-decoration: underline; cursor: default; } }
     }
   }
 }
 
-.popper-detail-panel {
-  .p-header { padding: 10px 12px; background: #fafafa; border-bottom: 1px solid #f0f0f0; font-size: 12px; font-weight: 600; color: #595959; }
-  .p-list { padding: 8px; display: flex; flex-direction: column; gap: 8px; }
-  .p-card {
-    padding: 8px 10px; background: #fff; border-radius: 4px; border: 1px solid #f0f0f0;
-    &:hover { border-color: #1890ff; }
-    .p-line-1 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;
-      .p-name { font-size: 13px; font-weight: 600; color: #262626; }
-      .p-status { font-size: 11px; padding: 1px 6px; border-radius: 10px; }
-    }
-    .p-time { font-size: 11px; color: #bfbfbf; font-family: monospace; }
+// Main Content
+.main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; }
+.content-header { padding: 16px 24px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;
+  .header-left { display: flex; align-items: center; gap: 8px; .product-name { margin: 0 12px; font-size: 18px; font-weight: 700; } .proposal-id { display: flex; align-items: center; gap: 4px; color: #bfbfbf; font-size: 13px; } }
+}
+.stepper-container { padding: 24px 60px; display: flex; justify-content: space-between; border-bottom: 1px solid #f0f0f0;
+  .step-node { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative;
+    .circle { width: 26px; height: 26px; border-radius: 50%; border: 1px solid #d9d9d9; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+    .label { margin-top: 8px; font-size: 12px; color: #bfbfbf; }
+    .line { position: absolute; left: calc(50% + 13px); right: calc(-50% + 13px); height: 1px; background: #f0f0f0; top: 13px; &.completed { background: #52c41a; } }
+    &.done { .circle { background: #52c41a; border-color: #52c41a; color: #fff; } .label { color: #52c41a; } }
+    &.active { .circle { background: #1890ff; border-color: #1890ff; color: #fff; } .label { color: #1890ff; font-weight: 600; } }
   }
 }
 
-.workspace-body { flex: 1; overflow-y: auto; padding: 20px;
-  .grid-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
-  .info-block { padding: 20px; border: 1px solid #f0f0f0; border-radius: 8px;
-    .block-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
-      &::before { content: ''; width: 3px; height: 14px; background: #1890ff; }
+.content-body { flex: 1; padding: 24px; overflow-y: auto; background: #f0f2f5;
+  .info-cards-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .info-card { 
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    .card-title { font-size: 14px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; &::before { content: ''; width: 3px; height: 14px; background: #1890ff; margin-right: 8px; } }
+    
+    // Grid for horizontal label-value
+    .card-grid { 
+      display: grid; grid-template-columns: 1fr; gap: 12px; 
+      .item { 
+        display: flex; align-items: baseline;
+        label { width: 90px; font-size: 12px; color: #8c8c8c; flex-shrink: 0; margin-bottom: 0; }
+        span { font-size: 13px; color: #262626; font-weight: 500; }
+      }
     }
-  }
-  .field-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
-    .field { label { display: block; font-size: 12px; color: #8c8c8c; margin-bottom: 4px; } span { font-size: 14px; font-weight: 500; } }
-  }
-  .time-metrics { display: flex; justify-content: space-around; 
-    .metric { text-align: center; 
-      .m-val { font-size: 22px; font-weight: 800; 
-        &.danger { color: #f5222d; } 
-        &.warning { color: #faad14; }
-        small { font-size: 12px; font-weight: 400; margin: 0 2px; }
-      } 
-      .m-lab { font-size: 12px; color: #8c8c8c; } 
+    
+    .time-list {
+      padding: 4px 0;
+      .time-row { 
+        display: flex; align-items: baseline; margin-bottom: 10px; 
+        label { width: 100px; font-size: 12px; color: #8c8c8c; flex-shrink: 0; }
+        span { font-size: 13px; color: #262626; font-weight: 600; flex: 1; text-align: right; }
+      }
     }
-    &.is-custom { display: grid; grid-template-columns: repeat(3, 1fr); }
-  }
-  .sku-cards-container { display: flex; gap: 16px; overflow-x: auto; .sku-mini-card { width: 180px; flex-shrink: 0; background: #fafafa; padding: 12px; border-radius: 8px; display: flex; gap: 12px; .sku-img { width: 50px; height: 50px; } .sku-details { font-size: 12px; } }
-    .sku-add-card { width: 100px; flex-shrink: 0; border: 1px dashed #d9d9d9; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #8c8c8c; cursor: pointer; }
+    
+    .card-divider { margin: 12px 0; border-color: #f0f0f0; }
+    
+    .card-countdown {
+      display: flex; gap: 8px; margin: 0 -20px -20px; padding: 16px 20px; background: #f8fafc; border-radius: 0 0 8px 8px; border-top: 1px solid #edf2f7;
+      .cd-box {
+        flex: 1; text-align: center; background: #fff; border-radius: 6px; padding: 10px 0; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        .val { font-size: 18px; font-weight: 700; margin-bottom: 2px; small { font-size: 11px; margin-left: 1px; font-weight: 400; } }
+        .lab { font-size: 11px; color: #8c8c8c; }
+        &.feedback { .val { color: #fa8c16; } }
+        &.task { .val { color: #262626; } }
+      }
+    }
+
+    // Grid for horizontal label-value in research/details blocks
+    .data-grid { 
+      display: grid; gap: 16px 40px; 
+      &.grid-3 { grid-template-columns: repeat(3, 1fr); }
+      &.grid-2 { grid-template-columns: repeat(2, 1fr); }
+      .item.span-2 { grid-column: span 2; }
+    }
+    
+    .item {
+      display: flex; align-items: baseline;
+      label { width: 90px; font-size: 12px; color: #8c8c8c; flex-shrink: 0; margin-bottom: 0; }
+      span { font-size: 13px; color: #262626; font-weight: 600; flex: 1; }
+      &.flex-row { display: flex; align-items: center; label { margin-right: 0; } }
+      &.align-start { align-items: flex-start; }
+      .value-text { font-size: 13px; color: #262626; font-weight: 600; line-height: 1.6; }
+      .red-star { color: #f5222d; margin-right: 2px; font-weight: bold; }
+    }
+    
+    .ref-image-box { width: 44px; height: 44px; border-radius: 4px; border: 1px solid #e8e8e8; margin-top: 4px; }
+    .detail-sub-title {
+      display: flex; align-items: center; gap: 8px; margin-top: 8px;
+      .icon { color: #1890ff; font-size: 16px; }
+      span { font-size: 13px; font-weight: 700; color: #1e293b; }
+    }
+    .footer-row-flex { display: flex; justify-content: space-between; align-items: center; .price-col { .label { font-size: 12px; color: #8c8c8c; margin-right: 24px; } .value { font-size: 14px; font-weight: 700; } } }
+    .supplementary-box { 
+      display: flex; align-items: baseline; background: #fffdf6; border: 1px solid #fef3c7; border-radius: 6px; padding: 14px 18px; 
+      .label { font-size: 12px; color: #92400e; margin-right: 24px; flex-shrink: 0; font-weight: 600; } 
+      .content { font-size: 13px; color: #78350f; font-weight: 500; line-height: 1.6; } 
+    }
   }
 }
 
-.table-view-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.table-header-bar { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-.table-main-box { flex: 1; overflow: hidden; }
-
-.text-danger { color: #f5222d; }
-.mt-16 { margin-top: 16px; }
-.mr-8 { margin-right: 8px; }
-.price-text { color: #f5222d; font-weight: 700; }
+.custom-tag { background: #fff; border-color: #d9d9d9; color: #262626; font-weight: normal; border-radius: 4px; }
+.mb-20 { margin-bottom: 20px; }
+.mb-16 { margin-bottom: 16px; }
+.mb-12 { margin-bottom: 12px; }
+.ml-8 { margin-left: 8px; }
+.ml-4 { margin-left: 4px; }
 .custom-scrollbar { &::-webkit-scrollbar { width: 4px; } &::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 2px; } }
 </style>
