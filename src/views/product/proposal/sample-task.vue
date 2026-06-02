@@ -86,7 +86,7 @@
               <el-button class="action-btn plain">转移任务</el-button>
             </template>
             <template v-else-if="currentTask.sampleMethodText === '现货拿样'">
-              <el-button type="primary" class="action-btn blue">购样申请</el-button>
+              <el-button type="primary" class="action-btn blue" @click="handlePurchaseApply()">购样申请</el-button>
               <el-button type="primary" icon="Plus" class="action-btn blue">样品登记</el-button>
               <el-button class="action-btn plain">转移任务</el-button>
             </template>
@@ -256,7 +256,7 @@
                     </template>
                     <template v-if="row.status === '已采纳'">
                       <el-button v-if="row.feeAmount === '¥ 0.00'" type="primary" link size="small">样品登记</el-button>
-                      <el-button v-else type="primary" link size="small">购样申请</el-button>
+                      <el-button v-else type="primary" link size="small" @click="handlePurchaseApply(row)">购样申请</el-button>
                     </template>
                   </template>
                 </el-table-column>
@@ -267,8 +267,9 @@
       </main>
     </div>
     
-    <!-- 定制反馈弹窗 -->
+    <!-- 弹窗组件挂载 -->
     <CustomFeedbackDialog ref="customFeedbackRef" />
+    <PurchaseApplyDialog ref="purchaseApplyRef" />
   </div>
 </template>
 
@@ -276,11 +277,13 @@
 import { ref, computed } from 'vue'
 import { Search, Clock, CopyDocument, Check, Plus, Document, Management } from '@element-plus/icons-vue'
 import CustomFeedbackDialog from './components/CustomFeedbackDialog.vue'
+import PurchaseApplyDialog from './components/PurchaseApplyDialog.vue'
 
 const searchQuery = ref('')
 const activeTab = ref('accepted')
 const currentTask = ref<any>(null)
 const customFeedbackRef = ref<any>(null)
+const purchaseApplyRef = ref<any>(null)
 
 const statusTabs = [
   { label: '未完成', value: 'unfinished' },
@@ -368,6 +371,15 @@ const getStepStatus = (index: number) => {
 
 const handleCustomFeedback = () => {
   customFeedbackRef.value?.open()
+}
+
+const handlePurchaseApply = (row?: any) => {
+  console.log('Opening Purchase Apply Dialog', row)
+  if (purchaseApplyRef.value) {
+    purchaseApplyRef.value.open(row)
+  } else {
+    console.error('purchaseApplyRef is not initialized')
+  }
 }
 
 const feedbackListData = ref([
