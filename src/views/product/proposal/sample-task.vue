@@ -81,9 +81,20 @@
             </div>
           </div>
           <div class="header-actions">
-            <el-button type="primary" class="action-btn blue">定制反馈</el-button>
-            <el-button type="primary" icon="Plus" class="action-btn blue">样品登记</el-button>
-            <el-button class="action-btn plain">转移任务</el-button>
+            <template v-if="currentTask.sampleMethodText === '定制拿样'">
+              <el-button type="primary" class="action-btn blue" @click="handleCustomFeedback">定制反馈</el-button>
+              <el-button class="action-btn plain">转移任务</el-button>
+            </template>
+            <template v-else-if="currentTask.sampleMethodText === '现货拿样'">
+              <el-button type="primary" class="action-btn blue">购样申请</el-button>
+              <el-button type="primary" icon="Plus" class="action-btn blue">样品登记</el-button>
+              <el-button class="action-btn plain">转移任务</el-button>
+            </template>
+            <template v-else>
+              <el-button type="primary" class="action-btn blue">反馈</el-button>
+              <el-button type="primary" icon="Plus" class="action-btn blue">样品登记</el-button>
+              <el-button class="action-btn plain">转移任务</el-button>
+            </template>
           </div>
         </header>
 
@@ -102,11 +113,11 @@
         </div>
 
         <div class="content-body custom-scrollbar">
-          <!-- 顶部三列卡片布局 -->
-          <div class="info-cards-row mb-16">
+          <!-- 顶部卡片布局：三个卡片并排显示 -->
+          <div class="info-cards-row mb-12">
             <div class="info-card">
               <h3 class="card-title">提案-基础信息</h3>
-              <div class="card-grid">
+              <div class="card-grid grid-2">
                 <div class="item"><label>运营大类</label><span>智能硬件</span></div>
                 <div class="item"><label>团队负责人</label><span>廖飞飞</span></div>
                 <div class="item"><label>产品经理</label><span>{{ currentTask.pm }}</span></div>
@@ -121,7 +132,7 @@
 
             <div class="info-card">
               <h3 class="card-title">提案-拿样要求</h3>
-              <div class="card-grid">
+              <div class="card-grid grid-2">
                 <div class="item flex-row"><label>开发方式</label><el-tag size="small" class="custom-tag">全新品-定制</el-tag></div>
                 <div class="item"><label>开发品牌</label><span>MoKo</span></div>
                 <div class="item"><label>初始Logo位置</label><span>无</span></div>
@@ -154,7 +165,7 @@
           </div>
 
           <!-- 4. 提案-调研信息 -->
-          <div class="info-card mb-16">
+          <div class="info-card mb-12">
             <h3 class="card-title">提案-调研信息</h3>
             <div class="data-grid grid-3 mb-20">
               <div class="item"><label>产品来源</label><span>-</span></div>
@@ -215,16 +226,21 @@
         </div>
       </main>
     </div>
+    
+    <!-- 定制反馈弹窗 -->
+    <CustomFeedbackDialog ref="customFeedbackRef" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Search, Clock, CopyDocument, Check, Plus } from '@element-plus/icons-vue'
+import { Search, Clock, CopyDocument, Check, Plus, Document, Management } from '@element-plus/icons-vue'
+import CustomFeedbackDialog from './components/CustomFeedbackDialog.vue'
 
 const searchQuery = ref('')
 const activeTab = ref('accepted')
 const currentTask = ref<any>(null)
+const customFeedbackRef = ref<any>(null)
 
 const statusTabs = [
   { label: '未完成', value: 'unfinished' },
@@ -309,6 +325,10 @@ const getStepStatus = (index: number) => {
   if (index === 1) return 'active'
   return 'pending'
 }
+
+const handleCustomFeedback = () => {
+  customFeedbackRef.value?.open()
+}
 </script>
 
 <style lang="scss" scoped>
@@ -376,15 +396,16 @@ const getStepStatus = (index: number) => {
   }
 }
 
-.content-body { flex: 1; padding: 24px; overflow-y: auto; background: #f0f2f5;
+.content-body { flex: 1; padding: 12px 16px; overflow-y: auto; background: #f0f2f5;
   .info-cards-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
   .info-card { 
-    background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1px 20px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     .card-title { font-size: 14px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; &::before { content: ''; width: 3px; height: 14px; background: #1890ff; margin-right: 8px; } }
     
     // Grid for horizontal label-value
     .card-grid { 
       display: grid; grid-template-columns: 1fr; gap: 12px; 
+      &.grid-2 { grid-template-columns: repeat(2, 1fr); gap: 12px 24px; }
       .item { 
         display: flex; align-items: baseline;
         label { width: 90px; font-size: 12px; color: #8c8c8c; flex-shrink: 0; margin-bottom: 0; }
@@ -447,9 +468,18 @@ const getStepStatus = (index: number) => {
   }
 }
 
-.custom-tag { background: #fff; border-color: #d9d9d9; color: #262626; font-weight: normal; border-radius: 4px; }
+.custom-tag { 
+  background: #e6f7ff; 
+  border-color: #91d5ff; 
+  color: #1890ff; 
+  font-weight: 500; 
+  border-radius: 4px;
+  padding: 0 8px;
+  height: 22px;
+  line-height: 20px;
+}
 .mb-20 { margin-bottom: 20px; }
-.mb-16 { margin-bottom: 16px; }
+.mb-12 { margin-bottom: 16px; }
 .mb-12 { margin-bottom: 12px; }
 .ml-8 { margin-left: 8px; }
 .ml-4 { margin-left: 4px; }
