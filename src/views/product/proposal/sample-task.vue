@@ -87,12 +87,12 @@
             </template>
             <template v-else-if="currentTask.sampleMethodText === '现货拿样'">
               <el-button type="primary" class="action-btn blue" @click="handlePurchaseApply()">购样申请</el-button>
-              <el-button type="primary" icon="Plus" class="action-btn blue">样品登记</el-button>
+              <el-button type="primary" icon="Plus" class="action-btn blue" @click="handleSampleRegistration()">样品登记</el-button>
               <el-button class="action-btn plain">转移任务</el-button>
             </template>
             <template v-else>
               <el-button type="primary" class="action-btn blue">反馈</el-button>
-              <el-button type="primary" icon="Plus" class="action-btn blue">样品登记</el-button>
+              <el-button type="primary" icon="Plus" class="action-btn blue" @click="handleSampleRegistration()">样品登记</el-button>
               <el-button class="action-btn plain">转移任务</el-button>
             </template>
           </div>
@@ -255,7 +255,7 @@
                       <el-button type="danger" link size="small">删除</el-button>
                     </template>
                     <template v-if="row.status === '已采纳'">
-                      <el-button v-if="row.feeAmount === '¥ 0.00'" type="primary" link size="small">样品登记</el-button>
+                      <el-button v-if="row.feeAmount === '¥ 0.00'" type="primary" link size="small" @click="handleSampleRegistration(row)">样品登记</el-button>
                       <el-button v-else type="primary" link size="small" @click="handlePurchaseApply(row)">购样申请</el-button>
                     </template>
                   </template>
@@ -270,6 +270,7 @@
     <!-- 弹窗组件挂载 -->
     <CustomFeedbackDialog ref="customFeedbackRef" />
     <PurchaseApplyDialog ref="purchaseApplyRef" />
+    <SampleRegistrationDialog ref="sampleRegistrationRef" />
   </div>
 </template>
 
@@ -278,12 +279,14 @@ import { ref, computed } from 'vue'
 import { Search, Clock, CopyDocument, Check, Plus, Document, Management } from '@element-plus/icons-vue'
 import CustomFeedbackDialog from './components/CustomFeedbackDialog.vue'
 import PurchaseApplyDialog from './components/PurchaseApplyDialog.vue'
+import SampleRegistrationDialog from './components/SampleRegistrationDialog.vue'
 
 const searchQuery = ref('')
 const activeTab = ref('accepted')
 const currentTask = ref<any>(null)
 const customFeedbackRef = ref<any>(null)
 const purchaseApplyRef = ref<any>(null)
+const sampleRegistrationRef = ref<any>(null)
 
 const statusTabs = [
   { label: '未完成', value: 'unfinished' },
@@ -382,6 +385,15 @@ const handlePurchaseApply = (row?: any) => {
   }
 }
 
+const handleSampleRegistration = (taskData?: any) => {
+  console.log('Opening Sample Registration Dialog', taskData)
+  if (sampleRegistrationRef.value) {
+    sampleRegistrationRef.value.open(taskData || currentTask.value)
+  } else {
+    console.error('sampleRegistrationRef is not initialized')
+  }
+}
+
 const feedbackListData = ref([
   {
     code: 'FA-20260520-01',
@@ -436,7 +448,7 @@ const feedbackListData = ref([
   },
   {
     code: 'FA-20260521-04',
-    source: '东莞某五金厂',
+    source: '東莞某五金厂',
     feeType: '开模费',
     feeAmount: '¥ 12,000.00',
     moldOwnership: '共有',
@@ -642,7 +654,6 @@ const feedbackListData = ref([
   line-height: 20px;
 }
 .mb-20 { margin-bottom: 20px; }
-.mb-12 { margin-bottom: 16px; }
 .mb-12 { margin-bottom: 12px; }
 .ml-8 { margin-left: 8px; }
 .ml-4 { margin-left: 4px; }
