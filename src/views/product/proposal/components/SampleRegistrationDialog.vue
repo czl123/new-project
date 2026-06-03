@@ -10,6 +10,7 @@ const emit = defineEmits(['refresh'])
 
 // 采用本地 ref 控制显示，确保 open() 方法 100% 有效
 const dialogVisible = ref(false)
+const isEdit = ref(false)
 
 const loading = ref(false)
 const saving = ref(false)
@@ -248,7 +249,7 @@ const handleSubmit = async () => {
           plain: true
         })
         dialogVisible.value = false
-        emit('refresh')
+        emit('refresh', JSON.parse(JSON.stringify(form)))
       } finally {
         loading.value = false
       }
@@ -270,11 +271,13 @@ const handleSave = async () => {
 
 const open = (taskData?: any) => {
   dialogVisible.value = true
+  isEdit.value = false
   if (taskData) {
-    // Check if it is a registration detail row (has regNo and specific specs)
-    const isRegistrationRow = taskData.regNo && (taskData.pattern !== undefined || taskData.color !== undefined)
+    // Check if it is a registration detail row (has regNo)
+    const isRegistrationRow = !!taskData.regNo
     
     if (isRegistrationRow) {
+      isEdit.value = true
       form.isLinkedToProposal = true
       form.proposalId = taskData.proposalNo || 'P001'
       form.name = taskData.name || '样品打样件'
@@ -630,7 +633,7 @@ defineExpose({ open })
                   <el-icon class="p-section-icon"><Setting /></el-icon>
                   <span>样品规格信息</span>
                 </div>
-                <el-button @click="handleAddDetail" class="p-add-row-btn" :icon="Plus">
+                <el-button v-if="!isEdit" @click="handleAddDetail" class="p-add-row-btn" :icon="Plus">
                   添加规格
                 </el-button>
               </div>
@@ -828,7 +831,7 @@ defineExpose({ open })
                     </template>
                   </el-table-column>
 
-                  <el-table-column label="操作" width="90" align="center" fixed="right">
+                  <el-table-column v-if="!isEdit" label="操作" width="90" align="center" fixed="right">
                     <template #default="scope">
                       <div class="p-row-actions">
                         <el-button 

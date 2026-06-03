@@ -204,7 +204,7 @@ const open = (row: any) => {
   }
   
   const defaultRefund = {
-    isRefundable: row.status === '已通过',
+    isRefundable: ['已通过', '同意', '待更新合同'].includes(row.status),
     refundMethod: '抵扣首单货款',
     refundCondition: '首批大货订单满1000件返还'
   }
@@ -223,8 +223,13 @@ const open = (row: any) => {
 
 const getStatusTagType = (status: string) => {
   switch (status) {
+    case '同意':
     case '已通过': return 'success'
+    case '待审批':
     case '审批中': return 'warning'
+    case '不同意':
+    case '已驳回': return 'danger'
+    case '待更新合同': return 'primary'
     case '待提交': return 'info'
     default: return 'info'
   }

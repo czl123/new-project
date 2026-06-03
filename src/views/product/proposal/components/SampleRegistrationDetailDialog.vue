@@ -17,13 +17,13 @@
           </div>
           <div class="meta-info mt-6">
             <span class="mr-16">采购员：<strong>{{ detailData.purchaserName || '黄小军' }}</strong>（{{ detailData.receiveTime || '2026-05-24 10:00' }}）</span>
-            <span class="mr-16">产品经理：<strong>{{ detailData.pmName || '陈招娣' }}</strong>（{{ detailData.feedbackTime || '2026-05-26 14:20' }}）</span>
+            <span class="mr-16">产品经理：<strong>{{ detailData.pmName || '陈招娣' }}</strong><span v-if="detailData.feedbackTime">（{{ detailData.feedbackTime }}）</span></span>
             <span>时效：<strong class="time-duration-val">{{ durationTime }}</strong></span>
           </div>
         </div>
         <div class="header-right">
-          <el-tag type="success" size="medium" effect="dark">
-            有效
+          <el-tag :type="getStatusTagType(detailData.status)" size="medium" effect="dark">
+            {{ detailData.status || '有效' }}
           </el-tag>
         </div>
       </div>
@@ -70,7 +70,7 @@
             <span>{{ detailData.packagingMethod || '盒装' }}</span>
           </el-descriptions-item>
           <el-descriptions-item label="包装数量">
-            <span>{{ detailData.packagingQuantity || '-' }}</span>
+            <span>{{ detailData.packagingQuantity || '1pack' }}</span>
           </el-descriptions-item>
           <el-descriptions-item label="样品特征">
             <div style="display: flex; gap: 12px;">
@@ -94,7 +94,7 @@
         
         <el-descriptions :column="3" border class="custom-desc-table">
           <el-descriptions-item label="规格">
-            <span>{{ detailData.spec || '通用' }}</span>
+            <span>{{ detailData.spec || '-' }}</span>
           </el-descriptions-item>
           <el-descriptions-item label="颜色">
             <span class="font-medium">{{ detailData.color || '-' }}</span>
@@ -114,7 +114,7 @@
           <el-descriptions-item label="尺码">
             <span>{{ detailData.size || '-' }}</span>
           </el-descriptions-item>
-          <el-descriptions-item label="直径">
+          <el-descriptions-item label="外径/内径">
             <span>{{ detailData.diameter || '-' }}</span>
           </el-descriptions-item>
           <el-descriptions-item label="容量">
@@ -198,16 +198,39 @@ import { Document } from '@element-plus/icons-vue'
 const visible = ref(false)
 const detailData = ref<any>(null)
 
+const getStatusTagType = (status: string) => {
+  switch (status) {
+    case '有效': return 'success'
+    case '待反馈': return 'warning'
+    case '待提交': return 'info'
+    case '无效': return 'danger'
+    case '已驳回': return 'danger'
+    default: return 'info'
+  }
+}
+
 const durationTime = computed(() => {
   const t1Str = detailData.value?.receiveTime || '2026-05-24 10:00'
-  const t2Str = detailData.value?.feedbackTime || '2026-05-26 14:20'
   const t1 = new Date(t1Str).getTime()
-  const t2 = new Date(t2Str).getTime()
-  if (isNaN(t1) || isNaN(t2)) return '2天4小时'
-  const diffMs = t2 - t1
-  if (diffMs <= 0) return '0小时'
+  if (isNaN(t1)) return ''
   
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  let t2: number
+  if (detailData.value?.feedbackTime) {
+    t2 = new Date(detailData.value.feedbackTime).getTime()
+  } else {
+    t2 = Date.now()
+  }
+  
+  if (isNaN(t2)) return ''
+  const diffMs = t2 - t1
+  if (diffMs <= 0) return '1分钟'
+  
+  const diffMinutes = Math.floor(diffMs / (1000 * 60))
+  if (diffMinutes < 60) {
+    return `${diffMinutes}分钟`
+  }
+  
+  const diffHours = Math.floor(diffMinutes / 60)
   const days = Math.floor(diffHours / 24)
   const hours = diffHours % 24
   
@@ -247,6 +270,12 @@ const open = (row: any) => {
     ...defaultMeta,
     ...row
   }
+  
+  const currentStatus = detailData.value.status || detailData.value.sampleStatus
+  if (!['有效', '无效', '已反馈'].includes(currentStatus) || !row.feedbackTime) {
+    delete detailData.value.feedbackTime
+  }
+  
   visible.value = true
 }
 
@@ -391,6 +420,10 @@ defineExpose({ open })
 
 .qual-link-item {
   font-size: 12px;
+  
+  :deep(.el-link) {
+    font-size: 12px;
+  }
 }
 
 .desc-content {
