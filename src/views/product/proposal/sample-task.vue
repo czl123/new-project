@@ -83,7 +83,6 @@
           <div class="header-actions">
             <template v-if="currentTask.sampleMethodText === '定制拿样'">
               <el-button type="primary" class="action-btn blue" @click="handleCustomFeedback">定制反馈</el-button>
-              <el-button type="primary" icon="Plus" class="action-btn blue" @click="handleSampleRegistration()">样品登记</el-button>
               <el-button class="action-btn plain">转移任务</el-button>
             </template>
             <template v-else-if="currentTask.sampleMethodText === '现货拿样'">
@@ -144,7 +143,7 @@
               </div>
             </div>
 
-            <div class="info-card no-padding-bottom">
+          <div class="info-card no-padding-bottom">
               <h3 class="card-title">提案-时效要求</h3>
               <div class="time-list">
                 <div class="time-row"><label>任务发布时间</label><span>05-20 09:00</span></div>
@@ -231,20 +230,33 @@
                 <el-button type="primary" link icon="Plus" @click="handleCustomFeedback">添加反馈</el-button>
               </div>
               <el-table :data="feedbackListData" border stripe size="small" class="custom-table">
-                <el-table-column label="反馈编号" prop="code" width="140" fixed="left" />
-                <el-table-column label="货源地" prop="source" width="120" />
-                <el-table-column label="费用类型" prop="feeType" width="100" />
-                <el-table-column label="费用金额" prop="feeAmount" width="100" />
-                <el-table-column label="模具归属" prop="moldOwnership" width="100" />
-                <el-table-column label="定制用时" prop="customDuration" width="100" />
-                <el-table-column label="初次报价" prop="initialQuote" width="100" />
-                <el-table-column label="生产周期" prop="productionCycle" width="100" />
-                <el-table-column label="起订量" prop="moq" width="80" />
-                <el-table-column label="是否可退款" prop="isRefundable" width="100" />
-                <el-table-column label="退款方式" prop="refundMethod" width="100" />
-                <el-table-column label="退款条件" prop="refundCondition" min-width="150" show-overflow-tooltip />
-                <el-table-column label="附加条件" prop="additionalConditions" min-width="150" show-overflow-tooltip />
-                <el-table-column label="状态" width="100" fixed="right">
+                <el-table-column label="反馈编号" prop="code" width="130" fixed="left" />
+                <el-table-column label="货源地" prop="source" width="140" />
+                <el-table-column label="费用(类型)" width="100">
+                  <template #default="{ row }">
+                    <div class="fee-cell">
+                      <span class="fee-amt">{{ row.feeAmount }}</span>
+                      <span class="fee-type">{{ row.feeType }}</span>
+                    </div>
+                  </template>
+                </el-table-column>
+                <el-table-column label="模具归属" prop="moldOwnership" width="80" />
+                <el-table-column label="定制用时" prop="customDuration" width="80" />
+                <el-table-column label="初次报价" prop="initialQuote" width="90" />
+                <el-table-column label="生产周期" prop="productionCycle" width="80" />
+                <el-table-column label="起订量" prop="moq" width="75" />
+                <el-table-column label="是否可退款" prop="isRefundable" width="90" />
+                <el-table-column label="退款条款" min-width="160" show-overflow-tooltip>
+                  <template #default="{ row }">
+                    <div v-if="row.isRefundable === '是'" class="refund-cell">
+                      <span class="refund-method">{{ row.refundMethod }}</span>
+                      <span class="refund-condition">条件: {{ row.refundCondition }}</span>
+                    </div>
+                    <span v-else class="text-secondary">-</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="附加条件" prop="additionalConditions" min-width="160" show-overflow-tooltip />
+                <el-table-column label="状态" width="95" fixed="right">
                   <template #default="{ row }">
                     <el-tag :type="row.statusType" size="small">{{ row.status }}</el-tag>
                   </template>
@@ -258,6 +270,7 @@
                     <template v-if="row.status === '已采纳'">
                       <el-button v-if="row.feeAmount === '¥ 0.00'" type="primary" link size="small" @click="handleSampleRegistration(row)">样品登记</el-button>
                       <el-button v-else type="primary" link size="small" @click="handlePurchaseApply(row)">购样申请</el-button>
+                      <el-button type="primary" link size="small" @click="handleExecutionDetail(row)">关联单据</el-button>
                     </template>
                   </template>
                 </el-table-column>
@@ -272,6 +285,7 @@
     <CustomFeedbackDialog ref="customFeedbackRef" />
     <PurchaseApplyDialog ref="purchaseApplyRef" />
     <SampleRegistrationDialog ref="sampleRegistrationRef" />
+    <ExecutionDetailDrawer ref="executionDetailDrawerRef" />
   </div>
 </template>
 
@@ -282,6 +296,7 @@ import { Search, Clock, CopyDocument, Check, Plus, Document, Management } from '
 import CustomFeedbackDialog from './components/CustomFeedbackDialog.vue'
 import PurchaseApplyDialog from './components/PurchaseApplyDialog.vue'
 import SampleRegistrationDialog from './components/SampleRegistrationDialog.vue'
+import ExecutionDetailDrawer from './components/ExecutionDetailDrawer.vue'
 
 const searchQuery = ref('')
 const activeTab = ref('accepted')
@@ -289,6 +304,7 @@ const currentTask = ref<any>(null)
 const customFeedbackRef = ref<any>(null)
 const purchaseApplyRef = ref<any>(null)
 const sampleRegistrationRef = ref<any>(null)
+const executionDetailDrawerRef = ref<any>(null)
 
 const statusTabs = [
   { label: '未完成', value: 'unfinished' },
@@ -483,6 +499,12 @@ const handleSampleRegistration = (taskData?: any) => {
   }
 }
 
+const handleExecutionDetail = (row: any) => {
+  if (executionDetailDrawerRef.value) {
+    executionDetailDrawerRef.value.open(row)
+  }
+}
+
 const feedbackListData = ref([
   {
     code: 'FA-20260520-01',
@@ -515,6 +537,40 @@ const feedbackListData = ref([
     refundMethod: '-',
     refundCondition: '-',
     additionalConditions: '无',
+    status: '已采纳',
+    statusType: 'success'
+  },
+  {
+    code: 'FA-20260523-07',
+    source: '阿里国际-义乌供应商',
+    feeType: '打样费',
+    feeAmount: '¥ 120.00',
+    moldOwnership: '-',
+    customDuration: '4天',
+    initialQuote: '¥ 88.00',
+    productionCycle: '20天',
+    moq: '1000',
+    isRefundable: '是',
+    refundMethod: '抵扣货款',
+    refundCondition: '首单退',
+    additionalConditions: '测试单个待提交购样单',
+    status: '已采纳',
+    statusType: 'success'
+  },
+  {
+    code: 'FA-20260523-08',
+    source: '阿里国际-宁波供应商',
+    feeType: '打样费',
+    feeAmount: '¥ 350.00',
+    moldOwnership: '-',
+    customDuration: '6天',
+    initialQuote: '¥ 95.00',
+    productionCycle: '25天',
+    moq: '1500',
+    isRefundable: '是',
+    refundMethod: '抵扣货款',
+    refundCondition: '满2万退',
+    additionalConditions: '测试多个购样申请记录',
     status: '已采纳',
     statusType: 'success'
   },
@@ -583,6 +639,23 @@ const feedbackListData = ref([
     refundMethod: '-',
     refundCondition: '-',
     additionalConditions: '样机免费寄送',
+    status: '已采纳',
+    statusType: 'success'
+  },
+  {
+    code: 'FA-20260522-07',
+    source: '长期合作-中山光源厂',
+    feeType: '打样费',
+    feeAmount: '¥ 0.00',
+    moldOwnership: '-',
+    customDuration: '4天',
+    initialQuote: '¥ 45.00',
+    productionCycle: '12天',
+    moq: '500',
+    isRefundable: '否',
+    refundMethod: '-',
+    refundCondition: '-',
+    additionalConditions: '测试多个直接登记（免费打样）',
     status: '已采纳',
     statusType: 'success'
   }
@@ -756,6 +829,36 @@ const feedbackListData = ref([
   .price-info { font-size: 11px; line-height: 1.5; color: #64748b; .amt { color: #f59e0b; font-weight: 600; } }
   .custom-table {
     :deep(.el-table__header) { th { background-color: #f8fafc; color: #475569; font-weight: 700; } }
+  }
+  .fee-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: flex-start;
+  }
+  .fee-amt {
+    font-weight: 700;
+    color: #fa8c16;
+    font-size: 12px;
+  }
+  .fee-type {
+    color: #64748b;
+    font-size: 11px;
+  }
+  .refund-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: flex-start;
+  }
+  .refund-method {
+    font-weight: 600;
+    color: #10b981;
+    font-size: 12px;
+  }
+  .refund-condition {
+    color: #64748b;
+    font-size: 11px;
   }
 }
 .custom-scrollbar { &::-webkit-scrollbar { width: 4px; } &::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 2px; } }

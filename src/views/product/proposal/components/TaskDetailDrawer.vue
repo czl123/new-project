@@ -68,7 +68,7 @@
               size="small"
               class="final-spec-style-table"
               :row-class-name="getRowClass"
-              @cell-mouse-enter="(row) => setHighlight(row.no)"
+              @cell-mouse-enter="(row: any) => setHighlight(row.no)"
               @cell-mouse-leave="clearHighlight"
             >
               <!-- 组 1：基础归属 (t-base 关联颜色) -->
@@ -118,7 +118,7 @@
               size="small" 
               class="final-spec-style-table" 
               :row-class-name="getRowClass"
-              @cell-mouse-enter="(row) => setHighlight(row.no)"
+              @cell-mouse-enter="(row: any) => setHighlight(row.no)"
               @cell-mouse-leave="clearHighlight"
             >
               <el-table-column label="申请基础" align="center" class-name="bg-base" label-class-name="t-base">

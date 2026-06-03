@@ -1,3 +1,4 @@
+/// <reference types="../../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, reactive, nextTick, computed } from 'vue';
 import { Management, Money, User, Timer, List, CircleCheckFilled, CircleClose, Warning } from '@element-plus/icons-vue';
 const visible = ref(false);

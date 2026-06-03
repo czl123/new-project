@@ -22,23 +22,23 @@ const createDefaultDetail = () => ({
   pattern: '',
   color: '',
   spec: '',
-  length: undefined,
-  width: undefined,
-  height: undefined,
+  length: undefined as number | undefined,
+  width: undefined as number | undefined,
+  height: undefined as number | undefined,
   sampleSizeUnit: 'cm',
-  netWeight: undefined,
+  netWeight: undefined as number | undefined,
   netWeightUnit: 'g',
   images: [] as string[],
-  pLength: undefined,
-  pWidth: undefined,
-  pHeight: undefined,
+  pLength: undefined as number | undefined,
+  pWidth: undefined as number | undefined,
+  pHeight: undefined as number | undefined,
   packagingSizeUnit: 'cm',
-  packagingWeight: undefined,
+  packagingWeight: undefined as number | undefined,
   packagingWeightUnit: 'g',
   size: '',
-  diameter: undefined,
+  diameter: undefined as number | undefined,
   diameterUnit: 'cm',
-  capacity: undefined,
+  capacity: undefined as number | undefined,
   capacityUnit: 'ml'
 })
 
@@ -271,20 +271,110 @@ const handleSave = async () => {
 const open = (taskData?: any) => {
   dialogVisible.value = true
   if (taskData) {
-    form.isLinkedToProposal = true
-    form.proposalId = taskData.proposalNo || ''
-    form.name = taskData.productName || ''
-    form.style = taskData.style || ''
-    form.mainMaterial = taskData.material || ''
-    form.applicableTo = taskData.applicableTo || ''
-    form.supplierName = taskData.source || ''
-    form.productManagerId = 'M201'
-    form.purchaserId = 'U101'
+    // Check if it is a registration detail row (has regNo and specific specs)
+    const isRegistrationRow = taskData.regNo && (taskData.pattern !== undefined || taskData.color !== undefined)
     
-    // 同步规格信息到第一行
-    if (form.details.length > 0) {
-      form.details[0].pattern = taskData.model || ''
-      form.details[0].color = taskData.style || ''
+    if (isRegistrationRow) {
+      form.isLinkedToProposal = true
+      form.proposalId = taskData.proposalNo || 'P001'
+      form.name = taskData.name || '样品打样件'
+      form.style = taskData.style || ''
+      form.mainMaterial = taskData.material || ''
+      form.applicableTo = taskData.applicableTo || '通用'
+      form.supplierName = taskData.supplierName || ''
+      form.productManagerId = 'M201'
+      form.purchaserId = 'U101'
+      
+      form.packagingMethod = taskData.packagingMethod || '盒装'
+      form.packagingQuantity = taskData.packagingQuantity || ''
+      form.initialQuote = taskData.initialQuote !== undefined ? taskData.initialQuote : 0
+      form.taxRate = taskData.taxRate !== undefined ? taskData.taxRate : 13
+      form.moq = taskData.moq !== undefined ? taskData.moq : 100
+      form.productionCycle = taskData.productionCycle !== undefined ? taskData.productionCycle : 15
+      form.description = taskData.description || ''
+      form.hasBattery = taskData.hasBattery !== undefined ? taskData.hasBattery : false
+      form.isCE = taskData.isCE !== undefined ? taskData.isCE : false
+      form.sampleFee = parseFloat((taskData.sampleFee || '0').toString().replace(/[^\d.]/g, '')) || 0
+      form.receiveDate = taskData.receiveTime ? taskData.receiveTime.split(' ')[0] : '2026-05-24'
+      
+      // Parse sample size (e.g. "15.5×8.2×2.1 cm")
+      let length: any = undefined
+      let width: any = undefined
+      let height: any = undefined
+      if (taskData.sampleSize) {
+        const parts = taskData.sampleSize.replace(' cm', '').replace(' mm', '').split('×')
+        if (parts.length === 3) {
+          length = parseFloat(parts[0])
+          width = parseFloat(parts[1])
+          height = parseFloat(parts[2])
+        }
+      }
+      
+      // Parse packaging size (e.g. "18.0×10.5×4.0 cm")
+      let pLength: any = undefined
+      let pWidth: any = undefined
+      let pHeight: any = undefined
+      if (taskData.packagingSize) {
+        const parts = taskData.packagingSize.replace(' cm', '').replace(' mm', '').split('×')
+        if (parts.length === 3) {
+          pLength = parseFloat(parts[0])
+          pWidth = parseFloat(parts[1])
+          pHeight = parseFloat(parts[2])
+        }
+      }
+      
+      // Populate detail
+      form.details = [{
+        pattern: taskData.pattern || '',
+        color: taskData.color || '',
+        spec: taskData.spec || '通用',
+        length,
+        width,
+        height,
+        sampleSizeUnit: taskData.sampleSize?.includes('mm') ? 'mm' : 'cm',
+        netWeight: parseFloat(taskData.netWeight) || undefined,
+        netWeightUnit: taskData.netWeight?.includes('kg') ? 'kg' : 'g',
+        images: taskData.image ? [taskData.image] : [],
+        pLength,
+        pWidth,
+        pHeight,
+        packagingSizeUnit: taskData.packagingSize?.includes('mm') ? 'mm' : 'cm',
+        packagingWeight: parseFloat(taskData.packagingWeight) || undefined,
+        packagingWeightUnit: taskData.packagingWeight?.includes('kg') ? 'kg' : 'g',
+        size: taskData.size || '',
+        diameter: parseFloat(taskData.diameter) || undefined,
+        diameterUnit: taskData.diameter?.includes('mm') ? 'mm' : 'cm',
+        capacity: parseFloat(taskData.capacity) || undefined,
+        capacityUnit: taskData.capacity?.includes('l') ? 'l' : 'ml'
+      }]
+    } else {
+      // Normal task/feedback sync
+      form.isLinkedToProposal = true
+      form.proposalId = taskData.proposalNo || ''
+      form.name = taskData.productName || ''
+      form.style = taskData.style || ''
+      form.mainMaterial = taskData.material || ''
+      form.applicableTo = taskData.applicableTo || ''
+      
+      if (taskData.isPurchaseSync) {
+        form.source = taskData.sourceChannel || '1'
+        form.supplierName = taskData.supplierName || ''
+        form.purchaseUrl = taskData.purchaseUrl || ''
+        form.sampleFee = taskData.sampleFee || 0
+      } else {
+        form.source = '1'
+        form.supplierName = taskData.source || ''
+        form.purchaseUrl = ''
+        form.sampleFee = 0
+      }
+      
+      form.productManagerId = 'M201'
+      form.purchaserId = 'U101'
+      
+      if (form.details.length > 0) {
+        form.details[0].pattern = taskData.model || ''
+        form.details[0].color = taskData.style || ''
+      }
     }
   }
 }
@@ -580,7 +670,7 @@ defineExpose({ open })
                                   action="#" 
                                   :show-file-list="false" 
                                   :auto-upload="false"
-                                  :on-change="(file) => handleImageSuccess(file, scope.$index)"
+                                  :on-change="(file: any) => handleImageSuccess(file, scope.$index)"
                                 >
                                   <el-button link type="primary" :icon="Plus">添加图片</el-button>
                                 </el-upload>
