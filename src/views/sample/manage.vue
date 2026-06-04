@@ -9,6 +9,9 @@
         <el-form-item label="样品名称">
           <el-input v-model="queryParams.sampleName" placeholder="请输入名称" clearable style="width: 180px" />
         </el-form-item>
+        <el-form-item label="提案编号">
+          <el-input v-model="queryParams.proposalNo" placeholder="请输入提案编号" clearable style="width: 150px" />
+        </el-form-item>
         <el-form-item label="拿样渠道">
           <el-select v-model="queryParams.source" placeholder="请选择" clearable style="width: 120px">
             <el-option v-for="s in SAMPLE_SOURCE" :key="s.value" :label="s.label" :value="s.value" />
@@ -583,7 +586,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElLoading, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 import { useTableHeight } from '@/hooks/useTableHeight'
@@ -594,7 +598,14 @@ import BatchStatusDialog from './components/BatchStatusDialog.vue'
 import SampleTimeline from './components/SampleTimeline.vue'
 
 const tableHeight = useTableHeight(190)
+const route = useRoute()
 const queryParams = reactive({ ...INITIAL_QUERY_PARAMS })
+
+onMounted(() => {
+  if (route.query.proposalNo) {
+    queryParams.proposalNo = route.query.proposalNo as string
+  }
+})
 const currentPage = ref(1)
 const pageSize = ref(20)
 const total = ref(5)
@@ -695,14 +706,14 @@ const doPrint = async (data: any[]) => {
 
 const allData = ref([
   { 
-    id: '1001', sampleNo: 'YP-202605001', sampleName: '户外牧羊人钩-待提交', proposalNo: 'TA-20260501', productManager: '张三', purchaser: '李四',
+    id: '1001', sampleNo: 'YP-202605001', sampleName: '户外牧羊人钩-待提交', proposalNo: 'TA-202604100', productManager: '张三', purchaser: '李四',
     style: '经典款', mainMaterial: '不锈钢', applicableTo: '亚马逊/自营',
     sampleType: '1', source: '1', round: 1, sampleFee: 50.00, receiveDate: '2026-05-09', comparisonEndDate: '-',
     status: '1', expireDate: '2026-12-31', updateTime: '2026-05-09 10:00:00', supplier: '晨光文具', spec: '不锈钢材质',
     images: ['/uploads/img_2c4gj_1778668130970.jpg', '/uploads/img_2c4gj_1778668144849.jpg']
   },
   { 
-    id: '1005', sampleNo: 'YP-202605005', sampleName: '登山杖-领用中', proposalNo: 'TA-20260505', productManager: '张三', purchaser: '李四',
+    id: '1005', sampleNo: 'YP-202605005', sampleName: '登山杖-领用中', proposalNo: 'TA-202604099', productManager: '张三', purchaser: '李四',
     style: '轻量化', mainMaterial: '碳纤维', applicableTo: '驴友',
     sampleType: '1', source: '1', round: 1, sampleFee: 180.00, receiveDate: '2026-05-18', comparisonEndDate: '-',
     status: '2', expireDate: '2026-12-01', updateTime: '2026-05-19 09:00:00', supplier: '户外用品厂', spec: '伸缩式',
@@ -779,6 +790,9 @@ const tableData = computed(() => {
   // 1. 搜索表单过滤
   if (queryParams.sampleNo) {
     filtered = filtered.filter(item => item.sampleNo.includes(queryParams.sampleNo))
+  }
+  if (queryParams.proposalNo) {
+    filtered = filtered.filter(item => item.proposalNo.includes(queryParams.proposalNo))
   }
   if (queryParams.round) {
     filtered = filtered.filter(item => String(item.round).includes(queryParams.round))

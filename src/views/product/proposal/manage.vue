@@ -54,37 +54,46 @@
 
         <el-form-item>
           <el-select v-model="queryParams.category" placeholder="运营大类" clearable style="width: 120px">
-            <el-option label="运动户外" value="1" />
+            <el-option label="运动户外" value="运动户外" />
+            <el-option label="个人护理" value="个人护理" />
+            <el-option label="家装工具" value="家装工具" />
           </el-select>
         </el-form-item>
 
         <el-form-item>
           <el-select v-model="queryParams.manager" placeholder="产品经理" clearable style="width: 110px">
-            <el-option label="谢东桥" value="1" />
+            <el-option label="谢东桥" value="谢东桥" />
+            <el-option label="吴美林" value="吴美林" />
+            <el-option label="闵咪咪" value="闵咪咪" />
           </el-select>
         </el-form-item>
 
         <el-form-item>
           <el-select v-model="queryParams.progress" placeholder="当前进度" clearable style="width: 110px">
             <el-option label="待设计" value="待设计" />
+            <el-option label="拿样中" value="拿样中" />
+            <el-option label="设计中" value="设计中" />
           </el-select>
         </el-form-item>
 
         <el-form-item>
           <el-select v-model="queryParams.devMethod" placeholder="开发方式" clearable style="width: 110px">
-            <el-option label="全新品" value="1" />
+            <el-option label="全新品-现货" value="全新品-现货" />
           </el-select>
         </el-form-item>
 
         <el-form-item>
           <el-select v-model="queryParams.level" placeholder="提案等级" clearable style="width: 100px">
             <el-option label="A" value="A" />
+            <el-option label="B" value="B" />
+            <el-option label="C" value="C" />
+            <el-option label="D" value="D" />
           </el-select>
         </el-form-item>
 
         <el-form-item>
           <el-select v-model="queryParams.newDevProgress" placeholder="新品开发进度" clearable style="width: 120px">
-            <el-option label="进行中" value="1" />
+            <el-option label="未完结-正常" value="未完结-正常" />
           </el-select>
         </el-form-item>
 
@@ -186,12 +195,12 @@
                 <div class="expand-section">
                   <div class="section-title">提案概况</div>
                   <div class="info-list">
-                    <div class="info-item">任务发布：<span class="val">共【0/1/1】轮</span> <el-icon class="hint-icon"><QuestionFilled /></el-icon></div>
-                    <div class="info-item">开模次数：<span class="val">共【0】次</span></div>
-                    <div class="info-item">定品申请：<span class="val">共【1】轮</span></div>
-                    <div class="info-item">提案用时：<span class="val">共【7(0)】天</span> <el-icon class="hint-icon"><QuestionFilled /></el-icon></div>
-                    <div class="info-item">样品数量：<span class="val-link">共【1/1/0】件</span> <el-icon class="hint-icon"><QuestionFilled /></el-icon></div>
-                    <div class="info-item">研发投入：<span class="val">共【0】元</span></div>
+                    <div class="info-item">任务发布：<span class="val">{{ row.taskRounds || '共【0/0/0】轮' }}</span> <el-icon class="hint-icon"><QuestionFilled /></el-icon></div>
+                    <div class="info-item">开模次数：<span class="val">{{ row.mouldCount || '共【0】次' }}</span></div>
+                    <div class="info-item">定品申请：<span class="val">{{ row.proposalRounds || '共【0】轮' }}</span></div>
+                    <div class="info-item">提案用时：<span class="val">{{ row.proposalDays || '共【0(0)】天' }}</span> <el-icon class="hint-icon"><QuestionFilled /></el-icon></div>
+                    <div class="info-item">样品数量：<span class="val-link" @click="goToSampleManage(row.proposalNo)">{{ row.sampleCountDesc || '共【0/0/0】件' }}</span> <el-icon class="hint-icon"><QuestionFilled /></el-icon></div>
+                    <div class="info-item">研发投入：<span class="val">{{ row.rdCost || '共【0】元' }}</span></div>
                   </div>
                 </div>
 
@@ -371,7 +380,7 @@
                 <span class="dropdown-trigger">操作</span>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item>编辑</el-dropdown-item>
+                    <el-dropdown-item @click="handleEdit(row)">编辑</el-dropdown-item>
                     <el-dropdown-item>创建任务</el-dropdown-item>
                     <el-dropdown-item>定品申请</el-dropdown-item>
                     <el-dropdown-item>信息编辑</el-dropdown-item>
@@ -413,17 +422,53 @@
       v-model="detailDrawerVisible" 
       :detail-data="currentDetail" 
     />
+
+    <!-- 编辑弹窗 -->
+    <EditDialog
+      v-model="editDialogVisible"
+      :row-data="currentEditRow"
+      @save="handleSaveEdit"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useTableHeight } from '../../../hooks/useTableHeight'
 import { STAT_TABS, STATUS_COLORS, INITIAL_QUERY_PARAMS } from './constants'
 import DetailDrawer from './components/DetailDrawer.vue'
+import EditDialog from './components/EditDialog.vue'
 
+const router = useRouter()
 const tableHeight = useTableHeight(240)
 const activeStat = ref('全部')
+
+const editDialogVisible = ref(false)
+const currentEditRow = ref<any>({})
+
+const handleEdit = (row: any) => {
+  currentEditRow.value = row
+  editDialogVisible.value = true
+}
+
+const handleSaveEdit = (updatedData: any) => {
+  const index = allTableData.value.findIndex(item => item.proposalNo === updatedData.proposalNo)
+  if (index > -1) {
+    allTableData.value[index] = {
+      ...allTableData.value[index],
+      ...updatedData
+    }
+  }
+}
+
+const goToSampleManage = (proposalNo: string) => {
+  if (!proposalNo || proposalNo === '-') return
+  router.push({
+    path: '/product/proposal/sample-manage',
+    query: { proposalNo }
+  })
+}
 const currentPage = ref(1)
 const pageSize = ref(20)
 const expandedRowKeys = ref<string[]>([])
@@ -460,15 +505,100 @@ const clearBatchSearch = () => {
 }
 
 const allTableData = ref([
-  { proposalNo: 'TA-202604101', source: '开发预案', date: '2026-04-22', status: '待设计', spu: 'US0218', platform: 'Amazon', category: '运动户外', productName: 'ZZ-户外牧羊人钩', style: '防鼠挡板配件', material: 'ABS+金属', manager: '谢东桥', devMethod: '全新品-现货', level: 'D', estProposalDate: '2026-05-15', devStatus: '未完结-正常', brand: '-', model: '-', launchTime: '-', isResearched: '否' },
-  { proposalNo: 'TA-202604100', source: '需求预案', date: '2026-04-20', status: '拿样中', hasBadge: true, spu: 'HC0867', platform: 'Amazon', category: '个人护理', productName: 'ZZ-牙刷保护套', style: '-', material: '-', manager: '吴美林', devMethod: '全新品-现货', level: 'D', estProposalDate: '2026-05-15', devStatus: '未完结-正常', brand: '-', model: '-', launchTime: '2026-05', isResearched: '' },
-  { proposalNo: 'TA-202604099', source: '需求预案', date: '2026-04-20', status: '拿样中', hasBadge: true, spu: 'HC0866', platform: 'Amazon', category: '个人护理', productName: 'ZZ-牙刷头保护套', style: '保护套', material: '-', manager: '吴美林', devMethod: '全新品-现货', level: 'D', estProposalDate: '2026-05-15', devStatus: '未完结-正常', brand: '-', model: '-', launchTime: '2026-05', isResearched: '' },
-  { proposalNo: 'TA-202604093', source: '开发预案', date: '2026-04-20', status: '设计中', spu: 'HW0548', platform: 'Amazon', category: '家装工具', productName: '自行车支架', style: '停车架可折叠', material: '碳钢+塑料', manager: '闵咪咪', devMethod: '全新品-现货', level: 'D', estProposalDate: '2026-06-05', devStatus: '未完结-正常', brand: '-', model: '-', launchTime: '-', isResearched: '是' },
+  { 
+    proposalNo: 'TA-202604101', source: '开发预案', date: '2026-04-22', status: '待设计', spu: 'US0218', platform: 'Amazon', category: '运动户外', productName: 'ZZ-户外牧羊人钩', style: '防鼠挡板配件', material: 'ABS+金属', manager: '谢东桥', devMethod: '全新品-现货', level: 'D', estProposalDate: '2026-05-15', devStatus: '未完结-正常', brand: '-', model: '-', launchTime: '-', isResearched: '否', actProposalDate: '-',
+    taskRounds: '共【0/0/0】轮', mouldCount: '共【0】次', proposalRounds: '共【0】轮', proposalDays: '共【0(0)】天', sampleCountDesc: '共【0/0/0】件', rdCost: '共【0】元'
+  },
+  { 
+    proposalNo: 'TA-202604100', source: '需求预案', date: '2026-04-20', status: '拿样中', hasBadge: true, spu: 'HC0867', platform: 'Amazon', category: '个人护理', productName: 'ZZ-牙刷保护套', style: '-', material: '-', manager: '吴美林', devMethod: '全新品-现货', level: 'D', estProposalDate: '2026-05-15', devStatus: '未完结-正常', brand: '-', model: '-', launchTime: '2026-05', isResearched: '', actProposalDate: '-',
+    taskRounds: '共【0/1/1】轮', mouldCount: '共【0】次', proposalRounds: '共【1】轮', proposalDays: '共【7(0)】天', sampleCountDesc: '共【1/1/0】件', rdCost: '共【50】元'
+  },
+  { 
+    proposalNo: 'TA-202604099', source: '需求预案', date: '2026-04-20', status: '拿样中', hasBadge: true, spu: 'HC0866', platform: 'Amazon', category: '个人护理', productName: 'ZZ-牙刷头保护套', style: '保护套', material: '-', manager: '吴美林', devMethod: '全新品-现货', level: 'D', estProposalDate: '2026-05-15', devStatus: '未完结-正常', brand: '-', model: '-', launchTime: '2026-05', isResearched: '', actProposalDate: '-',
+    taskRounds: '共【0/1/1】轮', mouldCount: '共【0】次', proposalRounds: '共【1】轮', proposalDays: '共【10(2)】天', sampleCountDesc: '共【1/0/1】件', rdCost: '共【180】元'
+  },
+  { 
+    proposalNo: 'TA-202604093', source: '开发预案', date: '2026-04-20', status: '设计中', spu: 'HW0548', platform: 'Amazon', category: '家装工具', productName: '自行车支架', style: '停车架可折叠', material: '碳钢+塑料', manager: '闵咪咪', devMethod: '全新品-现货', level: 'D', estProposalDate: '2026-06-05', devStatus: '未完结-正常', brand: '-', model: '-', launchTime: '-', isResearched: '是', actProposalDate: '-',
+    taskRounds: '共【0/0/0】轮', mouldCount: '共【0】次', proposalRounds: '共【0】轮', proposalDays: '共【15(0)】天', sampleCountDesc: '共【0/0/0】件', rdCost: '共【0】元'
+  },
 ])
 
 const tableData = computed(() => {
-  if (activeStat.value === '全部') return allTableData.value
-  return allTableData.value.filter(item => item.status === activeStat.value)
+  let filtered = allTableData.value
+  
+  // 1. 待办状态筛选
+  if (activeStat.value !== '全部') {
+    filtered = filtered.filter(item => item.status === activeStat.value)
+  }
+  
+  // 2. 平台筛选
+  if (queryParams.platform) {
+    filtered = filtered.filter(item => item.platform === queryParams.platform)
+  }
+  
+  // 3. 运营大类筛选
+  if (queryParams.category) {
+    filtered = filtered.filter(item => item.category === queryParams.category)
+  }
+  
+  // 4. 产品经理筛选
+  if (queryParams.manager) {
+    filtered = filtered.filter(item => item.manager === queryParams.manager)
+  }
+  
+  // 5. 当前进度 (status) 筛选
+  if (queryParams.progress) {
+    filtered = filtered.filter(item => item.status === queryParams.progress)
+  }
+  
+  // 6. 开发方式筛选
+  if (queryParams.devMethod) {
+    filtered = filtered.filter(item => item.devMethod === queryParams.devMethod)
+  }
+  
+  // 7. 提案等级筛选
+  if (queryParams.level) {
+    filtered = filtered.filter(item => item.level === queryParams.level)
+  }
+  
+  // 8. 新品开发进度 (devStatus) 筛选
+  if (queryParams.newDevProgress) {
+    filtered = filtered.filter(item => item.devStatus === queryParams.newDevProgress)
+  }
+  
+  // 9. 提案编号 / 产品名称 (搜索关键字) 模糊/批量筛选
+  if (queryParams.proposalNo) {
+    const queryVal = queryParams.proposalNo.trim()
+    if (queryParams.searchType === '1') {
+      // 提案编号搜索，支持批量输入逗号分割的单号
+      const ids = queryVal.split(',').map(s => s.trim()).filter(Boolean)
+      if (ids.length > 0) {
+        filtered = filtered.filter(item => ids.some(id => item.proposalNo.toLowerCase().includes(id.toLowerCase())))
+      }
+    } else if (queryParams.searchType === '2') {
+      // 产品名称模糊搜索
+      filtered = filtered.filter(item => item.productName.toLowerCase().includes(queryVal.toLowerCase()))
+    }
+  }
+
+  // 10. 立项日期 / 结项日期时间段筛选
+  if (queryParams.dateRange && queryParams.dateRange.length === 2) {
+    const [start, end] = queryParams.dateRange
+    if (start && end) {
+      const startDate = new Date(start)
+      const endDate = new Date(end)
+      endDate.setHours(23, 59, 59, 999) // 包含结束当天
+      
+      filtered = filtered.filter(item => {
+        const dateStr = queryParams.dateType === '1' ? item.date : item.actProposalDate
+        if (!dateStr || dateStr === '-') return false
+        const d = new Date(dateStr)
+        return d >= startDate && d <= endDate
+      })
+    }
+  }
+  
+  return filtered
 })
 
 const getStatCount = (label: string) => {

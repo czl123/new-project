@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="settings-master-detail">
     <div class="md-layout-body">
       <!-- 左侧菜单 (Master) -->
@@ -441,7 +441,7 @@
                     <el-input-number v-model="rdEditForm.minAmount" :controls="false" size="small" style="width: 120px" />
                     <span style="color: #9ca3af;">至</span>
                     <el-input-number v-if="rdEditForm.maxAmount !== Infinity" v-model="rdEditForm.maxAmount" :controls="false" size="small" style="width: 120px" />
-                    <el-checkbox :model-value="rdEditForm.maxAmount === Infinity" @change="(val) => rdEditForm.maxAmount = val ? Infinity : 1000">无上限 (∞)</el-checkbox>
+                    <el-checkbox :model-value="rdEditForm.maxAmount === Infinity" @change="(val: any) => rdEditForm.maxAmount = val ? Infinity : 1000">无上限 (∞)</el-checkbox>
                   </div>
                   <div v-if="rdEditForm.isDefault" style="color: #64748b; font-size: 13px;">
                     <el-icon><InfoFilled /></el-icon> 当前为系统兜底配置
@@ -802,7 +802,7 @@ const filteredApprovals = computed(() => {
     if (!kw) return true
     return item.rules.some(rule => 
       (rule.group && rule.group.toLowerCase().includes(kw)) || 
-      (rule.approver && rule.approver.toLowerCase().includes(kw))
+      (rule.approvers && rule.approvers.some((u: string) => u.toLowerCase().includes(kw)))
     )
   })
 })

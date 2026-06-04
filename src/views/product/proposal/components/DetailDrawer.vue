@@ -971,7 +971,7 @@ const handleViewTaskDetail = (row: any) => {
 }
 
 // 根据物料编码获取定品规格详情
-const getSpecByCode = (code: string) => {
+const getSpecByCode = (code: string): any => {
   return detailData.finalSpecList.find(item => item.materialCode === code) || {}
 }
 

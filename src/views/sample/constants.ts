@@ -35,6 +35,7 @@ export const SAMPLE_TYPE = [
 export const INITIAL_QUERY_PARAMS = {
   sampleNo: '',
   sampleName: '',
+  proposalNo: '',
   round: '',
   source: '',
   sampleType: '',

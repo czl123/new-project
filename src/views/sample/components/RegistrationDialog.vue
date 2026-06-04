@@ -595,7 +595,7 @@ const handleSave = async () => {
                                   action="#" 
                                   :show-file-list="false" 
                                   :auto-upload="false"
-                                  :on-change="(file) => handleImageSuccess(file, scope.$index)"
+                                  :on-change="(file: any) => handleImageSuccess(file, scope.$index)"
                                 >
                                   <el-button link type="primary" :icon="Plus">添加图片</el-button>
                                 </el-upload>
