@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="visible"
-    :title="isEditMode ? '编辑购样申请' : '购样申请'"
+    :title="isEditMode ? (form.items[0]?.feeType === '开模费' ? '编辑模具申请' : '编辑购样申请') : (form.items[0]?.feeType === '开模费' ? '模具申请' : '购样申请')"
     width="1100px"
     class="purchase-apply-dialog"
     destroy-on-close

@@ -365,7 +365,7 @@
                     </template>
                     <template v-if="row.status === '已采纳'">
                       <el-button v-if="row.feeAmount === '¥ 0.00'" type="primary" link size="small" @click="handleSampleRegistration(row)">样品登记</el-button>
-                      <el-button v-else type="primary" link size="small" @click="handlePurchaseApply(row)">购样申请</el-button>
+                      <el-button v-else type="primary" link size="small" @click="handlePurchaseApply(row)">{{ row.feeType === '开模费' ? '模具申请' : '购样申请' }}</el-button>
                       <el-button type="primary" link size="small" @click="handleExecutionDetail(row)">关联单据</el-button>
                     </template>
                   </template>
