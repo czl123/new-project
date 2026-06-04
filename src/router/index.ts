@@ -31,6 +31,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '开发样拿样任务', icon: 'List' }
       },
       {
+        path: 'product/proposal/sample-task-kanban',
+        name: 'SampleTaskKanban',
+        component: () => import('@/views/product/proposal/sample-task-kanban.vue'),
+        meta: { title: '开发样拿样任务看板', icon: 'DataAnalysis' }
+      },
+      {
         path: 'product/settings',
         name: 'ProductSettings',
         component: () => import('@/views/product/settings/index.vue'),

@@ -117,7 +117,7 @@ import {
   Select, Search, ArrowRight, Goods, Bell, User, Wallet, TrendCharts, Cpu, Files, Share, Tools, Setting,
   Document, Calendar, Edit, PieChart, Connection, Money, Box, ShoppingCart, DataAnalysis, Histogram, 
   List, Stamp, CreditCard, Ticket, Menu, Shop, Management, DataLine, OfficeBuilding, Download, Position,
-  Truck, Ship, Location, WarnTriangleFilled, Van, Back, House, Avatar, Odometer, Operation, Key, Guide, Notebook,
+  Ship, Location, WarnTriangleFilled, Van, Back, House, Avatar, Odometer, Operation, Key, Guide, Notebook,
   Close
 } from '@element-plus/icons-vue'
 
@@ -148,7 +148,7 @@ const productSubMenu = {
     [
       { title: '产品规划', icon: 'Document', items: [{ title: 'SPU管理', path: '/product/spu' }, { title: '产品线管理', path: '/product/line' }] },
       { title: '产品预案', icon: 'Calendar', items: [{ title: '开发预案', path: '/product/pre-plan/develop' }, { title: '需求预案', path: '/product/pre-plan/demand' }, { title: '推样预案', path: '/product/pre-plan/sample' }, { title: '预案反馈', path: '/product/pre-plan/feedback' }] },
-      { title: '产品提案', icon: 'Edit', items: [{ title: '提案管理', path: '/product/proposal/manage' }, { title: '开发样拿样任务', path: '/product/proposal/sample-task' }, { title: '开发样管理', path: '/product/proposal/sample-manage' }] },
+      { title: '产品提案', icon: 'Edit', items: [{ title: '提案管理', path: '/product/proposal/manage' }, { title: '开发样拿样任务', path: '/product/proposal/sample-task' }, { title: '开发样拿样任务看板', path: '/product/proposal/sample-task-kanban' }, { title: '开发样管理', path: '/product/proposal/sample-manage' }] },
       { title: '设置', icon: 'Setting', items: [{ title: '基础设置', path: '/product/settings' }] },
       { title: '产品运营', icon: 'PieChart', items: [{ title: '首单采购需求', path: '/product/operation/first-order-demand' }, { title: '首单采购管理', path: '/product/operation/first-order-manage' }, { title: '拓新首单管理', path: '/product/operation/new-first-order-manage' }, { title: '拓新首单需求', path: '/product/operation/new-first-order-demand' }] }
     ],
