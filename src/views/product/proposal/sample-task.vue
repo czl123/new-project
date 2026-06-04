@@ -575,6 +575,23 @@ const feedbackListData = ref([
     statusType: 'success'
   },
   {
+    code: 'FA-20260525-09',
+    source: '长期合作-东莞模具厂',
+    feeType: '开模费',
+    feeAmount: '¥ 8,000.00',
+    moldOwnership: '公司',
+    customDuration: '18天',
+    initialQuote: '¥ 120.00',
+    productionCycle: '30天',
+    moq: '2000',
+    isRefundable: '是',
+    refundMethod: '抵扣大货款',
+    refundCondition: '满10万退',
+    additionalConditions: '含试模样品及两次改模',
+    status: '已采纳',
+    statusType: 'success'
+  },
+  {
     code: 'FA-20260520-03',
     source: '阿里国际-义乌供应商',
     feeType: '打样费',

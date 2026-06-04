@@ -109,9 +109,10 @@
 
           <!-- 模块 2：费用与退款条款 -->
           <div class="form-section">
-            <div class="section-title">
+            <div class="section-title" style="display: flex; align-items: center; gap: 8px;">
               <span class="title-bar orange"></span>
               <span>费用与退款条款</span>
+              <el-tag type="warning" size="small" effect="light" style="font-weight: 600; margin-left: 4px;">费用类型: {{ form.items[0].feeType }}</el-tag>
             </div>
             <el-row :gutter="24">
               <el-col :span="6">
@@ -134,7 +135,7 @@
               </el-col>
               <el-col :span="6">
                 <el-form-item 
-                  label="购样费用" 
+                  label="费用(单价)" 
                   required
                   prop="items.0.price"
                   :rules="{ required: true, message: '请输入费用', trigger: 'blur' }"
@@ -440,9 +441,10 @@
 
               <!-- 模块 2：费用与退款条款 -->
               <div class="form-section">
-                <div class="section-title">
+                <div class="section-title" style="display: flex; align-items: center; gap: 8px;">
                   <span class="title-bar orange"></span>
                   <span>费用与退款条款</span>
+                  <el-tag type="warning" size="small" effect="light" style="font-weight: 600; margin-left: 4px;">费用类型: {{ item.feeType }}</el-tag>
                 </div>
                 <el-row :gutter="24">
                   <el-col :span="6">
@@ -465,7 +467,7 @@
                   </el-col>
                   <el-col :span="6">
                     <el-form-item 
-                      label="购样费用" 
+                      label="费用(单价)" 
                       required
                       :prop="'items.' + index + '.price'"
                       :rules="{ required: true, message: '请输入费用', trigger: 'blur' }"
@@ -724,6 +726,7 @@ const createEmptyItem = (data?: any) => {
   return {
     id: Date.now() + Math.random().toString(36).substring(2, 9),
     applyNo: data?.applyNo || '',
+    feeType: data?.feeType || '打样费',
     channel: isPurchaseRow ? (data.channel || '供应商') : (data?.source === '1688' || data?.source === '淘宝' ? data.source : '供应商'),
     supplierType: isPurchaseRow ? (data.supplierType || (data.supplier ? '正式' : '临时')) : '临时',
     supplier: isPurchaseRow ? (data.supplier || '') : '',
