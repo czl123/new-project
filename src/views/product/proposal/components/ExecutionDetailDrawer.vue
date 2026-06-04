@@ -19,10 +19,10 @@
       <div class="workspace-sidebar">
         <!-- 业务基础看板 -->
         <div class="sidebar-block context-card">
-          <div class="block-header">
+          <div class="block-header" v-if="!isSpotSample">
             <span class="block-title-text">单据上下文概览</span>
           </div>
-          <div class="context-details">
+          <div class="context-details" v-if="!isSpotSample">
             <div class="ctx-row">
               <span class="ctx-label">反馈编号</span>
               <span class="ctx-value font-mono">{{ feedbackData.code }}</span>
@@ -37,7 +37,7 @@
             </div>
           </div>
           
-          <div class="quick-kpis">
+          <div class="quick-kpis" :class="{ 'no-border': isSpotSample }">
             <div class="kpi-box">
               <span class="kpi-num">{{ purchaseList.length }}</span>
               <span class="kpi-lbl">购样申请</span>
@@ -341,7 +341,7 @@
 
 
             <!-- 样品登记子表 -->
-            <div class="sub-table-wrapper mt-24" v-if="['已通过', '同意'].includes(selectedApply.status)">
+            <div class="sub-table-wrapper mt-24" v-if="['已通过', '同意', '已登记'].includes(selectedApply.status) || selectedApply.type === 'direct'">
               <div class="sub-table-header">
                 <span class="sub-table-title">关联样品登记记录 ({{ selectedApply.registrations?.length || 0 }})</span>
                 <el-button type="primary" size="small" :icon="Plus" class="action-btn-styled" @click="handleRegisterSampleDirect(selectedApply)">
@@ -798,6 +798,7 @@ const visible = ref(false)
 const feedbackData = ref<any>(null)
 const purchaseList = ref<any[]>([])
 const directRegistrations = ref<any[]>([])
+const isSpotSample = ref(false)
 
 const selectedCategory = ref<'purchase' | 'direct'>('purchase')
 const selectedApplyNo = ref<string>('')
@@ -938,19 +939,59 @@ const getTotalRegCount = () => (purchaseList.value.reduce((acc, p) => acc + (p.r
 
 const open = (row: any) => {
   feedbackData.value = row
-  if (row.feeAmount === '¥ 0.00') {
+  isSpotSample.value = !!row.applyNo
+  
+  if (isSpotSample.value) {
+    directRegistrations.value = []
+    
+    const purchaseItem = {
+      applyNo: row.applyNo,
+      sampleName: row.sampleName || row.name,
+      channel: row.channel || '供应商',
+      supplier: row.supplier,
+      purchaseUrl: row.purchaseUrl,
+      qty: row.qty || 1,
+      price: row.price || '¥ 0.00',
+      amount: row.amount || '免费',
+      status: row.status,
+      applyTime: row.applyTime,
+      type: row.type || 'purchase',
+      registrations: row.registrations || [],
+      approvalNodes: row.approvalNodes || [
+        { nodeName: "提交申请", operator: "系统", time: row.applyTime, status: "completed" },
+        { nodeName: "完成登记", operator: "系统", time: row.applyTime, status: "completed" }
+      ]
+    }
+    
+    purchaseList.value = [purchaseItem]
+    selectedCategory.value = 'purchase'
+    selectedApplyNo.value = purchaseItem.applyNo
+  } else {
+    if (row.feeAmount === '¥ 0.00' || row.type === 'direct' || row.amount === '免费') {
     purchaseList.value = []
+    const firstReg = (row.type === 'direct' && row.registrations && row.registrations.length > 0) ? {
+      regNo: row.applyNo || 'DJ-20260603-71',
+      name: row.sampleName || '亚克力透光隔板',
+      source: row.channel || '供应商',
+      sampleType: '开发样',
+      sampleStatus: '有效',
+      receiveTime: row.applyTime || '2026-06-03 10:00',
+      receiver: '李四',
+      sampleFee: '¥ 0.00',
+      ...row.registrations[0]
+    } : {
+      regNo: 'DJ-20260603-71',
+      name: '亚克力透光隔板',
+      source: '供应商',
+      sampleType: '开发样',
+      sampleStatus: '待提交',
+      receiveTime: '2026-06-03 10:00',
+      receiver: '李四',
+      sampleFee: '¥ 0.00'
+    }
+    
     directRegistrations.value = [
-      {
-        regNo: 'DJ-20260603-71',
-        name: '亚克力透光隔板',
-        source: '供应商',
-        sampleType: '开发样',
-        sampleStatus: '待提交',
-        receiveTime: '2026-06-03 10:00',
-        receiver: '李四',
-        sampleFee: '¥ 0.00'
-      },
+      firstReg,
       {
         regNo: 'DJ-20260603-72',
         name: 'LED七彩发光线圈',
@@ -999,75 +1040,93 @@ const open = (row: any) => {
     selectedDirectRegNo.value = directRegistrations.value[0]?.regNo || ''
   } else {
     directRegistrations.value = []
+    
+    const firstPurchase = (row.applyNo && row.applyNo.startsWith('PO-')) ? {
+      applyNo: row.applyNo,
+      sampleName: row.sampleName,
+      channel: row.channel,
+      supplier: row.supplier,
+      qty: row.qty,
+      price: row.price,
+      amount: row.amount,
+      status: row.status,
+      applyTime: row.applyTime,
+      registrations: row.registrations || [],
+      approvalNodes: row.approvalNodes || [
+        { nodeName: "提交申请", operator: "张三", time: row.applyTime, status: "completed" },
+        { nodeName: "部门主管审批", operator: "经理", time: row.applyTime, status: "completed" }
+      ]
+    } : {
+      applyNo: 'PO-20260520-01',
+      sampleName: 'DIY灯光板 - 款式A',
+      channel: '供应商',
+      supplier: row.source || '线下-深圳供应商',
+      qty: 1,
+      price: '¥ 50.00',
+      amount: row.feeAmount || '¥ 50.00',
+      status: '同意',
+      applyTime: '2026-05-21 14:00',
+      duration: '1.5小时',
+      registrations: [
+        {
+          regNo: 'DJ-20260603-01',
+          pattern: '复古雕花',
+          color: '曜石黑',
+          spec: '500*500mm',
+          sampleSize: '50*50*10cm',
+          netWeight: '1.2kg',
+          status: '待提交',
+          image: 'https://picsum.photos/60/60?random=1'
+        },
+        {
+          regNo: 'DJ-20260603-02',
+          pattern: '现代简约',
+          color: '极光银',
+          spec: '400*400mm',
+          sampleSize: '40*40*8cm',
+          netWeight: '0.9kg',
+          status: '待反馈',
+          image: 'https://picsum.photos/60/60?random=2'
+        },
+        {
+          regNo: 'DJ-20260603-03',
+          pattern: '欧式浮雕',
+          color: '象牙白',
+          spec: '600*600mm',
+          sampleSize: '60*60*12cm',
+          netWeight: '1.5kg',
+          status: '有效',
+          image: 'https://picsum.photos/60/60?random=3'
+        },
+        {
+          regNo: 'DJ-20260603-04',
+          pattern: '波西米亚',
+          color: '古铜色',
+          spec: '300*300mm',
+          sampleSize: '30*30*6cm',
+          netWeight: '0.7kg',
+          status: '无效',
+          image: 'https://picsum.photos/60/60?random=4'
+        },
+        {
+          regNo: 'DJ-20260603-05',
+          pattern: '几何线条',
+          color: '香槟金',
+          spec: '450*450mm',
+          sampleSize: '45*45*9cm',
+          netWeight: '1.1kg',
+          status: '已驳回',
+          image: 'https://picsum.photos/60/60?random=5'
+        }
+      ],
+      approvalNodes: [
+        { nodeName: "提交申请", operator: "张三", time: "2026-05-21 14:00", status: "completed" },
+        { nodeName: "部门主管审批", operator: "经理", time: "2026-05-21 15:30", status: "completed" }
+      ]
+    }
+
     purchaseList.value = [
-      {
-        applyNo: 'PO-20260520-01',
-        sampleName: 'DIY灯光板 - 款式A',
-        channel: '供应商',
-        supplier: row.source || '线下-深圳供应商',
-        qty: 1,
-        price: '¥ 50.00',
-        amount: row.feeAmount || '¥ 50.00',
-        status: '同意',
-        applyTime: '2026-05-21 14:00',
-        duration: '1.5小时',
-        registrations: [
-          {
-            regNo: 'DJ-20260603-01',
-            pattern: '复古雕花',
-            color: '曜石黑',
-            spec: '500*500mm',
-            sampleSize: '50*50*10cm',
-            netWeight: '1.2kg',
-            status: '待提交',
-            image: 'https://picsum.photos/60/60?random=1'
-          },
-          {
-            regNo: 'DJ-20260603-02',
-            pattern: '现代简约',
-            color: '极光银',
-            spec: '400*400mm',
-            sampleSize: '40*40*8cm',
-            netWeight: '0.9kg',
-            status: '待反馈',
-            image: 'https://picsum.photos/60/60?random=2'
-          },
-          {
-            regNo: 'DJ-20260603-03',
-            pattern: '欧式浮雕',
-            color: '象牙白',
-            spec: '600*600mm',
-            sampleSize: '60*60*12cm',
-            netWeight: '1.5kg',
-            status: '有效',
-            image: 'https://picsum.photos/60/60?random=3'
-          },
-          {
-            regNo: 'DJ-20260603-04',
-            pattern: '波西米亚',
-            color: '古铜色',
-            spec: '300*300mm',
-            sampleSize: '30*30*6cm',
-            netWeight: '0.7kg',
-            status: '无效',
-            image: 'https://picsum.photos/60/60?random=4'
-          },
-          {
-            regNo: 'DJ-20260603-05',
-            pattern: '几何线条',
-            color: '香槟金',
-            spec: '450*450mm',
-            sampleSize: '45*45*9cm',
-            netWeight: '1.1kg',
-            status: '已驳回',
-            image: 'https://picsum.photos/60/60?random=5'
-          }
-        ],
-        approvalNodes: [
-          { nodeName: "提交申请", operator: "张三", time: "2026-05-21 14:00", status: "completed" },
-          { nodeName: "部门主管审批", operator: "经理", time: "2026-05-21 15:30", status: "completed" }
-        ]
-      },
+      firstPurchase,
       {
         applyNo: 'PO-20260521-02',
         sampleName: '亚克力防尘保护盒 - 淘宝样',
@@ -1171,11 +1230,13 @@ const open = (row: any) => {
     selectedCategory.value = 'purchase'
     selectedApplyNo.value = purchaseList.value[0]?.applyNo || ''
   }
+  }
   visible.value = true
 }
 
 const getStatusTagType = (status: string) => {
   switch (status) {
+    case '已登记':
     case '同意':
     case '已通过': return 'success'
     case '待审批':
@@ -1327,6 +1388,12 @@ $bg-main: #f4f7f9;
   margin-top: 20px;
   padding-top: 16px;
   border-top: 1px dashed #f0f0f0;
+  
+  &.no-border {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
   
   .kpi-box {
     flex: 1;

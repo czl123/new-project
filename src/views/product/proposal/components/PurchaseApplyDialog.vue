@@ -274,6 +274,39 @@
             </el-row>
           </div>
 
+          <!-- 模块 3.5：合同信息 -->
+          <div class="form-section" v-if="form.items[0].feeType === '开模费'">
+            <div class="section-title">
+              <span class="title-bar cyan"></span>
+              <span>合同信息</span>
+            </div>
+            <el-row :gutter="24">
+              <el-col :span="8">
+                <el-form-item label="合同文件" required prop="items.0.contractFiles" :rules="{ required: true, type: 'array', message: '请上传合同文件', trigger: 'change' }">
+                  <el-upload
+                    action="#"
+                    :auto-upload="false"
+                    v-model:file-list="form.items[0].contractFiles"
+                  >
+                    <el-button type="primary" size="small" plain :icon="Upload">上传合同</el-button>
+                  </el-upload>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="合同金额" required prop="items.0.contractAmount" :rules="{ required: true, message: '请输入合同金额', trigger: 'blur' }">
+                  <el-input-number v-model="form.items[0].contractAmount" :min="0" :precision="2" :controls="false" placeholder="请输入合同金额" class="w-full">
+                    <template #append>CNY</template>
+                  </el-input-number>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="合同备注" prop="items.0.contractRemark">
+                  <el-input v-model="form.items[0].contractRemark" placeholder="请输入合同备注" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </div>
+
           <!-- 模块 4：单据相关附件 -->
           <div class="form-section" v-if="form.items[0].channel !== '供应商'">
             <div class="section-title">
@@ -606,6 +639,39 @@
                 </el-row>
               </div>
 
+              <!-- 模块 3.5：合同信息 -->
+              <div class="form-section" v-if="item.feeType === '开模费'">
+                <div class="section-title">
+                  <span class="title-bar cyan"></span>
+                  <span>合同信息</span>
+                </div>
+                <el-row :gutter="24">
+                  <el-col :span="8">
+                    <el-form-item label="合同文件" required :prop="'items.' + index + '.contractFiles'" :rules="{ required: true, type: 'array', message: '请上传合同文件', trigger: 'change' }">
+                      <el-upload
+                        action="#"
+                        :auto-upload="false"
+                        v-model:file-list="item.contractFiles"
+                      >
+                        <el-button type="primary" size="small" plain :icon="Upload">上传合同</el-button>
+                      </el-upload>
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="8">
+                    <el-form-item label="合同金额" required :prop="'items.' + index + '.contractAmount'" :rules="{ required: true, message: '请输入合同金额', trigger: 'blur' }">
+                      <el-input-number v-model="item.contractAmount" :min="0" :precision="2" :controls="false" placeholder="请输入合同金额" class="w-full">
+                        <template #append>CNY</template>
+                      </el-input-number>
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="8">
+                    <el-form-item label="合同备注" :prop="'items.' + index + '.contractRemark'">
+                      <el-input v-model="item.contractRemark" placeholder="请输入合同备注" />
+                    </el-form-item>
+                  </el-col>
+                </el-row>
+              </div>
+
               <!-- 模块 4：单据相关附件 -->
               <div class="form-section" v-if="item.channel !== '供应商'">
                 <div class="section-title">
@@ -683,7 +749,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, InfoFilled, Picture, Camera, Delete } from '@element-plus/icons-vue'
+import { Plus, InfoFilled, Picture, Camera, Delete, Upload } from '@element-plus/icons-vue'
 
 const visible = ref(false)
 const isEditMode = ref(false)
@@ -744,7 +810,10 @@ const createEmptyItem = (data?: any) => {
     refundCondition: data?.refundCondition || '',
     sampleImages: data?.sampleImages || (data?.image ? [data.image] : [] as string[]),
     orderScreenshots: data?.orderScreenshots || [] as string[],
-    paymentQrCodes: data?.paymentQrCodes || (data?.paymentQrCode ? [data.paymentQrCode] : [] as string[])
+    paymentQrCodes: data?.paymentQrCodes || (data?.paymentQrCode ? [data.paymentQrCode] : [] as string[]),
+    contractFiles: data?.contractFiles || (data?.contractFile ? [{ name: data.contractFile, url: '#' }] : []),
+    contractAmount: data?.contractAmount || undefined,
+    contractRemark: data?.contractRemark || ''
   }
 }
 
@@ -1103,6 +1172,7 @@ defineExpose({ open })
     &.orange { background-color: #fa8c16; }
     &.purple { background-color: #722ed1; }
     &.green { background-color: #52c41a; }
+    &.cyan { background-color: #13c2c2; }
   }
   
   span {

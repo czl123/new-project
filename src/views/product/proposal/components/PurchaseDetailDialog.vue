@@ -80,6 +80,9 @@
           <el-descriptions-item label="样品名称">
             <span class="font-medium">{{ detailData.sampleName }}</span>
           </el-descriptions-item>
+          <el-descriptions-item label="费用类型">
+            <el-tag type="warning" size="small" effect="light" style="font-weight: 600;">{{ detailData.feeType || '打样费' }}</el-tag>
+          </el-descriptions-item>
           <el-descriptions-item label="购样数量">
             <span>{{ detailData.qty }} 个</span>
           </el-descriptions-item>
@@ -93,9 +96,6 @@
             <el-tag :type="detailData.isRefundable ? 'success' : 'info'" size="small">
               {{ detailData.isRefundable ? '是' : '否' }}
             </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="收款方式" v-if="detailData.channel === '供应商'">
-            <span>{{ detailData.paymentMethod || '银行转账' }}</span>
           </el-descriptions-item>
           <el-descriptions-item label="退款条款" v-if="detailData.channel === '供应商' && detailData.isRefundable" :span="2">
             <div class="refund-policy">
@@ -113,13 +113,16 @@
           <span>收款账户信息</span>
         </div>
         <el-descriptions :column="2" border class="custom-desc-table" v-if="detailData.paymentMethod === '银行转账'">
+          <el-descriptions-item label="收款方式">
+            <span>{{ detailData.paymentMethod || '银行转账' }}</span>
+          </el-descriptions-item>
           <el-descriptions-item label="开户行">
             <span>{{ detailData.bankName || '中国工商银行义乌支行' }}</span>
           </el-descriptions-item>
           <el-descriptions-item label="账户名称">
             <span>{{ detailData.accountName || '义乌得力商贸有限公司' }}</span>
           </el-descriptions-item>
-          <el-descriptions-item label="银行账号" :span="2">
+          <el-descriptions-item label="银行账号">
             <span class="font-medium code-style">{{ detailData.bankAccount || '6217 0038 9001 0293 848' }}</span>
           </el-descriptions-item>
         </el-descriptions>
@@ -138,6 +141,31 @@
               />
             </div>
             <span class="no-attach" v-else>暂无收款二维码</span>
+          </el-descriptions-item>
+        </el-descriptions>
+      </div>
+
+      <!-- 模块 3.5：合同信息 -->
+      <div class="detail-section mb-20" v-if="detailData.feeType === '开模费'">
+        <div class="section-title mb-12">
+          <span class="title-bar cyan"></span>
+          <span>合同信息</span>
+        </div>
+        <el-descriptions :column="2" border class="custom-desc-table">
+          <el-descriptions-item label="合同文件">
+            <div class="contract-file-list" v-if="detailData.contractFiles && detailData.contractFiles.length > 0">
+              <div v-for="(file, idx) in detailData.contractFiles" :key="idx" class="contract-file-item" style="display: flex; align-items: center; gap: 4px;">
+                <el-icon><Document /></el-icon>
+                <span class="file-name" style="color: var(--el-color-primary);">{{ file.name }}</span>
+              </div>
+            </div>
+            <span class="no-attach" v-else>暂无合同文件</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="合同金额">
+            <span class="font-semibold text-danger">¥ {{ typeof detailData.contractAmount === 'number' ? detailData.contractAmount.toFixed(2) : (detailData.contractAmount || '0.00') }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="合同备注" :span="2">
+            <span>{{ detailData.contractRemark || '暂无合同备注' }}</span>
           </el-descriptions-item>
         </el-descriptions>
       </div>
@@ -209,9 +237,17 @@ const open = (row: any) => {
     refundCondition: '首批大货订单满1000件返还'
   }
 
+  const defaultContract = row.feeType === '开模费' ? {
+    contractFiles: row.contractFiles || [{ name: '不锈钢微调固定座开模合同.pdf', url: '#' }],
+    contractAmount: row.contractAmount || 8000.00,
+    contractRemark: row.contractRemark || '开模费用一次性付清，模具所有权归我司所有。'
+  } : {}
+
   detailData.value = {
     ...defaultBank,
     ...defaultRefund,
+    ...defaultContract,
+    feeType: row.feeType || '打样费',
     ...row,
     // 如果是 1688 / 淘宝，我们配给它对应的付款截图或店铺名
     shopName: row.channel !== '供应商' ? `${row.channel}优质货源店` : '',
@@ -288,6 +324,7 @@ defineExpose({ open })
     &.orange { background-color: #fa8c16; }
     &.purple { background-color: #722ed1; }
     &.green { background-color: #52c41a; }
+    &.cyan { background-color: #13c2c2; }
   }
   
   span {
