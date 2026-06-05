@@ -508,10 +508,19 @@ const handleCreateTask = (row: any) => {
 const handleSaveCreateTask = (taskData: any) => {
   const index = allTableData.value.findIndex(item => item.proposalNo === taskData.proposalNo)
   if (index > -1) {
-    const row = allTableData.value[index]
-    row.status = '拿样中'
-    if (row.taskRounds && row.taskRounds.includes('0/0/0')) {
-      row.taskRounds = '共【0/1/0】轮'
+    // 将表单修改的数据回写到本地列表中
+    allTableData.value[index] = {
+      ...allTableData.value[index],
+      ...taskData
+    }
+    
+    // 只有在点击“提交”时才流转状态
+    if (taskData.isSubmit) {
+      const row = allTableData.value[index]
+      row.status = '拿样中'
+      if (row.taskRounds && row.taskRounds.includes('0/0/0')) {
+        row.taskRounds = '共【0/1/0】轮'
+      }
     }
   }
 }

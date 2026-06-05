@@ -11,7 +11,6 @@
       <div class="dialog-header-custom">
         <span class="title-main">创建拿样任务</span>
         <span class="proposal-no-badge">{{ form.proposalNo }}</span>
-        <el-tag type="primary" size="small" effect="dark">新建任务</el-tag>
       </div>
     </template>
 
@@ -430,7 +429,8 @@
         </div>
         <div class="footer-actions">
           <el-button @click="visible = false" size="small">取消</el-button>
-          <el-button type="primary" :loading="saving" @click="handleSave" size="small">生成并下发任务</el-button>
+          <el-button type="primary" plain :loading="saving" @click="handleSave(false)" size="small">保存</el-button>
+          <el-button type="primary" :loading="saving" @click="handleSave(true)" size="small">提交</el-button>
         </div>
       </div>
     </template>
@@ -635,25 +635,33 @@ const rules = {
 }
 
 // 保存并下发任务
-const handleSave = async () => {
-  if (!formRef.value) return
-  await formRef.value.validate(async (valid: boolean) => {
-    if (valid) {
-      saving.value = true
-      try {
-        // 模拟网络传输延迟
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        
-        emit('save', JSON.parse(JSON.stringify(form.value)))
-        ElMessage.success(`任务 ${form.value.taskNo} 创建且已成功下发！`)
-        visible.value = false
-      } finally {
-        saving.value = false
+const handleSave = async (isSubmit = true) => {
+  if (isSubmit) {
+    if (!formRef.value) return
+    await formRef.value.validate(async (valid: boolean) => {
+      if (valid) {
+        await executeSave(true)
+      } else {
+        ElMessage.warning('表单信息校验失败，请检查必填项')
       }
-    } else {
-      ElMessage.warning('表单信息校验失败，请检查必填项')
-    }
-  })
+    })
+  } else {
+    await executeSave(false)
+  }
+}
+
+const executeSave = async (isSubmit: boolean) => {
+  saving.value = true
+  try {
+    // 模拟网络传输延迟
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    
+    emit('save', { ...JSON.parse(JSON.stringify(form.value)), isSubmit })
+    ElMessage.success(isSubmit ? `任务 ${form.value.taskNo} 创建且已成功下发！` : `任务 ${form.value.taskNo} 草稿保存成功！`)
+    visible.value = false
+  } finally {
+    saving.value = false
+  }
 }
 </script>
 
