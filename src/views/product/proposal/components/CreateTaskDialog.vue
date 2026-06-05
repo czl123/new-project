@@ -576,30 +576,30 @@ watch(() => props.rowData, (newVal: any) => {
     if (!merged.researchFile) merged.researchFile = '深度调研报告_2026.pdf'
     if (!merged.roiFile) merged.roiFile = 'ROI利润测算表_V1.xlsx'
     
-    // 任务特有配置
-    merged.taskNo = `TK${todayStr}${randNum}`
-    merged.user = '杨登峰'
-    merged.samplingMethod = (newVal.devMethod && newVal.devMethod.includes('现货')) ? '现货拿样' : '定制拿样'
-    merged.priority = 'P1'
-    merged.feedbackDeadline = fdStr
-    merged.deadline = dStr
-    merged.customCycle = newVal.customCycle || ''
+    // 任务特有配置 (支持回显已保存的草稿)
+    merged.taskNo = newVal.taskNo || `TK${todayStr}${randNum}`
+    merged.user = newVal.user || '杨登峰'
+    merged.samplingMethod = newVal.samplingMethod || ((newVal.devMethod && newVal.devMethod.includes('现货')) ? '现货拿样' : '定制拿样')
+    merged.priority = newVal.priority || 'P1'
+    merged.feedbackDeadline = newVal.feedbackDeadline !== undefined ? newVal.feedbackDeadline : fdStr
+    merged.deadline = newVal.deadline !== undefined ? newVal.deadline : dStr
+    merged.customCycle = newVal.customCycle !== undefined ? newVal.customCycle : ''
     
-    merged.bottomLinePrice = '32 CNY'
-    merged.styleRequirement = '符合图纸或参考样，无划痕'
-    merged.brandRequirement = '通用'
-    merged.materialRequirement = '防潮，防霉，承重性强'
-    merged.patternRequirement = '无图案'
-    merged.colorRequirement = '常规主色'
-    merged.sizeRequirement = '适配规格'
-    merged.weightRequirement = '单品不超过常规重量'
-    merged.packQtyRequirement = '1个/包'
-    merged.functionRequirement = '安全，经久耐用'
-    merged.accessoryRequirement = '配备必要装配螺丝/配件'
-    merged.packagingRequirement = '常规五层纸箱包装'
-    merged.complianceRequirement = '符合跨境电商出口标准'
-    merged.certRequirement = '无'
-    merged.supplementaryRequirement = '请重点确认材质的防刮擦性能与物理强度。'
+    merged.bottomLinePrice = newVal.bottomLinePrice !== undefined ? newVal.bottomLinePrice : '32 CNY'
+    merged.styleRequirement = newVal.styleRequirement !== undefined ? newVal.styleRequirement : '符合图纸或参考样，无划痕'
+    merged.brandRequirement = newVal.brandRequirement !== undefined ? newVal.brandRequirement : '通用'
+    merged.materialRequirement = newVal.materialRequirement !== undefined ? newVal.materialRequirement : '防潮，防霉，承重性强'
+    merged.patternRequirement = newVal.patternRequirement !== undefined ? newVal.patternRequirement : '无图案'
+    merged.colorRequirement = newVal.colorRequirement !== undefined ? newVal.colorRequirement : '常规主色'
+    merged.sizeRequirement = newVal.sizeRequirement !== undefined ? newVal.sizeRequirement : '适配规格'
+    merged.weightRequirement = newVal.weightRequirement !== undefined ? newVal.weightRequirement : '单品不超过常规重量'
+    merged.packQtyRequirement = newVal.packQtyRequirement !== undefined ? newVal.packQtyRequirement : '1个/包'
+    merged.functionRequirement = newVal.functionRequirement !== undefined ? newVal.functionRequirement : '安全，经久耐用'
+    merged.accessoryRequirement = newVal.accessoryRequirement !== undefined ? newVal.accessoryRequirement : '配备必要装配螺丝/配件'
+    merged.packagingRequirement = newVal.packagingRequirement !== undefined ? newVal.packagingRequirement : '常规五层纸箱包装'
+    merged.complianceRequirement = newVal.complianceRequirement !== undefined ? newVal.complianceRequirement : '符合跨境电商出口标准'
+    merged.certRequirement = newVal.certRequirement !== undefined ? newVal.certRequirement : '无'
+    merged.supplementaryRequirement = newVal.supplementaryRequirement !== undefined ? newVal.supplementaryRequirement : '请重点确认材质的防刮擦性能与物理强度。'
 
     form.value = JSON.parse(JSON.stringify(merged))
   }

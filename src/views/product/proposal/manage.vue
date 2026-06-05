@@ -212,7 +212,17 @@
                     <div class="pipeline-node">
                       <div class="node-tag">拿样阶段</div>
                       <div class="node-content">
-                        <div class="info-item">任务待发：<el-link type="primary" :underline="false">0</el-link></div>
+                        <div class="info-item">
+                          任务待发：
+                          <el-link 
+                            type="primary" 
+                            :underline="false" 
+                            :disabled="row.status !== '待设计'"
+                            @click="row.status === '待设计' && handleCreateTask(row)"
+                          >
+                            {{ row.status === '待设计' ? 1 : 0 }}
+                          </el-link>
+                        </div>
                         <div class="info-item">定制反馈：<el-link type="primary" :underline="false">0</el-link></div>
                       </div>
                     </div>
