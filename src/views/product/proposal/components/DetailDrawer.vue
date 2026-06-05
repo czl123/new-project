@@ -405,7 +405,7 @@
               <el-row :gutter="24">
                 <el-col :span="12">
                   <div class="link-block">
-                    <div class="sub-label">参考链接：</div>
+                    <div class="sub-label">参考竞品：</div>
                     <div class="multi-links mt-8">
                       <div v-for="(link, idx) in detailData.refLinks" :key="idx" class="link-item">
                         <el-icon><Link /></el-icon>
@@ -663,7 +663,7 @@
                       <template #header><span class="t-marketing">图片要求</span></template>
                     </el-table-column>
                     <el-table-column prop="refLink" width="120" show-overflow-tooltip>
-                      <template #header><span class="t-marketing">参考链接</span></template>
+                      <template #header><span class="t-marketing">参考竞品</span></template>
                     </el-table-column>
                   </el-table-column>
 

@@ -25,107 +25,87 @@
         class="workspace-form"
         size="small"
       >
-        <!-- 🔒 只读归类基本信息区 -->
-        <div class="readonly-wrapper">
-          <div class="readonly-header-collapse">
-            <span class="readonly-title-text">{{ isCollapsed ? '已归档只读信息 (摘要)' : '已归档只读信息 (完整)' }}</span>
-            <el-button type="primary" link size="small" @click="isCollapsed = !isCollapsed">
-              {{ isCollapsed ? '展开完整信息' : '收起' }}
-              <el-icon class="el-icon--right"><ArrowDown v-if="isCollapsed" /><ArrowUp v-else /></el-icon>
-            </el-button>
+        <!-- 基础信息看板 -->
+        <div class="info-dashboard">
+          <div class="dash-item">
+            <div class="label">首单采购金额</div>
+            <div class="value">¥{{ formattedTotalAmount }}</div>
           </div>
-
-          <!-- 当折叠时展示的极简摘要 -->
-          <el-descriptions v-if="isCollapsed" :column="4" border size="small" class="locked-descriptions">
-            <el-descriptions-item label="产品名称" :span="2">
-              <span class="font-bold text-highlight">{{ form.productName }}</span>
-            </el-descriptions-item>
-            <el-descriptions-item label="SPU">
-              <span class="font-mono">{{ form.spu || '-' }}</span>
-            </el-descriptions-item>
-            <el-descriptions-item label="提案等级">
-              <span class="font-bold text-highlight-orange">{{ form.level }} 级</span>
-            </el-descriptions-item>
-
-            <el-descriptions-item label="首单采购数量">
-              <span>{{ form.buyQty ? form.buyQty.toLocaleString() + ' PCS' : '-' }}</span>
-            </el-descriptions-item>
-            <el-descriptions-item label="首单采购单价">
-              <span>{{ form.unitPrice ? '¥' + form.unitPrice.toFixed(2) : '-' }}</span>
-            </el-descriptions-item>
-            <el-descriptions-item label="首单采购金额" :span="2">
-              <span class="text-green font-bold text-lg-amount">¥{{ formattedTotalAmount }}</span>
-            </el-descriptions-item>
-          </el-descriptions>
-
-          <!-- 未折叠时展示的完整三大版块 -->
-          <div v-else class="readonly-full-content">
-            <div class="readonly-group-title">
-              <el-icon class="group-icon"><Goods /></el-icon>
-              <span>产品基础档案</span>
-            </div>
-            <el-descriptions :column="4" border size="small" class="locked-descriptions mb-8">
-              <el-descriptions-item label="产品名称" :span="2">
-                <span class="font-bold text-highlight">{{ form.productName }}</span>
-              </el-descriptions-item>
-              <el-descriptions-item label="SPU">
-                <span class="font-mono">{{ form.spu || '-' }}</span>
-              </el-descriptions-item>
-              <el-descriptions-item label="运营大类">{{ form.category || '-' }}</el-descriptions-item>
-
-              <el-descriptions-item label="款式">{{ form.style || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="型号">{{ form.model || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="主材料">{{ form.material || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="适用品牌或对象">{{ form.applicableObject || '-' }}</el-descriptions-item>
-            </el-descriptions>
-
-            <div class="readonly-group-title">
-              <el-icon class="group-icon"><User /></el-icon>
-              <span>项目开发与归属</span>
-            </div>
-            <el-descriptions :column="4" border size="small" class="locked-descriptions mb-8">
-              <el-descriptions-item label="产品经理">{{ form.manager || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="团队负责人">{{ form.teamLeader || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="开发方式">{{ form.devMethod || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="提案等级">
-                <span class="font-bold text-highlight-orange">{{ form.level }} 级</span>
-              </el-descriptions-item>
-
-              <el-descriptions-item label="开发品牌">{{ form.brand || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="契合平台">{{ form.platform || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="产品来源" :span="2">{{ form.productSource || '-' }}</el-descriptions-item>
-            </el-descriptions>
-
-            <div class="readonly-group-title">
-              <el-icon class="group-icon"><Wallet /></el-icon>
-              <span>首单及包装预算</span>
-            </div>
-            <el-descriptions :column="4" border size="small" class="locked-descriptions">
-              <el-descriptions-item label="初始Logo位置">{{ form.logoPosition || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="初始包装方式">{{ form.packagingMethod || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="运营上架时间要求" :span="2">{{ form.listingTimeOps || '-' }}</el-descriptions-item>
-
-              <el-descriptions-item label="首单采购数量">
-                <span>{{ form.buyQty ? form.buyQty.toLocaleString() + ' PCS' : '-' }}</span>
-              </el-descriptions-item>
-              <el-descriptions-item label="首单采购单价">
-                <span>{{ form.unitPrice ? '¥' + form.unitPrice.toFixed(2) : '-' }}</span>
-              </el-descriptions-item>
-              <el-descriptions-item label="首单采购金额" :span="2">
-                <span class="text-green font-bold text-lg-amount">¥{{ formattedTotalAmount }}</span>
-              </el-descriptions-item>
-            </el-descriptions>
+          <div class="dash-item">
+            <div class="label">首单采购数量</div>
+            <div class="value">{{ form.buyQty ? form.buyQty.toLocaleString() : 0 }} <span class="unit">PCS</span></div>
+          </div>
+          <div class="dash-item">
+            <div class="label">单价</div>
+            <div class="value">¥{{ form.unitPrice || 0 }}</div>
+          </div>
+          <div class="dash-item">
+            <div class="label">提案等级</div>
+            <div class="value-tag" :data-level="form.level">{{ form.level }} 级</div>
           </div>
         </div>
 
-        <!-- 📅 结项与时效计划 -->
-        <div class="p-section-card">
-          <div class="p-section-header">
-            <el-icon class="p-section-icon"><Calendar /></el-icon>
+        <!-- 提案-基础 -->
+        <div class="section-card">
+          <div class="section-title">
+            <span>提案-基础</span>
+            <el-button type="primary" link size="small" @click="isReadonlyCollapsed = !isReadonlyCollapsed" style="margin-left: auto; font-weight: normal;">
+              {{ isReadonlyCollapsed ? '展开只读信息' : '收起只读信息' }}
+              <el-icon class="el-icon--right"><ArrowDown v-if="isReadonlyCollapsed" /><ArrowUp v-else /></el-icon>
+            </el-button>
+          </div>
+          
+          <div v-show="!isReadonlyCollapsed" class="readonly-content-collapse-wrapper mb-12">
+            <!-- 分组 1：管理与时效 -->
+            <div class="sub-section-title">
+              <el-icon><Management /></el-icon>
+              <span>管理与时效</span>
+            </div>
+            <el-descriptions :column="3" border size="small" class="mb-12">
+              <el-descriptions-item label="运营大类">{{ form.category || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="团队负责人">{{ form.teamLeader || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="产品经理">{{ form.manager || '-' }}</el-descriptions-item>
+            </el-descriptions>
+
+            <!-- 分组 2：SPU 核心属性 -->
+            <div class="sub-section-title">
+              <el-icon><List /></el-icon>
+              <span>SPU 核心属性</span>
+            </div>
+            <el-descriptions :column="3" border size="small" class="mb-12">
+              <el-descriptions-item label="产品名称">{{ form.productName || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="款式">{{ form.style || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="主材料">{{ form.material || '-' }}</el-descriptions-item>
+              
+              <el-descriptions-item label="适用品牌/对象">{{ form.applicableObject || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="型号">{{ form.model || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="SPU">{{ form.spu || '-' }}</el-descriptions-item>
+            </el-descriptions>
+
+            <!-- 分组 3：开发与品牌 -->
+            <div class="sub-section-title">
+              <el-icon><PriceTag /></el-icon>
+              <span>开发与品牌</span>
+            </div>
+            <el-descriptions :column="3" border size="small">
+              <el-descriptions-item label="产品来源">{{ form.productSource || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="开发方式">{{ form.devMethod || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="开发品牌">{{ form.brand || '-' }}</el-descriptions-item>
+              
+              <el-descriptions-item label="初始Logo位置">{{ form.logoPosition || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="初始包装方式">{{ form.packagingMethod || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="-"></el-descriptions-item>
+            </el-descriptions>
+          </div>
+
+          <!-- 结项与时效计划 -->
+          <div class="sub-section-title">
+            <el-icon><Calendar /></el-icon>
             <span>结项与时效计划</span>
           </div>
-          <el-row :gutter="12">
-            <el-col :span="8">
+          
+          <el-row :gutter="24">
+            <el-col :span="6">
               <el-form-item prop="estProposalDate">
                 <template #label>
                   <div class="form-label-with-tip">
@@ -138,7 +118,7 @@
                 <el-date-picker v-model="form.estProposalDate" type="date" placeholder="选择下单日期" value-format="YYYY-MM-DD" class="w-full" />
               </el-form-item>
             </el-col>
-            <el-col :span="8">
+            <el-col :span="6">
               <el-form-item prop="estProjectDate">
                 <template #label>
                   <div class="form-label-with-tip">
@@ -151,47 +131,30 @@
                 <el-date-picker v-model="form.estProjectDate" type="date" placeholder="选择入库交期" value-format="YYYY-MM-DD" class="w-full" />
               </el-form-item>
             </el-col>
-            <el-col :span="8">
+            <el-col :span="6">
               <el-form-item label="开发上架时间要求" prop="listingTimeDev">
-                <el-input v-model="form.listingTimeDev" placeholder="如: 预计 2026-05-15 售卖" />
+                <el-date-picker v-model="form.listingTimeDev" type="date" placeholder="选择上架日期" value-format="YYYY-MM-DD" class="w-full" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="6">
+              <el-form-item label="运营上架时间要求" prop="listingTimeOps">
+                <el-input v-model="form.listingTimeOps" disabled placeholder="-" />
               </el-form-item>
             </el-col>
           </el-row>
         </div>
 
-        <!-- 🔍 市场调研与定位 -->
-        <div class="p-section-card">
-          <div class="p-section-header">
-            <el-icon class="p-section-icon"><DataAnalysis /></el-icon>
-            <span>市场调研与定位</span>
-          </div>
-          <el-row :gutter="12" class="mb-8">
-            <el-col :span="12">
-              <el-form-item label="核心卖点说明" prop="sellingPoints">
-                <el-input
-                  v-model="form.sellingPoints"
-                  type="textarea"
-                  :rows="4"
-                  placeholder="提示要点：&#10;1. 核心材质及物理优势&#10;2. 结构创新与功能亮点&#10;3. 配套赠品及视觉差异化"
-                  maxlength="500"
-                  show-word-limit
-                />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="市场评估" prop="marketEst">
-                <el-input
-                  v-model="form.marketEst"
-                  type="textarea"
-                  :rows="4"
-                  placeholder="提示要点：&#10;1. 对应竞品月销预估与客单价定位&#10;2. 核心流量入口与搜索热度趋势&#10;3. ROI测算与目标毛利率范围"
-                />
-              </el-form-item>
-            </el-col>
-          </el-row>
+        <!-- 提案-调研 -->
+        <div class="section-card">
+          <div class="section-title">提案-调研</div>
 
-          <el-row :gutter="12" class="mb-8">
-            <el-col :span="8">
+          <!-- 分组 1：市场与人群 -->
+          <div class="sub-section-title">
+            <el-icon><Monitor /></el-icon>
+            <span>市场与人群</span>
+          </div>
+          <el-row :gutter="24" class="mb-8">
+            <el-col :span="12">
               <el-form-item label="主攻市场" prop="mainMarket">
                 <el-select v-model="form.mainMarket" multiple collapse-tags placeholder="选择销售市场" class="w-full">
                   <el-option label="北美市场 (🇺🇸/🇨🇦)" value="北美" />
@@ -201,19 +164,36 @@
                 </el-select>
               </el-form-item>
             </el-col>
-            <el-col :span="8">
-              <el-form-item label="使用场景" prop="usageScenario">
-                <el-input v-model="form.usageScenario" placeholder="如：户外露营、庭院美化" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="8">
+            <el-col :span="12">
               <el-form-item label="使用人群" prop="userGroup">
                 <el-input v-model="form.userGroup" placeholder="如：中高端户外爱好者" />
               </el-form-item>
             </el-col>
           </el-row>
+          <el-row :gutter="24" class="mb-4">
+            <el-col :span="24">
+              <el-form-item label="市场评估" prop="marketEst">
+                <el-input
+                  v-model="form.marketEst"
+                  type="textarea"
+                  :rows="3"
+                  placeholder="提示要点：&#10;1. 对应竞品月销预估与客单价定位&#10;2. 核心流量入口与搜索热度趋势&#10;3. ROI测算与目标毛利率范围"
+                />
+              </el-form-item>
+            </el-col>
+          </el-row>
 
-          <el-row :gutter="12">
+          <!-- 分组 2：场景与标签 -->
+          <div class="sub-section-title">
+            <el-icon><Guide /></el-icon>
+            <span>场景与标签</span>
+          </div>
+          <el-row :gutter="24" class="mb-4">
+            <el-col :span="8">
+              <el-form-item label="使用场景" prop="usageScenario">
+                <el-input v-model="form.usageScenario" placeholder="如：户外露营、庭院美化" />
+              </el-form-item>
+            </el-col>
             <el-col :span="8">
               <el-form-item label="季节标签" prop="seasonTags">
                 <el-select v-model="form.seasonTags" multiple collapse-tags placeholder="选择季节" class="w-full">
@@ -228,84 +208,118 @@
                 </el-select>
               </el-form-item>
             </el-col>
-            <el-col :span="8">
+          </el-row>
+
+          <!-- 分组 3：素材与卖点 -->
+          <div class="sub-section-title">
+            <el-icon><Film /></el-icon>
+            <span>素材与卖点</span>
+          </div>
+          <el-row :gutter="24" class="mb-8">
+            <el-col :span="12">
+              <el-form-item label="卖点说明" prop="sellingPoints">
+                <el-input
+                  v-model="form.sellingPoints"
+                  type="textarea"
+                  :rows="4"
+                  placeholder="提示要点：&#10;1. 核心材质及物理优势&#10;2. 结构创新与功能亮点&#10;3. 配套赠品及视觉差异化"
+                  maxlength="500"
+                  show-word-limit
+                />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
               <el-form-item label="调研分析文档">
-                <div class="associated-docs-list-v3 mb-4">
-                  <div class="doc-item-v3" v-for="(file, idx) in form.researchFiles" :key="idx">
-                    <el-icon class="doc-icon" :class="getFileIconClass(file.name)"><Document /></el-icon>
-                    <span class="doc-name">{{ file.name }}</span>
-                    <el-button type="danger" link size="small" @click="removeResearchFile(idx)">移除</el-button>
+                <div style="width: 100%;">
+                  <div class="research-capsule-list mb-4">
+                    <div v-for="(file, idx) in form.researchFiles" :key="idx" class="design-capsule-item">
+                      <el-icon class="file-icon" :class="getFileIconClass(file.name)"><Document /></el-icon>
+                      <div class="file-info">
+                        <span class="file-name" :title="file.name">{{ file.name }}</span>
+                      </div>
+                      <el-button type="danger" link size="small" class="delete-btn" @click="removeResearchFile(idx)">删除</el-button>
+                    </div>
+                    <div v-if="!form.researchFiles || form.researchFiles.length === 0" class="no-design-placeholder">
+                      暂无已上传的调研分析文档
+                    </div>
                   </div>
-                  <div v-if="!form.researchFiles || form.researchFiles.length === 0" class="no-doc-placeholder-v3">
-                    暂无关联文档
+                  <el-upload
+                    action="#"
+                    :show-file-list="false"
+                    :auto-upload="false"
+                    :on-change="handleResearchFileUpload"
+                    class="doc-upload-inline"
+                  >
+                    <div class="doc-upload-trigger-dashed">
+                      <el-icon><Plus /></el-icon>
+                      <span>上传分析文档</span>
+                    </div>
+                  </el-upload>
+                </div>
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+          <el-row :gutter="24">
+            <el-col :span="12">
+              <el-form-item label="参考竞品">
+                <div class="links-list-v3">
+                  <div v-for="(link, idx) in form.refLinks" :key="idx" class="link-row-v3 mb-4">
+                    <el-input v-model="link.url" placeholder="链接地址 (例: https://...)" style="flex: 1;" />
+                    <el-button type="danger" plain :icon="Delete" circle size="small" @click="removeRefLink(idx)" />
+                  </div>
+                  <div class="link-add-dashed-row" @click="addRefLink">
+                    <el-icon><Plus /></el-icon>
+                    <span>添加竞品参考链接</span>
                   </div>
                 </div>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="参考图片" class="ref-images-form-item">
                 <el-upload
                   action="#"
-                  :show-file-list="false"
+                  v-model:file-list="form.refImages"
+                  list-type="picture-card"
                   :auto-upload="false"
-                  :on-change="handleResearchFileUpload"
+                  :on-preview="handleRefImagePreview"
                 >
-                  <el-button type="primary" size="small" :icon="Upload">添加上传文档</el-button>
+                  <el-icon><Plus /></el-icon>
                 </el-upload>
               </el-form-item>
             </el-col>
           </el-row>
         </div>
 
-        <!-- 🔗 参考竞品 -->
-        <div class="p-section-card">
-          <div class="p-section-header">
-            <el-icon class="p-section-icon"><Link /></el-icon>
-            <span>参考竞品</span>
-            <el-button type="primary" link :icon="Plus" size="small" @click="addRefLink" class="ml-auto">添加参考链接</el-button>
-          </div>
-          <div class="links-list-v3">
-            <div v-for="(link, idx) in form.refLinks" :key="idx" class="link-row-v3 mb-4">
-              <el-input v-model="link.label" placeholder="参考名称 (例: 竞品A)" style="width: 180px" />
-              <el-input v-model="link.url" placeholder="网站 URL 地址" style="flex: 1;" />
-              <el-button type="danger" plain :icon="Delete" circle size="small" @click="removeRefLink(idx)" />
-            </div>
-            <div v-if="form.refLinks.length === 0" class="no-links-placeholder-v3 mb-8">
-              暂无参考链接，点击“添加参考链接”按钮进行添加
-            </div>
-
-            <!-- 🖼️ 参考图上传 -->
-            <el-form-item label="参考图片" class="ref-images-form-item">
-              <el-upload
-                action="#"
-                v-model:file-list="form.refImages"
-                list-type="picture-card"
-                :auto-upload="false"
-                :on-preview="handleRefImagePreview"
-              >
-                <el-icon><Plus /></el-icon>
-              </el-upload>
-            </el-form-item>
-          </div>
-        </div>
-
-        <!-- 📐 工业设计与图档 -->
-        <div class="p-section-card">
-          <div class="p-section-header">
-            <el-icon class="p-section-icon"><Setting /></el-icon>
-            <span>工业设计与图档</span>
-          </div>
-          <el-row :gutter="12" class="mb-8">
+        <!-- 提案-设计 -->
+        <div class="section-card">
+          <div class="section-title">提案-设计</div>
+          <el-row :gutter="24" class="mb-8">
             <el-col :span="12">
               <el-form-item label="Logo位置" prop="designLogoPosition">
                 <el-input v-model="form.designLogoPosition" placeholder="例: 产品背部激光打标, 印白" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="产品规格书" prop="productManual">
-                <el-input v-model="form.productManual" placeholder="说明书归档文件名称/编号" />
+              <el-form-item label="产品规格书">
+                <el-upload
+                  action="#"
+                  :show-file-list="false"
+                  :auto-upload="false"
+                  :on-change="handleDesignFileUpload"
+                  class="doc-upload-inline"
+                >
+                  <div class="doc-upload-trigger-dashed">
+                    <el-icon><Plus /></el-icon>
+                    <span>上传产品规格书</span>
+                  </div>
+                </el-upload>
               </el-form-item>
             </el-col>
           </el-row>
 
           <div class="design-capsule-wrapper">
-            <div class="design-capsule-list mb-8">
+            <div class="design-capsule-list">
               <div v-for="(file, idx) in form.designFiles" :key="idx" class="design-capsule-item">
                 <el-icon class="file-icon"><Document /></el-icon>
                 <div class="file-info">
@@ -315,18 +329,8 @@
                 <el-button type="danger" link size="small" class="delete-btn" @click="removeDesignFile(idx)">删除</el-button>
               </div>
               <div v-if="!form.designFiles || form.designFiles.length === 0" class="no-design-placeholder">
-                暂无上传设计图档
+                暂无已上传的产品规格书
               </div>
-            </div>
-            <div class="upload-bar">
-              <el-upload
-                action="#"
-                :show-file-list="false"
-                :auto-upload="false"
-                :on-change="handleDesignFileUpload"
-              >
-                <el-button type="primary" size="small" :icon="Upload">新增上传设计图档</el-button>
-              </el-upload>
             </div>
           </div>
         </div>
@@ -346,10 +350,9 @@
           <span>保存后，修改的数据将同步更新提案列表并持久化保存草稿。</span>
         </div>
         <div class="footer-actions">
-          <el-button @click="visible = false" size="default">取消</el-button>
-          <el-button type="primary" :loading="saving" @click="handleSave" size="default">
-            {{ saving ? '正在同步数据...' : '确认保存修改' }}
-          </el-button>
+          <el-button @click="visible = false" size="small">取消</el-button>
+          <el-button type="primary" plain :loading="saving" @click="handleSave('save')" size="small">保存</el-button>
+          <el-button type="primary" :loading="submitting" @click="handleSave('submit')" size="small">提交</el-button>
         </div>
       </div>
     </template>
@@ -358,7 +361,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { Plus, Delete, Upload, Document, DataAnalysis, InfoFilled, Goods, User, Wallet, Lock, QuestionFilled, ArrowDown, ArrowUp, Calendar, Link, Setting } from '@element-plus/icons-vue'
+import { Plus, Delete, Upload, Document, DataAnalysis, InfoFilled, Goods, User, Wallet, Lock, QuestionFilled, ArrowDown, ArrowUp, Calendar, Link, Setting, Monitor, Guide, Film, Management, List, PriceTag } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 const props = defineProps({
@@ -381,7 +384,8 @@ const visible = computed({
 
 const formRef = ref()
 const saving = ref(false)
-const isCollapsed = ref(true)
+const submitting = ref(false)
+const isReadonlyCollapsed = ref(true)
 
 // 预设的多选标签
 const presetSeasons = ['春季', '夏季', '秋季', '冬季', '常规/四季通用']
@@ -554,16 +558,16 @@ const removeRefLink = (index: number) => {
   form.value.refLinks.splice(index, 1)
 }
 
-// 上传设计图档模拟
+// 上传产品规格书模拟
 const handleDesignFileUpload = (uploadFile: any) => {
   const newFile = {
     date: new Date().toISOString().split('T')[0],
-    name: uploadFile.name || '新设计图纸.dwg',
+    name: uploadFile.name || '产品规格书.pdf',
     uploader: form.value.manager || '系统用户',
     method: '手动上传'
   }
   form.value.designFiles.push(newFile)
-  ElMessage.success('成功上传并登记新图档')
+  ElMessage.success('成功上传并登记产品规格书')
 }
 
 const removeDesignFile = (index: number) => {
@@ -583,21 +587,35 @@ const rules = {
   level: [{ required: true, message: '请选择提案等级', trigger: 'change' }]
 }
 
-// 保存数据
-const handleSave = async () => {
+// 保存 / 提交数据
+const handleSave = async (action: 'save' | 'submit') => {
   if (!formRef.value) return
   await formRef.value.validate(async (valid: boolean) => {
     if (valid) {
-      saving.value = true
+      if (action === 'submit') {
+        submitting.value = true
+      } else {
+        saving.value = true
+      }
       try {
         // 模拟网络传输延迟
         await new Promise((resolve) => setTimeout(resolve, 1000))
         form.value.totalAmount = form.value.buyQty * form.value.unitPrice
-        emit('save', JSON.parse(JSON.stringify(form.value)))
-        ElMessage.success('提案内容已保存并同步至主列表')
+        
+        if (action === 'submit') {
+          if (form.value.status === '待设计') {
+            form.value.status = '设计中'
+          }
+          emit('save', JSON.parse(JSON.stringify(form.value)))
+          ElMessage.success('提案已成功提交并同步状态')
+        } else {
+          emit('save', JSON.parse(JSON.stringify(form.value)))
+          ElMessage.success('提案内容已保存草稿')
+        }
         visible.value = false
       } finally {
         saving.value = false
+        submitting.value = false
       }
     } else {
       ElMessage.warning('表单信息校验失败，请检查红框必填项')
@@ -619,8 +637,8 @@ const handleSave = async () => {
   }
 
   .el-dialog__body {
-    padding: 12px 16px !important;
-    background-color: #ffffff;
+    padding: 0 !important;
+    background-color: #f8f9fb;
   }
 }
 
@@ -658,23 +676,24 @@ const handleSave = async () => {
 .edit-dialog-container {
   max-height: 72vh;
   overflow-y: auto;
-  padding: 2px;
+  padding: 8px 10px 12px 10px;
+  background-color: #f8f9fb;
 }
 
 .workspace-form {
   display: flex;
   flex-direction: column;
 
-  :deep(.el-form-item) {
+  .el-form-item, .el-form-item--small {
     margin-bottom: 10px !important;
   }
-  :deep(.el-form-item__label) {
+  .el-form-item__label {
     font-size: 11px;
     color: #475569;
     font-weight: 600;
   }
-  :deep(.el-input__wrapper), :deep(.el-textarea__inner) {
-    padding: 4px 8px;
+  .el-input__wrapper, .el-textarea__inner {
+    padding: 3px 6px;
     transition: border-color 0.2s, box-shadow 0.2s;
     
     &:hover {
@@ -682,102 +701,36 @@ const handleSave = async () => {
     }
   }
   
-  :deep(.el-input__wrapper.is-focus), :deep(.el-textarea__inner:focus) {
+  .el-input__wrapper.is-focus, .el-textarea__inner:focus {
     box-shadow: 0 0 0 1px #1890ff inset, 0 0 0 2px rgba(24, 144, 255, 0.08) !important;
   }
 }
 
-/* 只读区域包裹容器 */
-.readonly-wrapper {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 10px 12px 12px 12px;
-  margin-bottom: 16px;
+/* 基础信息看板 */
+.info-dashboard {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
   
-  .locked-descriptions {
-    :deep(.el-descriptions__table) {
-      border-radius: 4px;
-      overflow: hidden;
+  .dash-item {
+    background: #ffffff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 21, 41, 0.03);
+    border: 1px solid #e2e8f0;
+    
+    .label { font-size: 11px; color: #8c8c8c; margin-bottom: 4px; font-weight: 600; }
+    .value { font-size: 18px; font-weight: bold; color: #262626; font-family: monospace; }
+    .unit { font-size: 10px; color: #bfbfbf; margin-left: 2px; font-weight: normal; }
+    
+    .value-tag {
+      font-size: 16px; font-weight: bold;
+      &[data-level="A"] { color: #f5222d; }
+      &[data-level="B"] { color: #fa8c16; }
+      &[data-level="C"] { color: #1890ff; }
+      &[data-level="D"] { color: #faad14; }
     }
-    :deep(.el-descriptions__cell) {
-      padding: 5px 8px !important;
-      font-size: 11px;
-      line-height: 1.3;
-    }
-    :deep(.el-descriptions__label) {
-      background-color: #f1f5f9 !important;
-      color: #475569;
-      font-weight: 600;
-      width: 110px;
-    }
-    :deep(.el-descriptions__content) {
-      background-color: #ffffff !important;
-      color: #0f172a;
-    }
-  }
-}
-
-.readonly-header-collapse {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px dashed #e2e8f0;
-  padding-bottom: 6px;
-  margin-bottom: 8px;
-  
-  .readonly-title-text {
-    font-size: 11px;
-    font-weight: 700;
-    color: #475569;
-  }
-}
-
-.readonly-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px dashed #e2e8f0;
-  padding-bottom: 6px;
-  margin-bottom: 6px;
-  
-  .readonly-title-text {
-    font-size: 11px;
-    font-weight: 700;
-    color: #475569;
-  }
-  
-  .lock-indicator {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 10px;
-    color: #64748b;
-    background-color: #e2e8f0;
-    padding: 1.5px 6px;
-    border-radius: 4px;
-    font-weight: 600;
-  }
-}
-
-/* 只读分组标题 */
-.readonly-group-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 10px;
-  margin-bottom: 6px;
-  
-  .group-icon {
-    font-size: 13px;
-    color: #64748b;
-  }
-  
-  span {
-    font-size: 11px;
-    font-weight: 700;
-    color: #475569;
-    letter-spacing: 0.5px;
   }
 }
 
@@ -818,38 +771,101 @@ const handleSave = async () => {
   }
 }
 
-/* Section Cards - 保持拿样任务一致的超轻质感 */
-.p-section-card {
+/* Section Cards - 保持与详情一致的经典质感 */
+.section-card {
   background: #ffffff;
-  border-radius: 6px;
-  border: 1px solid #f1f5f9;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
-  padding: 10px 14px;
-  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.04);
+  margin-bottom: 10px;
 
   &:last-child {
     margin-bottom: 0;
   }
 
-  .p-section-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  .section-title {
     font-size: 13px;
     font-weight: 600;
-    color: #1e293b;
+    color: #262626;
     margin-bottom: 10px;
+    display: flex;
+    align-items: center;
     
-    .p-section-icon {
-      font-size: 16px;
-      color: #1890ff;
-    }
-    
-    .ml-auto {
-      margin-left: auto;
+    &::before {
+      content: '';
+      width: 4px;
+      height: 12px;
+      background: #1890ff;
+      margin-right: 6px;
+      border-radius: 2px;
     }
   }
+
+  .sub-section-title {
+    font-size: 12px;
+    font-weight: bold;
+    color: #262626;
+    background: linear-gradient(90deg, #f0f7ff 0%, #ffffff 100%);
+    padding: 4px 10px 6px 10px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    
+    &:not(:first-of-type) {
+      margin-top: 8px;
+    }
+    
+    .el-icon {
+      color: #1890ff;
+      font-size: 13px;
+    }
+  }
+
+  .el-row:last-child {
+    margin-bottom: 0 !important;
+    .el-form-item {
+      margin-bottom: 0 !important;
+    }
+  }
+
+  .el-descriptions__table {
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .el-descriptions__cell {
+    padding: 4px 8px !important;
+    font-size: 11px;
+    line-height: 1.3;
+  }
+  .el-descriptions__label {
+    background-color: #fafafa !important;
+    color: #475569;
+    font-weight: 600;
+    width: 110px;
+  }
+  .el-descriptions__content {
+    color: #0f172a;
+    background-color: #ffffff !important;
+  }
 }
+
+.form-label-with-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-right: 8px;
+  
+  .btn-add-link {
+    font-size: 11px;
+    font-weight: normal;
+    padding: 0;
+    height: auto;
+  }
+}
+
 
 /* 排型辅助 */
 .w-full {
@@ -857,31 +873,31 @@ const handleSave = async () => {
 }
 
 .mb-24 {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .mb-16 {
-  margin-bottom: 10px;
-}
-
-.mb-12 {
   margin-bottom: 8px;
 }
 
-.mb-8 {
+.mb-12 {
   margin-bottom: 6px;
 }
 
-.mb-4 {
+.mb-8 {
   margin-bottom: 4px;
 }
 
+.mb-4 {
+  margin-bottom: 2px;
+}
+
 .mt-12 {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .mt-6 {
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .font-mono {
@@ -947,11 +963,17 @@ const handleSave = async () => {
   background-color: transparent;
   border: none;
   border-radius: 0;
+  width: 100%;
 
   .link-row-v3 {
     display: flex;
     gap: 6px;
     align-items: center;
+    width: 100%;
+    
+    .el-input {
+      flex: 1;
+    }
   }
 
   .no-links-placeholder-v3 {
@@ -963,74 +985,86 @@ const handleSave = async () => {
 }
 
 /* 工业图档胶囊列表 */
+.research-capsule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .design-capsule-list {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   
-  .design-capsule-item {
-    display: flex;
-    align-items: center;
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    padding: 6px 12px;
-    gap: 8px;
-    position: relative;
-    transition: all 0.2s;
-    
-    &:hover {
-      border-color: #cbd5e1;
-      background-color: #f1f5f9;
-      
-      .delete-btn {
-        opacity: 1;
-      }
-    }
-    
-    .file-icon {
-      font-size: 18px;
-      color: #64748b;
-    }
-    
-    .file-info {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      min-width: 0;
-      
-      .file-name {
-        font-size: 11px;
-        font-weight: 600;
-        color: #334155;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      
-      .file-meta {
-        font-size: 10px;
-        color: #94a3b8;
-        margin-top: 1px;
-      }
-    }
+  .no-design-placeholder {
+    grid-column: span 2;
+  }
+}
+
+.design-capsule-item {
+  display: flex;
+  align-items: center;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 4px 8px;
+  gap: 6px;
+  position: relative;
+  transition: all 0.2s;
+  
+  &:hover {
+    border-color: #cbd5e1;
+    background-color: #f1f5f9;
     
     .delete-btn {
-      opacity: 0;
-      transition: opacity 0.2s;
+      opacity: 1;
     }
   }
   
-  .no-design-placeholder {
-    grid-column: span 2;
-    text-align: center;
-    font-size: 11px;
-    color: #94a3b8;
-    padding: 16px;
-    border: 1px dashed #e2e8f0;
-    border-radius: 6px;
-    background-color: #f8fafc;
+  .file-icon {
+    font-size: 18px;
+    color: #64748b;
+    &.pdf { color: #ef4444; }
+    &.excel { color: #22c55e; }
+    &.word { color: #3b82f6; }
   }
+  
+  .file-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    
+    .file-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: #334155;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .file-meta {
+      font-size: 10px;
+      color: #94a3b8;
+      margin-top: 1px;
+    }
+  }
+  
+  .delete-btn {
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+}
+
+.no-design-placeholder {
+  text-align: center;
+  font-size: 11px;
+  color: #94a3b8;
+  padding: 8px;
+  border: 1px dashed #e2e8f0;
+  border-radius: 6px;
+  background-color: #f8fafc;
 }
 
 .upload-bar {
@@ -1064,12 +1098,118 @@ const handleSave = async () => {
 .ref-images-form-item {
   margin-top: 10px;
   
-  :deep(.el-upload-list--picture-card) {
-    --el-upload-list-picture-card-size: 70px;
-    margin-bottom: 0;
+  .el-upload-list--picture-card {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    
+    .el-upload-list__item {
+      width: 96px !important;
+      height: 96px !important;
+      margin: 0 !important;
+      border-radius: 4px;
+    }
   }
-  :deep(.el-upload--picture-card) {
-    --el-upload-picture-card-size: 70px;
+  
+  .el-upload--picture-card {
+    width: 96px !important;
+    height: 96px !important;
+    line-height: 94px !important;
+    border-radius: 4px;
+    margin: 0 !important;
+    
+    .el-icon {
+      font-size: 20px;
+      line-height: inherit;
+    }
+  }
+}
+
+.link-add-dashed-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 24px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 4px;
+  background-color: #f8fafc;
+  color: #64748b;
+  font-size: 11px;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: all 0.2s;
+  width: 100%;
+  
+  &:hover {
+    border-color: #1890ff;
+    color: #1890ff;
+    background-color: #f0f7ff;
+  }
+}
+
+.doc-upload-inline {
+  width: 100%;
+  margin-top: 4px;
+  
+  :deep(.el-upload) {
+    width: 100%;
+    display: block;
+  }
+}
+
+.doc-upload-trigger-dashed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  padding: 4px 8px;
+  border-radius: 3px;
+  width: 100%;
+  height: 24px;
+  color: #64748b;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    border-color: #1890ff;
+    color: #1890ff;
+    background: #f0f7ff;
+  }
+}
+
+.design-upload-capsule {
+  width: 100%;
+  display: block;
+  
+  :deep(.el-upload) {
+    width: 100%;
+    display: block;
+  }
+}
+
+.design-upload-trigger-dashed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background-color: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  padding: 8px;
+  height: 38px;
+  color: #64748b;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    border-color: #1890ff;
+    color: #1890ff;
+    background-color: #f0f7ff;
   }
 }
 </style>
