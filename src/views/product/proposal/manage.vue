@@ -173,7 +173,7 @@
     </div>
 
     <!-- 表格区域 -->
-    <div class="table-container modern-card">
+    <div class="table-container modern-card" ref="tableContainerRef">
       <el-table 
         :data="tableData" 
         :height="tableHeight"
@@ -302,7 +302,8 @@
           </template>
         </el-table-column>
         <el-table-column prop="proposalNo" label="提案编号" width="120" fixed class-name="font-bold text-dark" />
-        <el-table-column label="提案来源" width="100">
+        <el-table-column prop="platform" label="平台" min-width="80" align="center" />
+        <el-table-column label="提案来源" min-width="100">
           <template #default="{ row }">
             <el-link type="primary" :underline="false" class="source-link">{{ row.source }}</el-link>
           </template>
@@ -337,16 +338,8 @@
             </el-popover>
           </template>
         </el-table-column>
-        <el-table-column prop="spu" label="SPU" width="90" class-name="text-secondary" />
-        <el-table-column prop="platform" label="平台" width="80" align="center" />
-        <el-table-column prop="category" label="运营大类" width="110" show-overflow-tooltip />
-        <el-table-column prop="productName" label="产品名称" width="150" class-name="font-medium text-dark" show-overflow-tooltip />
-        <el-table-column prop="style" label="款式" width="110" show-overflow-tooltip class-name="text-secondary" />
-        <el-table-column prop="material" label="主材料" width="110" show-overflow-tooltip class-name="text-secondary" />
-        <el-table-column prop="brand" label="适用品牌或..." width="110" show-overflow-tooltip />
-        <el-table-column prop="model" label="型号" width="100" show-overflow-tooltip />
-        <el-table-column prop="manager" label="产品经理" width="85" align="center" />
-        <el-table-column prop="devMethod" label="开发方式" width="110" />
+        <el-table-column prop="manager" label="产品经理" min-width="85" align="center" />
+        <el-table-column prop="devMethod" label="开发方式" min-width="110" />
         <el-table-column prop="level" label="提案等级" width="90" align="center" />
         <el-table-column prop="launchTime" label="上架时间" width="100" align="center" />
         <el-table-column prop="isResearched" label="预调研" width="70" align="center" />
@@ -369,7 +362,7 @@
         </el-table-column>
 
         <el-table-column prop="archiveTime" label="归档时间" width="110" align="center" class-name="text-secondary" />
-        <el-table-column prop="archiveDesc" label="归档说明" width="120" show-overflow-tooltip />
+        <el-table-column prop="archiveDesc" label="归档说明" min-width="120" show-overflow-tooltip />
 
         <el-table-column label="操作" width="100" fixed="right" align="center">
           <template #default="{ row }">
@@ -381,7 +374,7 @@
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item @click="handleEdit(row)">编辑</el-dropdown-item>
-                    <el-dropdown-item>创建任务</el-dropdown-item>
+                    <el-dropdown-item @click="handleCreateTask(row)">创建任务</el-dropdown-item>
                     <el-dropdown-item>定品申请</el-dropdown-item>
                     <el-dropdown-item>信息编辑</el-dropdown-item>
                     <el-dropdown-item>归档</el-dropdown-item>
@@ -429,19 +422,61 @@
       :row-data="currentEditRow"
       @save="handleSaveEdit"
     />
+
+    <!-- 创建任务弹窗 -->
+    <CreateTaskDialog
+      v-model="createTaskDialogVisible"
+      :row-data="currentCreateTaskRow"
+      @save="handleSaveCreateTask"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useTableHeight } from '../../../hooks/useTableHeight'
 import { STAT_TABS, STATUS_COLORS, INITIAL_QUERY_PARAMS } from './constants'
 import DetailDrawer from './components/DetailDrawer.vue'
 import EditDialog from './components/EditDialog.vue'
+import CreateTaskDialog from './components/CreateTaskDialog.vue'
 
 const router = useRouter()
-const tableHeight = useTableHeight(240)
+const tableContainerRef = ref<HTMLElement | null>(null)
+const tableHeight = ref(400)
+
+const calcTableHeight = () => {
+  if (tableContainerRef.value) {
+    const rect = tableContainerRef.value.getBoundingClientRect()
+    const windowHeight = window.innerHeight
+    // pagination-footer is 48px, plus some padding/margin (10px). Let's subtract 58px.
+    tableHeight.value = Math.max(windowHeight - rect.top - 58, 200)
+  }
+}
+
+let resizeObserver: ResizeObserver | null = null
+
+onMounted(() => {
+  calcTableHeight()
+  window.addEventListener('resize', calcTableHeight)
+  
+  if (typeof ResizeObserver !== 'undefined' && tableContainerRef.value) {
+    resizeObserver = new ResizeObserver(() => {
+      calcTableHeight()
+    })
+    const pageEl = tableContainerRef.value.parentElement
+    if (pageEl) {
+      resizeObserver.observe(pageEl)
+    }
+  }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', calcTableHeight)
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+  }
+})
+
 const activeStat = ref('全部')
 
 const editDialogVisible = ref(false)
@@ -458,6 +493,25 @@ const handleSaveEdit = (updatedData: any) => {
     allTableData.value[index] = {
       ...allTableData.value[index],
       ...updatedData
+    }
+  }
+}
+
+const createTaskDialogVisible = ref(false)
+const currentCreateTaskRow = ref<any>({})
+
+const handleCreateTask = (row: any) => {
+  currentCreateTaskRow.value = row
+  createTaskDialogVisible.value = true
+}
+
+const handleSaveCreateTask = (taskData: any) => {
+  const index = allTableData.value.findIndex(item => item.proposalNo === taskData.proposalNo)
+  if (index > -1) {
+    const row = allTableData.value[index]
+    row.status = '拿样中'
+    if (row.taskRounds && row.taskRounds.includes('0/0/0')) {
+      row.taskRounds = '共【0/1/0】轮'
     }
   }
 }
@@ -632,7 +686,9 @@ const resetQuery = () => {
 .page-container {
   padding: 0 10px 10px 10px;
   background-color: #f0f2f5;
-  min-height: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 10px;
