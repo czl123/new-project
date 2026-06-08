@@ -322,9 +322,13 @@
     </div>
 
     <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="visible = false">关 闭</el-button>
-        <el-button type="primary" @click="visible = false">确认完毕</el-button>
+      <div class="edit-dialog-footer">
+        <div class="footer-left-info"></div>
+        <div class="footer-actions">
+          <el-button @click="visible = false" size="small">取消</el-button>
+          <el-button type="primary" plain @click="visible = false" size="small">保存</el-button>
+          <el-button type="primary" @click="visible = false" size="small">提交</el-button>
+        </div>
       </div>
     </template>
   </el-dialog>
@@ -1237,13 +1241,23 @@ defineExpose({ open })
   background-color: #f1f5f9 !important;
 }
 
-.dialog-footer {
-  padding: 10px 20px;
+.edit-dialog-footer {
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 4px 2px;
   border-top: 1px solid #f1f5f9;
   background-color: #ffffff;
+
+  .footer-left-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #64748b;
+    .el-icon { color: #1890ff; font-size: 13px; }
+  }
 }
 
 .ml-auto {

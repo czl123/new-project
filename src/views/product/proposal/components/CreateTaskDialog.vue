@@ -230,7 +230,7 @@
               </el-form-item>
             </el-col>
             <el-col :span="8" v-if="form.samplingMethod === '定制拿样'">
-              <el-form-item label="期望定制周期" prop="customCycle">
+              <el-form-item label="期望定制用时" prop="customCycle">
                 <el-input v-model="form.customCycle" placeholder="请输入天数" class="w-full">
                   <template #append>天</template>
                 </el-input>
@@ -631,7 +631,7 @@ const rules = {
   logoPosition: [{ required: true, message: '请选择Logo位置', trigger: 'change' }],
   feedbackDeadline: [{ required: true, message: '请选择反馈截止时间', trigger: 'change' }],
   deadline: [{ required: true, message: '请选择任务截止时间', trigger: 'change' }],
-  customCycle: [{ required: true, message: '请输入期望定制周期', trigger: 'blur' }]
+  customCycle: [{ required: true, message: '请输入期望定制用时', trigger: 'blur' }]
 }
 
 // 保存并下发任务
