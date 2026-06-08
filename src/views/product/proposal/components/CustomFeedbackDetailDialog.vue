@@ -31,24 +31,7 @@
 
         <div class="pane-divider"></div>
 
-        <div class="pane-title">
-          <el-icon class="title-icon"><InfoFilled /></el-icon>
-          <span>定制任务内容</span>
-        </div>
-
         <div class="task-info-vertical">
-          <div class="info-row">
-            <span class="label">提案编号：</span>
-            <span class="value font-mono font-bold">{{ taskInfo.proposalNo || '-' }}</span>
-          </div>
-          <div class="info-row">
-            <span class="label">产品名称：</span>
-            <span class="value font-bold">{{ taskInfo.productName || '-' }}</span>
-          </div>
-          <div class="info-row">
-            <span class="label">产品经理：</span>
-            <span class="value">{{ taskInfo.manager || '-' }}</span>
-          </div>
           <div class="info-row">
             <span class="label">运营大类：</span>
             <span class="value">{{ taskInfo.category || '-' }}</span>
@@ -62,16 +45,8 @@
             <span class="value">{{ taskInfo.customCycle || '7天' }}</span>
           </div>
           <div class="info-row">
-            <span class="label">立项日期：</span>
-            <span class="value">{{ taskInfo.date || '-' }}</span>
-          </div>
-          <div class="info-row">
-            <span class="label">当前进度：</span>
-            <span class="value">
-              <el-tag size="small" :type="taskInfo.status === '待设计' ? 'info' : 'warning'">
-                {{ taskInfo.status || '-' }}
-              </el-tag>
-            </span>
+            <span class="label">Logo 位置：</span>
+            <span class="value">{{ taskInfo.logoPosition || '-' }}</span>
           </div>
 
           <!-- 反馈截止时间 + 倒计时 -->
@@ -114,10 +89,8 @@
           </div>
         </div>
 
-        <div class="pane-divider"></div>
-
-        <div class="attach-section">
-          <div class="section-label">产品规格书 / 设计图档</div>
+        <div class="attach-section mt-16">
+          <div class="section-label">产品规格书</div>
           <div class="attach-list">
             <div v-for="(file, idx) in taskInfo.designFiles" :key="idx" class="file-chip">
               <el-icon class="file-icon"><Document /></el-icon>
@@ -422,11 +395,12 @@ const open = (row: any) => {
     proposalNo: row.proposalNo || '',
     productName: row.productName || 'ZZ-定制产品',
     manager: row.manager || '杨登峰',
-    category: row.category || '默认大类',
+    category: row.category || '',
     status: row.status || '拿样中',
     date: row.date || '2026-06-08',
     bottomLinePrice: row.bottomLinePrice || '32 CNY',
     customCycle: row.customCycle || '10天',
+    logoPosition: row.logoPosition || '无',
     supplementaryRequirement: row.supplementaryRequirement || '请重点确认魔术贴的使用寿命，以及边缘缝线是否容易脱落。',
     designFiles: row.designFiles || [],
     feedbackDeadline: row.feedbackDeadline || '2026-06-15 18:00:00',
@@ -574,7 +548,7 @@ defineExpose({ open })
 }
 
 .left-pane {
-  width: 340px;
+  width: 380px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -660,36 +634,37 @@ defineExpose({ open })
 
 .deadline-block {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
   width: 100%;
 
   .deadline-date {
     font-size: 11px;
     color: #334155;
     font-family: monospace;
+    flex-shrink: 0;
   }
 }
 
 /* 倒计时 chips */
 .countdown-chips {
   display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
+  gap: 2px;
 
   .chip {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 11px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 10px;
     font-weight: 700;
     font-family: monospace;
     background-color: #eff6ff;
     color: #3b82f6;
     border: 1px solid #bfdbfe;
-    min-width: 34px;
+    min-width: 28px;
     transition: all 0.3s;
 
     &.urgent {
@@ -749,7 +724,6 @@ defineExpose({ open })
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
-  overflow: hidden;
 
   .info-row {
     background: #ffffff;
