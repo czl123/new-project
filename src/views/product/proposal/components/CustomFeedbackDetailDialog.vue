@@ -41,8 +41,8 @@
             <span class="value highlight-price">{{ taskInfo.bottomLinePrice || '32 CNY' }}</span>
           </div>
           <div class="info-row">
-            <span class="label">期望定制周期：</span>
-            <span class="value">{{ taskInfo.customCycle || '7天' }}</span>
+            <span class="label">期望定制用时：</span>
+            <span class="value">{{ taskInfo.customCycle || '5天' }}</span>
           </div>
           <div class="info-row">
             <span class="label">Logo 位置：</span>
@@ -120,6 +120,7 @@
 
         <div class="feedback-table-wrapper">
           <el-table
+            ref="feedbackTableRef"
             :data="feedbackList"
             border
             stripe
@@ -127,7 +128,9 @@
             class="premium-table"
             header-cell-class-name="premium-header"
             row-class-name="premium-row"
-            height="100%"
+            max-height="350"
+            highlight-current-row
+            @row-click="handleRowClick"
           >
             <el-table-column label="反馈编号" prop="code" width="135">
               <template #default="{ row }">
@@ -199,25 +202,121 @@
               </template>
             </el-table-column>
 
-            <el-table-column label="操作" width="160" align="center">
+            <el-table-column label="操作" width="185" align="center" fixed="right">
               <template #default="{ row }">
-                <template v-if="row.isAdopted === '待决策'">
-                  <el-button type="primary" link size="small" @click="handleAdopt(row)">采纳</el-button>
-                  <el-button type="danger" link size="small" @click="handleNotAdopt(row)">不采纳</el-button>
-                  <el-button type="warning" link size="small" @click="handleReject(row)">驳回</el-button>
-                </template>
-                <template v-else-if="row.isAdopted === '已采纳'">
-                  <el-tag size="small" type="success" effect="dark">已采纳</el-tag>
-                </template>
-                <template v-else-if="row.isAdopted === '不采纳'">
-                  <el-tag size="small" type="info" effect="dark">不采纳</el-tag>
-                </template>
-                <template v-else-if="row.isAdopted === '已驳回'">
-                  <el-tag size="small" type="warning" effect="dark">已驳回</el-tag>
-                </template>
+                <div class="action-btns-flex">
+                  <el-button 
+                    type="primary" 
+                    link
+                    size="small" 
+                    @click="handleAdopt(row)"
+                    :class="{ 'is-active-link': row.isAdopted === '已采纳' }"
+                  >采纳</el-button>
+                  <el-button 
+                    type="danger" 
+                    link
+                    size="small" 
+                    @click="handleNotAdopt(row)"
+                    :class="{ 'is-active-link': row.isAdopted === '不采纳' }"
+                  >不采纳</el-button>
+                  <el-button 
+                    type="warning" 
+                    link
+                    size="small" 
+                    @click="handleReject(row)"
+                    :class="{ 'is-active-link': row.isAdopted === '已驳回' }"
+                  >驳回</el-button>
+                </div>
               </template>
             </el-table-column>
           </el-table>
+        </div>
+
+        <!-- 方案详细说明区 -->
+        <div class="feedback-detail-panel" v-if="selectedFeedback">
+          <div class="detail-panel-header">
+            <el-icon class="mr-4"><InfoFilled /></el-icon>
+            <span>方案详细说明 [{{ selectedFeedback.code }}]</span>
+          </div>
+          <div class="detail-panel-content">
+            <!-- 第一行：基础属性 -->
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="label">反馈日期：</span>
+                <span class="value">{{ selectedFeedback.date }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">反馈人：</span>
+                <span class="value">{{ selectedFeedback.user }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">货源地：</span>
+                <span class="value">{{ selectedFeedback.source }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">费用类型：</span>
+                <span class="value">{{ selectedFeedback.feeType }} ({{ selectedFeedback.fee }})</span>
+              </div>
+            </div>
+
+            <!-- 第二行：商务条款 -->
+            <div class="detail-grid border-top">
+              <div class="detail-item">
+                <span class="label">初次报价：</span>
+                <span class="value highlight">{{ selectedFeedback.initialQuote }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">生产周期：</span>
+                <span class="value">{{ selectedFeedback.productionCycle }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">起订量：</span>
+                <span class="value">{{ selectedFeedback.moq }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">定制用时：</span>
+                <div class="value-with-warn">
+                  <span class="value" :class="{ 'text-danger': isDurationOver }">{{ selectedFeedback.customDuration }}</span>
+                  <el-tooltip
+                    v-if="isDurationOver"
+                    content="当前反馈定制用时已超过期望定制用时"
+                    placement="top"
+                  >
+                    <el-icon class="ml-4 text-warning"><Warning /></el-icon>
+                  </el-tooltip>
+                </div>
+              </div>
+            </div>
+
+            <!-- 第三行：退款相关 -->
+            <div class="detail-grid border-top">
+              <div class="detail-item">
+                <span class="label">是否可退：</span>
+                <el-tag size="small" :type="selectedFeedback.isRefundable === '是' ? 'success' : 'danger'" effect="plain">
+                  {{ selectedFeedback.isRefundable }}
+                </el-tag>
+              </div>
+              <div class="detail-item full-width-3" v-if="selectedFeedback.isRefundable === '是'">
+                <span class="label">退款条件：</span>
+                <span class="value">{{ selectedFeedback.refundCondition }}</span>
+              </div>
+            </div>
+
+            <!-- 第四行：说明文字 -->
+            <div class="detail-text-block border-top">
+              <div class="detail-item full-width">
+                <span class="label">附加条件：</span>
+                <span class="value">{{ selectedFeedback.additionalConditions || '-' }}</span>
+              </div>
+              <div class="detail-item full-width mt-8">
+                <span class="label">备注说明：</span>
+                <span class="value">{{ selectedFeedback.notes || '-' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="feedback-detail-empty" v-else>
+          <el-empty :image-size="40" description="点击表格行查看方案详细说明" />
         </div>
       </div>
     </div>
@@ -232,13 +331,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onUnmounted } from 'vue'
-import { InfoFilled, Management, Document, Picture } from '@element-plus/icons-vue'
+import { ref, onUnmounted, computed } from 'vue'
+import { InfoFilled, Management, Document, Picture, Warning } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const visible = ref(false)
+const feedbackTableRef = ref<any>(null)
 const taskInfo = ref<any>({})
 const feedbackList = ref<any[]>([])
+const selectedFeedback = ref<any>(null)
 
 // 倒计时
 const feedbackCountdown = ref<any>(null)
@@ -399,7 +500,7 @@ const open = (row: any) => {
     status: row.status || '拿样中',
     date: row.date || '2026-06-08',
     bottomLinePrice: row.bottomLinePrice || '32 CNY',
-    customCycle: row.customCycle || '10天',
+    customCycle: row.customCycle || '5天',
     logoPosition: row.logoPosition || '无',
     supplementaryRequirement: row.supplementaryRequirement || '请重点确认魔术贴的使用寿命，以及边缘缝线是否容易脱落。',
     designFiles: row.designFiles || [],
@@ -408,12 +509,59 @@ const open = (row: any) => {
   }
 
   feedbackList.value = getMockFeedbacks(taskInfo.value.proposalNo)
+  selectedFeedback.value = null
   startCountdown()
   visible.value = true
+  
+  // 强制表格重排，解决固定列偏移
+  setTimeout(() => {
+    feedbackTableRef.value?.doLayout()
+  }, 100)
 }
 
+const handleRowClick = (row: any) => {
+  selectedFeedback.value = row
+}
+
+// 比较时间：判断反馈的定制用时是否超过期望周期
+const isDurationOver = computed(() => {
+  if (!selectedFeedback.value || !taskInfo.value.customCycle) return false
+  
+  const parseDays = (str: string) => {
+    const num = parseInt(str.replace(/\D/g, '')) || 0
+    return num
+  }
+  
+  const expected = parseDays(taskInfo.value.customCycle)
+  const actual = parseDays(selectedFeedback.value.customDuration)
+  
+  return actual > expected
+})
+
 // 采纳操作
-const handleAdopt = (row: any) => {
+const handleAdopt = async (row: any) => {
+  // 校验定制用时
+  const parseDays = (str: string) => parseInt(str.replace(/\D/g, '')) || 0
+  const expected = parseDays(taskInfo.value.customCycle)
+  const actual = parseDays(row.customDuration)
+
+  if (actual > expected) {
+    try {
+      await ElMessageBox.confirm(
+        `当前方案的定制用时（${row.customDuration}）已超过期望定制用时（${taskInfo.value.customCycle}），是否仍要采纳该方案？`,
+        '超时提醒',
+        {
+          confirmButtonText: '坚持采纳',
+          cancelButtonText: '取消',
+          type: 'warning',
+          buttonSize: 'small'
+        }
+      )
+    } catch (e) {
+      return // 用户点击取消，终止采纳
+    }
+  }
+
   ElMessageBox.prompt(
     `请输入采纳方案【${row.code}】的开发反馈说明：`,
     '确认采纳',
@@ -838,9 +986,106 @@ defineExpose({ open })
 }
 
 .feedback-table-wrapper {
-  flex: 1;
+  width: 100%;
   overflow: hidden;
   margin-top: 4px;
+  flex-shrink: 0;
+}
+
+/* 方案详情面板样式 */
+.feedback-detail-panel {
+  margin-top: 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.detail-panel-header {
+  background: #f8fafc;
+  padding: 8px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+}
+
+.detail-panel-content {
+  padding: 12px 16px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 8px 0;
+
+  &.border-top {
+    border-top: 1px dashed #f1f5f9;
+  }
+}
+
+.detail-text-block {
+  padding: 12px 0 4px;
+  &.border-top {
+    border-top: 1px dashed #f1f5f9;
+  }
+}
+
+.detail-item {
+  display: flex;
+  align-items: flex-start;
+  font-size: 12px;
+  line-height: 1.5;
+
+  &.full-width {
+    grid-column: span 4;
+  }
+  &.full-width-3 {
+    grid-column: span 3;
+  }
+
+  .label {
+    color: #64748b;
+    font-weight: 500;
+    width: 65px;
+    flex-shrink: 0;
+  }
+  .value {
+    color: #1e293b;
+    word-break: break-all;
+    &.highlight {
+      color: #0284c7;
+      font-weight: 700;
+    }
+  }
+
+  .value-with-warn {
+    display: flex;
+    align-items: center;
+  }
+
+  .text-danger {
+    color: #ef4444 !important;
+    font-weight: 700;
+  }
+
+  .text-warning {
+    color: #f59e0b;
+    font-size: 14px;
+    cursor: pointer;
+  }
+}
+
+.feedback-detail-empty {
+  margin-top: 20px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
 }
 
 /* 反馈表格美化 */
@@ -898,6 +1143,55 @@ defineExpose({ open })
   .price-text {
     color: #0284c7;
     font-weight: 600;
+  }
+
+  .action-btns-flex {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+
+    :deep(.el-button) {
+      /* 核心结构强制一致 */
+      width: auto !important; /* 取消固定宽度，让链接自然排列 */
+      height: 24px !important;
+      padding: 0 4px !important;
+      margin: 0 !important;
+      font-size: 12px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      transition: all 0.2s;
+      
+      span {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 1 !important;
+      }
+
+      &.el-button--primary { color: #3b82f6 !important; }
+      &.el-button--danger { color: #ef4444 !important; }
+      &.el-button--warning { color: #f59e0b !important; }
+
+      &:hover {
+        opacity: 0.7;
+      }
+
+      /* 选中状态：加粗并显示下划线 */
+      &.is-active-link {
+        font-weight: 800 !important;
+        text-decoration: underline !important;
+        text-underline-offset: 4px !important;
+      }
+    }
   }
 
   .cycle-text,
