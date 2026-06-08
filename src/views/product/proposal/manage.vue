@@ -223,7 +223,16 @@
                             {{ row.status === '待设计' ? 1 : 0 }}
                           </el-link>
                         </div>
-                        <div class="info-item">定制反馈：<el-link type="primary" :underline="false">0</el-link></div>
+                        <div class="info-item">
+                          定制反馈：
+                          <el-link 
+                            type="primary" 
+                            :underline="false" 
+                            @click="handleCustomFeedback(row)"
+                          >
+                            {{ row.feedbackCount || 1 }}
+                          </el-link>
+                        </div>
                       </div>
                     </div>
                     <!-- 阶段 2: 反馈 -->
@@ -439,6 +448,11 @@
       :row-data="currentCreateTaskRow"
       @save="handleSaveCreateTask"
     />
+
+    <!-- 定制反馈明细弹窗 -->
+    <CustomFeedbackDetailDialog
+      ref="customFeedbackDetailDialogRef"
+    />
   </div>
 </template>
 
@@ -449,6 +463,7 @@ import { STAT_TABS, STATUS_COLORS, INITIAL_QUERY_PARAMS } from './constants'
 import DetailDrawer from './components/DetailDrawer.vue'
 import EditDialog from './components/EditDialog.vue'
 import CreateTaskDialog from './components/CreateTaskDialog.vue'
+import CustomFeedbackDetailDialog from './components/CustomFeedbackDetailDialog.vue'
 
 const router = useRouter()
 const tableContainerRef = ref<HTMLElement | null>(null)
@@ -509,10 +524,15 @@ const handleSaveEdit = (updatedData: any) => {
 
 const createTaskDialogVisible = ref(false)
 const currentCreateTaskRow = ref<any>({})
+const customFeedbackDetailDialogRef = ref<any>(null)
 
 const handleCreateTask = (row: any) => {
   currentCreateTaskRow.value = row
   createTaskDialogVisible.value = true
+}
+
+const handleCustomFeedback = (row: any) => {
+  customFeedbackDetailDialogRef.value?.open(row)
 }
 
 const handleSaveCreateTask = (taskData: any) => {
@@ -580,19 +600,19 @@ const clearBatchSearch = () => {
 const allTableData = ref([
   { 
     proposalNo: 'TA-202604101', source: '开发预案', date: '2026-04-22', status: '待设计', spu: 'US0218', platform: 'Amazon', category: '运动户外', productName: 'ZZ-户外牧羊人钩', style: '防鼠挡板配件', material: 'ABS+金属', manager: '谢东桥', devMethod: '全新品-现货', level: 'D', estProposalDate: '2026-05-15', devStatus: '未完结-正常', brand: '-', model: '-', launchTime: '-', isResearched: '否', actProposalDate: '-',
-    taskRounds: '共【0/0/0】轮', mouldCount: '共【0】次', proposalRounds: '共【0】轮', proposalDays: '共【0(0)】天', sampleCountDesc: '共【0/0/0】件', rdCost: '共【0】元'
+    taskRounds: '共【0/0/0】轮', mouldCount: '共【0】次', proposalRounds: '共【0】轮', proposalDays: '共【0(0)】天', sampleCountDesc: '共【0/0/0】件', rdCost: '共【0】元', feedbackCount: 2
   },
   { 
     proposalNo: 'TA-202604100', source: '需求预案', date: '2026-04-20', status: '拿样中', hasBadge: true, spu: 'HC0867', platform: 'Amazon', category: '个人护理', productName: 'ZZ-牙刷保护套', style: '-', material: '-', manager: '吴美林', devMethod: '全新品-现货', level: 'D', estProposalDate: '2026-05-15', devStatus: '未完结-正常', brand: '-', model: '-', launchTime: '2026-05', isResearched: '', actProposalDate: '-',
-    taskRounds: '共【0/1/1】轮', mouldCount: '共【0】次', proposalRounds: '共【1】轮', proposalDays: '共【7(0)】天', sampleCountDesc: '共【1/1/0】件', rdCost: '共【50】元'
+    taskRounds: '共【0/1/1】轮', mouldCount: '共【0】次', proposalRounds: '共【1】轮', proposalDays: '共【7(0)】天', sampleCountDesc: '共【1/1/0】件', rdCost: '共【50】元', feedbackCount: 3
   },
   { 
     proposalNo: 'TA-202604099', source: '需求预案', date: '2026-04-20', status: '拿样中', hasBadge: true, spu: 'HC0866', platform: 'Amazon', category: '个人护理', productName: 'ZZ-牙刷头保护套', style: '保护套', material: '-', manager: '吴美林', devMethod: '全新品-现货', level: 'D', estProposalDate: '2026-05-15', devStatus: '未完结-正常', brand: '-', model: '-', launchTime: '2026-05', isResearched: '', actProposalDate: '-',
-    taskRounds: '共【0/1/1】轮', mouldCount: '共【0】次', proposalRounds: '共【1】轮', proposalDays: '共【10(2)】天', sampleCountDesc: '共【1/0/1】件', rdCost: '共【180】元'
+    taskRounds: '共【0/1/1】轮', mouldCount: '共【0】次', proposalRounds: '共【1】轮', proposalDays: '共【10(2)】天', sampleCountDesc: '共【1/0/1】件', rdCost: '共【180】元', feedbackCount: 1
   },
   { 
     proposalNo: 'TA-202604093', source: '开发预案', date: '2026-04-20', status: '设计中', spu: 'HW0548', platform: 'Amazon', category: '家装工具', productName: '自行车支架', style: '停车架可折叠', material: '碳钢+塑料', manager: '闵咪咪', devMethod: '全新品-现货', level: 'D', estProposalDate: '2026-06-05', devStatus: '未完结-正常', brand: '-', model: '-', launchTime: '-', isResearched: '是', actProposalDate: '-',
-    taskRounds: '共【0/0/0】轮', mouldCount: '共【0】次', proposalRounds: '共【0】轮', proposalDays: '共【15(0)】天', sampleCountDesc: '共【0/0/0】件', rdCost: '共【0】元'
+    taskRounds: '共【0/0/0】轮', mouldCount: '共【0】次', proposalRounds: '共【0】轮', proposalDays: '共【15(0)】天', sampleCountDesc: '共【0/0/0】件', rdCost: '共【0】元', feedbackCount: 2
   },
 ])
 

@@ -56,23 +56,11 @@
           </div>
           
           <div v-show="!isReadonlyCollapsed" class="readonly-content-collapse-wrapper mb-12">
-            <!-- 分组 1：管理与时效 -->
-            <div class="sub-section-title">
-              <el-icon><Management /></el-icon>
-              <span>管理与时效</span>
-            </div>
             <el-descriptions :column="3" border size="small" class="mb-12">
               <el-descriptions-item label="运营大类">{{ form.category || '-' }}</el-descriptions-item>
               <el-descriptions-item label="团队负责人">{{ form.teamLeader || '-' }}</el-descriptions-item>
               <el-descriptions-item label="产品经理">{{ form.manager || '-' }}</el-descriptions-item>
-            </el-descriptions>
-
-            <!-- 分组 2：SPU 核心属性 -->
-            <div class="sub-section-title">
-              <el-icon><List /></el-icon>
-              <span>SPU 核心属性</span>
-            </div>
-            <el-descriptions :column="3" border size="small" class="mb-12">
+              
               <el-descriptions-item label="产品名称">{{ form.productName || '-' }}</el-descriptions-item>
               <el-descriptions-item label="款式">{{ form.style || '-' }}</el-descriptions-item>
               <el-descriptions-item label="主材料">{{ form.material || '-' }}</el-descriptions-item>
@@ -80,18 +68,11 @@
               <el-descriptions-item label="适用品牌/对象">{{ form.applicableObject || '-' }}</el-descriptions-item>
               <el-descriptions-item label="型号">{{ form.model || '-' }}</el-descriptions-item>
               <el-descriptions-item label="SPU">{{ form.spu || '-' }}</el-descriptions-item>
-            </el-descriptions>
-
-            <!-- 分组 3：开发与品牌 -->
-            <div class="sub-section-title">
-              <el-icon><PriceTag /></el-icon>
-              <span>开发与品牌</span>
-            </div>
-            <el-descriptions :column="3" border size="small">
+              
               <el-descriptions-item label="产品来源">{{ form.productSource || '-' }}</el-descriptions-item>
               <el-descriptions-item label="开发方式">{{ form.devMethod || '-' }}</el-descriptions-item>
               <el-descriptions-item label="开发品牌">{{ form.brand || '-' }}</el-descriptions-item>
-              
+
               <el-descriptions-item label="初始Logo位置">{{ form.logoPosition || '-' }}</el-descriptions-item>
               <el-descriptions-item label="初始包装方式">{{ form.packagingMethod || '-' }}</el-descriptions-item>
               <el-descriptions-item label="-"></el-descriptions-item>
@@ -148,11 +129,7 @@
         <div class="section-card">
           <div class="section-title">提案-调研</div>
 
-          <!-- 分组 1：市场与人群 -->
-          <div class="sub-section-title">
-            <el-icon><Monitor /></el-icon>
-            <span>市场与人群</span>
-          </div>
+
           <el-row :gutter="24" class="mb-8">
             <el-col :span="12">
               <el-form-item label="主攻市场" prop="mainMarket">
@@ -183,11 +160,7 @@
             </el-col>
           </el-row>
 
-          <!-- 分组 2：场景与标签 -->
-          <div class="sub-section-title">
-            <el-icon><Guide /></el-icon>
-            <span>场景与标签</span>
-          </div>
+
           <el-row :gutter="24" class="mb-4">
             <el-col :span="8">
               <el-form-item label="使用场景" prop="usageScenario">
@@ -210,11 +183,7 @@
             </el-col>
           </el-row>
 
-          <!-- 分组 3：素材与卖点 -->
-          <div class="sub-section-title">
-            <el-icon><Film /></el-icon>
-            <span>素材与卖点</span>
-          </div>
+
           <el-row :gutter="24" class="mb-8">
             <el-col :span="12">
               <el-form-item label="卖点说明" prop="sellingPoints">
@@ -639,6 +608,10 @@ const handleSave = async (action: 'save' | 'submit') => {
   .el-dialog__body {
     padding: 0 !important;
     background-color: #f8f9fb;
+  }
+
+  .el-descriptions__label {
+    white-space: nowrap;
   }
 }
 
