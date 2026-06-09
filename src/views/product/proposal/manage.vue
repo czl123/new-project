@@ -230,12 +230,8 @@
                             :underline="false" 
                             @click="handleCustomFeedback(row)"
                           >
-                            {{ row.feedbackCount || 2 }}
+                            {{ row.feedbackCount || 1 }}
                           </el-link>
-                        </div>
-                        <div class="info-item">
-                          模具申请：
-                          <el-link type="primary" :underline="false">1</el-link>
                         </div>
                       </div>
                     </div>
