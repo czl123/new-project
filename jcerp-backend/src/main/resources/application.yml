@@ -1,0 +1,20 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: jcerp-workflow-backend
+  datasource:
+    # 替换为您实际的 Oracle 数据库连接信息
+    url: jdbc:oracle:thin:@//test.jcintergl.com:1521/ORCLPDB1
+    username: product
+    password: Bsc_Test001
+    driver-class-name: oracle.jdbc.OracleDriver
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  global-config:
+    db-config:
+      id-type: assign_id # 雪花算法生成ID
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 打印 SQL 日志

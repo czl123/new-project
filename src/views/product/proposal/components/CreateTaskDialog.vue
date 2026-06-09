@@ -416,6 +416,24 @@
               </el-form-item>
             </el-col>
           </el-row>
+
+          <el-divider content-position="left">审批流转预览 (模拟配置)</el-divider>
+          <el-row :gutter="24" class="mb-4">
+            <el-col :span="12">
+               <el-form-item label="模拟预估金额" label-width="130px">
+                  <el-input-number v-model="form.amount" :min="0" :step="1000" placeholder="调整金额查看右侧流程变化" class="w-full" />
+               </el-form-item>
+               <div class="hint-text text-secondary" style="margin-left: 130px; font-size: 11px;">
+                 提示：根据后台配置的OA规则，当预估金额大于 10000 时，需要总经理额外审批。
+               </div>
+            </el-col>
+            <el-col :span="12">
+               <div class="workflow-preview-box" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+                 <TimelineViewer :path="workflowPath" :current-index="0" />
+               </div>
+            </el-col>
+          </el-row>
+
         </div>
       </el-form>
     </div>
@@ -441,6 +459,9 @@
 import { ref, computed, watch } from 'vue'
 import { Plus, Document, InfoFilled, ArrowDown, ArrowUp, Management, List, PriceTag, Monitor, Guide, Film, Link } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import TimelineViewer from '@/components/Workflow/TimelineViewer.vue'
+import { WorkflowEngine } from '@/components/Workflow/WorkflowEngine'
+import { mockWorkflowData } from '@/components/Workflow/mockData'
 
 const props = defineProps({
   modelValue: {
@@ -633,6 +654,15 @@ const rules = {
   deadline: [{ required: true, message: '请选择任务截止时间', trigger: 'change' }],
   customCycle: [{ required: true, message: '请输入期望定制用时', trigger: 'blur' }]
 }
+
+// 模拟工作流引擎计算审批路径
+const workflowPath = ref<any[]>([])
+const engine = new WorkflowEngine(mockWorkflowData)
+
+watch(() => form.value.amount, (newVal) => {
+  // 实时根据表单填写的金额（由于此表单无金额，使用一个模拟值或者假设有 amount 字段）计算流转路径
+  workflowPath.value = engine.resolvePath({ amount: newVal || 0 })
+}, { immediate: true })
 
 // 保存并下发任务
 const handleSave = async (isSubmit = true) => {

@@ -43,6 +43,18 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '设置', icon: 'Setting' }
       },
       {
+        path: 'settings/workflow-list',
+        name: 'WorkflowList',
+        component: () => import('@/views/settings/workflow/index.vue'),
+        meta: { title: '流程单据配置列表', icon: 'List' }
+      },
+      {
+        path: 'settings/workflow-editor',
+        name: 'WorkflowEditor',
+        component: () => import('@/components/Workflow/WorkflowEditor.vue'),
+        meta: { title: '流程审批配置', icon: 'Share' }
+      },
+      {
         path: 'product/proposal/sample-manage',
         name: 'SampleManage',
         component: () => import('@/views/sample/manage.vue'),

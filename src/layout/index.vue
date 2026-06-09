@@ -233,7 +233,8 @@ const settingsSubMenu = {
      { title: '基础资料', icon: 'Files', items: [{ title: '站点管理', path: '/set/base/site' }] },
      { title: '组织架构', icon: 'OfficeBuilding', items: [{ title: '部门管理', path: '/set/org/dept' }] }],
     [{ title: '集成中心', icon: 'Connection', items: [{ title: '数据源配置', path: '/set/inte/source' }] },
-     { title: '资源权限', icon: 'Guide', items: [{ title: '菜单管理', path: '/set/res/menu' }] }],
+     { title: '资源权限', icon: 'Guide', items: [{ title: '菜单管理', path: '/set/res/menu' }] },
+     { title: '流程中心', icon: 'Share', items: [{ title: '单据流程配置', path: '/settings/workflow-list' }] }],
     [{ title: '系统管理', icon: 'Setting', items: [{ title: '系统公告', path: '/set/sys/notice' }, { title: '应用管理', path: '/set/sys/app' }, { title: '字典管理', path: '/set/sys/dict' }] },
      { title: '日志管理', icon: 'Notebook', items: [{ title: '业务日志', path: '/set/log/biz' }] }]
   ]
