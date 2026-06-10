@@ -398,7 +398,7 @@ defineExpose({ open })
       }
       
       &.no-icon {
-        padding-left: 24px; /* 与有 icon 的对齐 */
+        padding-left: 0; /* 取消对齐缩进 */
         font-size: 13px;
         color: #4b5563;
       }
@@ -407,7 +407,7 @@ defineExpose({ open })
     .modern-radio-group {
       display: flex;
       gap: 32px;
-      padding-left: 24px;
+      padding-left: 0; /* 取消缩进 */
       
       :deep(.el-radio) {
         margin-right: 0;
@@ -426,7 +426,7 @@ defineExpose({ open })
       margin-top: 16px;
       
       &.indented {
-        padding-left: 24px;
+        padding-left: 0; /* 取消缩进 */
       }
 
       .director-select-row {
@@ -466,7 +466,7 @@ defineExpose({ open })
       gap: 16px;
       
       &.indented-more {
-        padding-left: 44px; /* 根据截图稍微往右缩进更多 */
+        padding-left: 0; /* 取消缩进 */
       }
 
       :deep(.el-radio), :deep(.el-checkbox) {
@@ -483,7 +483,7 @@ defineExpose({ open })
     }
 
     .indented {
-      margin-left: 24px;
+      margin-left: 0; /* 取消缩进 */
       :deep(.el-checkbox__label) { 
         color: #4b5563; 
         font-size: 13px;

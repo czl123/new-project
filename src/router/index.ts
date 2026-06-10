@@ -43,6 +43,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '设置', icon: 'Setting' }
       },
       {
+        path: 'set/org/dept',
+        name: 'DeptManage',
+        component: () => import('@/views/settings/organization/index.vue'),
+        meta: { title: '部门管理', icon: 'OfficeBuilding' }
+      },
+      {
         path: 'settings/workflow-list',
         name: 'WorkflowList',
         component: () => import('@/views/settings/workflow/index.vue'),
