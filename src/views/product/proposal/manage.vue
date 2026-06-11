@@ -463,6 +463,16 @@
     <CustomFeedbackDetailDialog
       ref="customFeedbackDetailDialogRef"
     />
+
+    <!-- 购样/模具申请弹窗 -->
+    <PurchaseApplyDialog
+      ref="purchaseApplyRef"
+    />
+
+    <!-- 专属模具申请弹窗 -->
+    <MouldApplyDialog
+      ref="mouldApplyRef"
+    />
   </div>
 </template>
 
@@ -474,10 +484,14 @@ import DetailDrawer from './components/DetailDrawer.vue'
 import EditDialog from './components/EditDialog.vue'
 import CreateTaskDialog from './components/CreateTaskDialog.vue'
 import CustomFeedbackDetailDialog from './components/CustomFeedbackDetailDialog.vue'
+import PurchaseApplyDialog from './components/PurchaseApplyDialog.vue'
+import MouldApplyDialog from './components/MouldApplyDialog.vue'
 
 const router = useRouter()
 const tableContainerRef = ref<HTMLElement | null>(null)
 const tableHeight = ref(400)
+const purchaseApplyRef = ref<any>(null)
+const mouldApplyRef = ref<any>(null)
 
 const calcTableHeight = () => {
   if (tableContainerRef.value) {
@@ -543,6 +557,13 @@ const handleCreateTask = (row: any) => {
 
 const handleCustomFeedback = (row: any) => {
   customFeedbackDetailDialogRef.value?.open(row)
+}
+
+const handleMouldApply = (row: any) => {
+  mouldApplyRef.value?.open({
+    proposalNo: row.proposalNo,
+    productName: row.productName
+  })
 }
 
 const handleSaveCreateTask = (taskData: any) => {
