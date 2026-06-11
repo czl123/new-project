@@ -238,6 +238,7 @@
                           <el-link 
                             type="primary" 
                             :underline="false"
+                            @click="handleMouldApply(row)"
                           >
                             {{ row.mouldApplyCount ?? 1 }}
                           </el-link>

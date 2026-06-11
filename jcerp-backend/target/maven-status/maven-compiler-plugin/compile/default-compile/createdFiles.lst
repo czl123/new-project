@@ -1,0 +1,9 @@
+com\jcerp\workflow\controller\WorkflowDefController.class
+com\jcerp\workflow\entity\WorkflowDef.class
+com\jcerp\workflow\config\JacksonConfig.class
+com\jcerp\workflow\service\impl\WorkflowDefServiceImpl.class
+com\jcerp\workflow\config\CorsConfig$1.class
+com\jcerp\workflow\JcerpBackendApplication.class
+com\jcerp\workflow\config\CorsConfig.class
+com\jcerp\workflow\mapper\WorkflowDefMapper.class
+com\jcerp\workflow\service\IWorkflowDefService.class

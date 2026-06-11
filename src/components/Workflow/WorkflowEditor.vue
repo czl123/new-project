@@ -47,16 +47,27 @@ import { mockWorkflowData } from './mockData'
 const route = useRoute()
 const router = useRouter()
 const bizType = ref('')
+const workflowData = ref(JSON.parse(JSON.stringify(mockWorkflowData)))
+
+const loadConfig = async () => {
+  if (!bizType.value) return
+  
+  try {
+    const res = await fetch(`/api/workflow/def/get?bizType=${encodeURIComponent(bizType.value)}`)
+    const result = await res.json()
+    if (result.code === 200 && result.data && result.data.workflowJson) {
+      workflowData.value = JSON.parse(result.data.workflowJson)
+      ElMessage.success(`已加载 [${bizType.value}] 的现有配置`)
+    }
+  } catch (error) {
+    console.error('加载配置失败:', error)
+  }
+}
 
 onMounted(() => {
   bizType.value = route.query.bizType as string || ''
+  loadConfig()
 })
-
-const goBack = () => {
-  router.back()
-}
-
-const workflowData = ref(JSON.parse(JSON.stringify(mockWorkflowData)))
 const zoom = ref(1)
 const nodeConfigDrawerRef = ref<any>(null)
 
@@ -194,7 +205,10 @@ const handleSave = async () => {
     const res = await fetch('/api/workflow/def/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(workflowData.value)
+      body: JSON.stringify({
+        bizType: bizType.value,
+        workflowData: workflowData.value
+      })
     })
     
     if (res.ok) {

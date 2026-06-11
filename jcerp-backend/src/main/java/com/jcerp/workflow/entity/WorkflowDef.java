@@ -1,6 +1,7 @@
 package com.jcerp.workflow.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -17,6 +18,10 @@ public class WorkflowDef {
     
     // 流程名称
     private String name;
+
+    // 业务单据类型
+    @TableField("BIZTYPE")
+    private String bizType;
     
     // 流程配置生成的完整 JSON 字符串 (映射到 Oracle 的 CLOB)
     private String workflowJson;
