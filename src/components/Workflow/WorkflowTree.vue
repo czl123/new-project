@@ -28,9 +28,10 @@
                 <el-icon><Close /></el-icon>
               </div>
 
-              <!-- 递归渲染分支内部节点 -->
+              <!-- 递归渲染分支内部节点：标记为分支路径 -->
               <WorkflowTree 
                 :nodeConfig="condNode" 
+                :isBranch="true"
                 @click-node="$emit('click-node', $event)"
                 @add-node="$emit('add-node', $event)"
                 @delete-node="$emit('delete-node', $event)"
@@ -41,23 +42,26 @@
         </div>
       </template>
 
-      <!-- 递归渲染子节点 -->
+      <!-- 递归渲染子节点：保持当前的 isBranch 状态 -->
       <WorkflowTree 
         v-if="nodeConfig.childNode" 
         :nodeConfig="nodeConfig.childNode" 
+        :isBranch="isBranch"
         @click-node="$emit('click-node', $event)"
         @add-node="$emit('add-node', $event)"
         @delete-node="$emit('delete-node', $event)"
       />
     </div>
-    <div class="end-node" v-if="!nodeConfig?.childNode && nodeConfig?.type !== 'condition' && nodeConfig?.type !== 'route'">
+    
+    <!-- 流程结束标识：仅在主路径彻底终结时显示 -->
+    <div class="end-node" v-if="isAbsoluteEnd">
       <div class="circle">流程结束</div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue'
+import { computed } from 'vue'
 import { Close } from '@element-plus/icons-vue'
 import NodeCard from './NodeCard.vue'
 import AddNode from './AddNode.vue'
@@ -66,10 +70,35 @@ const props = defineProps({
   nodeConfig: {
     type: Object,
     default: null
+  },
+  // 新增：标识当前是否处于分支路径中
+  isBranch: {
+    type: Boolean,
+    default: false
   }
 })
 
 const emit = defineEmits(['click-node', 'add-node', 'delete-node'])
+
+// 判断是否为绝对终点：没有后续子节点，且当前不处于任何未汇聚的分支中
+const isAbsoluteEnd = computed(() => {
+  const node = props.nodeConfig
+  if (!node) return false
+  
+  // 1. 如果还在分支路径中，即使没有后续节点，也不显示结束标识（因为它会汇聚到主路径）
+  if (props.isBranch) return false
+  
+  // 2. 如果当前节点还有子节点，说明流程还在继续
+  if (node.childNode) return false
+  
+  // 3. 路由节点（route）本身不直接挂结束标识，它的结束由其 childNode（汇聚点）决定
+  if (node.type === 'route') return false
+  
+  // 4. 分支节点（condition）属于结构支撑，不显示结束标识
+  if (node.type === 'condition') return false
+  
+  return true
+})
 
 const handleAddNode = (type: string) => {
   emit('add-node', { parentNode: props.nodeConfig, type })

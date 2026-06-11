@@ -3,6 +3,8 @@
     <div class="node-header">
       <div class="title">
         <el-icon v-if="nodeConfig.type === 'approver'" class="mr-1"><Avatar /></el-icon>
+        <el-icon v-else-if="nodeConfig.type === 'task'" class="mr-1"><Checked /></el-icon>
+        <el-icon v-else-if="nodeConfig.type === 'system'" class="mr-1"><Cpu /></el-icon>
         <el-icon v-else-if="nodeConfig.type === 'cc'" class="mr-1"><Position /></el-icon>
         <el-icon v-else-if="nodeConfig.type === 'start'" class="mr-1"><UserFilled /></el-icon>
         <span>{{ nodeConfig.name }}</span>
@@ -18,7 +20,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Avatar, Position, UserFilled, Close, ArrowRight } from '@element-plus/icons-vue'
+import { Avatar, Position, UserFilled, Close, ArrowRight, Checked, Cpu } from '@element-plus/icons-vue'
 
 const props = defineProps({
   nodeConfig: {
@@ -30,6 +32,8 @@ const props = defineProps({
 const nodeClass = computed(() => {
   return {
     'node-approver': props.nodeConfig.type === 'approver',
+    'node-task': props.nodeConfig.type === 'task',
+    'node-system': props.nodeConfig.type === 'system',
     'node-cc': props.nodeConfig.type === 'cc',
     'node-start': props.nodeConfig.type === 'start',
     'node-condition': props.nodeConfig.type === 'condition'
@@ -106,6 +110,8 @@ const nodeClass = computed(() => {
   /* 颜色主题 */
   &.node-start .node-header { background: #94a3b8; }
   &.node-approver .node-header { background: #3b82f6; }
+  &.node-task .node-header { background: #f59e0b; }
+  &.node-system .node-header { background: #8b5cf6; }
   &.node-cc .node-header { background: #10b981; }
   
   &.node-condition {

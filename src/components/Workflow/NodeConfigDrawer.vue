@@ -2,7 +2,7 @@
   <el-drawer
     v-model="visible"
     :title="drawerTitle"
-    size="500px"
+    size="540px"
     class="node-config-drawer"
     append-to-body
     destroy-on-close
@@ -14,39 +14,100 @@
           <el-input v-model="currentNode.name" placeholder="请输入节点名称" />
         </el-form-item>
 
-        <!-- 审批人节点配置 -->
-        <template v-if="currentNode.type === 'approver'">
-          <!-- 1. 选择审批对象 -->
+        <!-- 审批人/处理人节点配置 -->
+        <template v-if="currentNode.type === 'approver' || currentNode.type === 'task'">
           <div class="config-block mt-24">
             <div class="block-title">
-              <el-icon class="title-icon" style="color: #409eff;"><Setting /></el-icon> 选择审批对象：
-            </div>
-            <el-radio-group v-model="currentNode.props.assigneeType" class="modern-radio-group">
-              <el-radio label="user">指定用户</el-radio>
-              <el-radio label="role">指定角色</el-radio>
-              <el-radio label="optional">发起人自选</el-radio>
-              <el-radio label="director">部门主管</el-radio>
-            </el-radio-group>
-
-            <!-- 动态下级选项 -->
-            <div class="sub-options indented" v-if="currentNode.props.assigneeType === 'user'">
-              <el-button type="primary" size="default">选择人员</el-button>
+              <el-icon class="title-icon" style="color: #409eff;"><Setting /></el-icon> 
+              配置{{ currentNode.type === 'approver' ? '审批' : '处理' }}人规则：
             </div>
             
-            <div class="sub-options indented" v-if="currentNode.props.assigneeType === 'role'">
-              <el-button type="primary" size="default">选择系统角色</el-button>
+            <!-- 已选规则展示区 -->
+            <div class="selected-rules-wrap" v-if="currentNode.props.approverRules?.length">
+              <div v-for="(rule, index) in currentNode.props.approverRules" :key="index" class="rule-tag-item">
+                <el-tag closable @close="removeRule(index)" effect="plain" type="primary">
+                  <el-icon v-if="rule.type === 'user'"><User /></el-icon>
+                  <el-icon v-else-if="rule.type === 'director'"><Avatar /></el-icon>
+                  <el-icon v-else><Document /></el-icon>
+                  {{ getRuleLabel(rule) }}
+                </el-tag>
+              </div>
+            </div>
+            <div v-else class="empty-rules-tip">暂未配置规则，请在下方添加</div>
+
+            <!-- 添加规则的操作区 -->
+            <div class="add-rule-actions mt-16">
+              <el-dropdown trigger="click" @command="handleAddRule">
+                <el-button type="primary" plain icon="Plus">添加审批来源</el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="user">指定用户</el-dropdown-item>
+                    <el-dropdown-item command="director">发起人的主管</el-dropdown-item>
+                    <el-dropdown-item command="form">表单内人员</el-dropdown-item>
+                    <el-dropdown-item command="form_director">表单人员的主管</el-dropdown-item>
+                    <el-dropdown-item command="optional">发起人自选</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
             </div>
 
-            <div class="sub-options indented" v-if="currentNode.props.assigneeType === 'director'">
-              <div class="director-select-row">
-                <el-icon class="sub-icon" style="color: #e6a23c;"><User /></el-icon> 指定主管：
-                <div class="select-wrapper">
-                  发起人的 
-                  <el-select v-model="currentNode.props.directorLevel" size="default" style="width: 120px; margin: 0 8px;">
-                    <el-option label="上级主管" value="1" />
-                    <el-option label="二级主管" value="2" />
+            <!-- 规则详情编辑区 (点击添加后出现的具体配置) -->
+            <div class="rule-config-panel mt-16" v-if="activeRuleType">
+              <div class="panel-header">
+                <span class="panel-title">配置详情：{{ activeRuleTitle }}</span>
+                <el-icon class="close-panel" @click="activeRuleType = ''"><Close /></el-icon>
+              </div>
+              
+              <div class="panel-body">
+                <!-- 指定用户 -->
+                <template v-if="activeRuleType === 'user'">
+                  <el-select
+                    v-model="tempRuleData.users"
+                    multiple
+                    placeholder="请选择人员"
+                    style="width: 100%"
+                  >
+                    <el-option-group v-for="dept in deptTree" :key="dept.id" :label="dept.name">
+                      <el-option
+                        v-for="member in getAllMembers(dept)"
+                        :key="member.empNo"
+                        :label="member.name"
+                        :value="member.name"
+                      />
+                    </el-option-group>
                   </el-select>
-                  <el-icon class="info-icon"><InfoFilled /></el-icon>
+                </template>
+
+                <!-- 主管级别选择 -->
+                <template v-if="activeRuleType === 'director'">
+                  <div class="flex-center">
+                    <span>发起人的 </span>
+                    <el-select v-model="tempRuleData.level" style="width: 150px; margin: 0 10px;">
+                      <el-option label="一级主管" value="1" />
+                      <el-option label="二级主管" value="2" />
+                      <el-option label="三级主管" value="3" />
+                    </el-select>
+                  </div>
+                </template>
+
+                <!-- 表单人员 -->
+                <template v-if="activeRuleType === 'form' || activeRuleType === 'form_director'">
+                  <div class="flex-center">
+                    <span>选择表单字段 </span>
+                    <el-select v-model="tempRuleData.field" style="width: 180px; margin: 0 10px;">
+                      <el-option label="采购员" value="purchaser" />
+                      <el-option label="项目负责人" value="projectLead" />
+                      <el-option label="技术支持" value="techSupport" />
+                      <el-option label="需求人" value="requester" />
+                      <el-option label="运营人员" value="operator" />
+                    </el-select>
+                    <span v-if="activeRuleType === 'form_director'"> 的主管</span>
+                  </div>
+                </template>
+
+                <div class="panel-footer mt-16">
+                  <el-button size="small" @click="activeRuleType = ''">取消</el-button>
+                  <el-button size="small" type="primary" @click="confirmAddRule">确认添加</el-button>
                 </div>
               </div>
             </div>
@@ -54,54 +115,81 @@
 
           <el-divider class="slim-divider" />
 
-          <!-- 2. 多人审批时审批方式 -->
-          <div class="config-block">
+          <!-- 多人审批时审批方式 -->
+          <div class="config-block" v-if="currentNode.type === 'approver'">
             <div class="block-title">
-              <el-icon class="title-icon" style="color: #67c23a;"><UserFilled /></el-icon> 多人审批时审批方式：
+              <el-icon class="title-icon" style="color: #67c23a;"><UserFilled /></el-icon> 多人/多规则审批方式：
             </div>
-            <el-radio-group v-model="currentNode.props.signType" class="vertical-radio-group indented-more">
-              <el-radio label="and">会签(所有人都审批通过后，流转至下一节点)</el-radio>
-              <el-radio label="or">或签(任意一个人审批通过后，流转至下一节点)</el-radio>
+            <el-radio-group v-model="currentNode.props.signType" class="vertical-radio-group">
+              <el-radio label="and">会签 (所有规则定义的审批人都同意后，流转至下一节点)</el-radio>
+              <el-radio label="or">或签 (任何一个定义的审批人同意后，流转至下一节点)</el-radio>
             </el-radio-group>
           </div>
 
-          <el-divider class="slim-divider" />
-
-          <!-- 3. 第一级审批时允许操作 -->
-          <div class="config-block">
-            <div class="block-title">
-              <el-icon class="title-icon" style="color: #e6a23c;"><Edit /></el-icon> 第一级审批时允许操作：
+          <template v-if="currentNode.type === 'approver'">
+            <el-divider class="slim-divider" />
+            <div class="config-block">
+              <div class="block-title">
+                <el-icon class="title-icon" style="color: #e6a23c;"><Edit /></el-icon> 第一级审批时允许操作：
+              </div>
+              <el-checkbox-group v-model="currentNode.props.firstLevelActions" class="vertical-checkbox-group">
+                <el-checkbox label="edit">单据已提交审核但未进行审批时，可以编辑</el-checkbox>
+                <el-checkbox label="delete">删除</el-checkbox>
+              </el-checkbox-group>
             </div>
-            <el-checkbox-group v-model="currentNode.props.firstLevelActions" class="vertical-checkbox-group indented-more">
-              <el-checkbox label="edit">单据已提交审核但未进行审批时，可以编辑</el-checkbox>
-              <el-checkbox label="delete">删除</el-checkbox>
-            </el-checkbox-group>
-          </div>
+          </template>
 
-          <el-divider class="slim-divider" />
-
-          <!-- 4. 审批人删除或禁用后 -->
-          <div class="config-block">
-            <div class="block-title no-icon">审批人删除或禁用后：</div>
-            <el-checkbox v-model="currentNode.props.autoTransferToAdmin" class="indented">自动转交给管理员</el-checkbox>
-          </div>
+          <template v-else>
+             <el-divider class="slim-divider" />
+             <div class="config-block">
+                <div class="block-title">
+                  <el-icon class="title-icon" style="color: #409eff;"><Edit /></el-icon> 处理要求：
+                </div>
+                <div class="indented">
+                  <el-checkbox v-model="currentNode.props.needAttachment">必须上传附件</el-checkbox>
+                  <el-checkbox v-model="currentNode.props.needRemark">必须填写备注</el-checkbox>
+                </div>
+             </div>
+          </template>
         </template>
 
-        <!-- 抄送人节点配置 -->
+        <!-- 系统自动处理节点配置 -->
+        <template v-else-if="currentNode.type === 'system'">
+           <div class="config-block mt-24">
+              <div class="block-title">
+                <el-icon class="title-icon" style="color: #8b5cf6;"><Cpu /></el-icon> 
+                自动化任务配置：
+              </div>
+              <div class="panel-body" style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <el-form-item label="系统执行动作">
+                  <el-select v-model="currentNode.props.action" placeholder="请选择自动执行的任务" style="width: 100%">
+                    <el-option label="自动匹配关联物料" value="match_material" />
+                    <el-option label="自动同步至 ERP" value="sync_erp" />
+                    <el-option label="自动更新单据状态" value="update_status" />
+                    <el-option label="生成 PDF 归档" value="gen_pdf" />
+                  </el-select>
+                </el-form-item>
+                <div class="tip-text" style="color: #64748b; line-height: 1.6;">
+                  提示：该节点由系统后端异步执行，执行成功后流程将自动流转至下一节点。
+                  若执行失败，流程将暂停并通知管理员。
+                </div>
+              </div>
+           </div>
+        </template>
+
+        <!-- 抄送人节点配置 (简化版) -->
         <template v-else-if="currentNode.type === 'cc'">
           <el-form-item label="选择抄送人">
-             <el-select v-model="currentNode.content" placeholder="请选择抄送人 (模拟)" class="w-full" multiple>
-              <el-option label="财务部" value="财务部" />
-              <el-option label="人事部" value="人事部" />
-              <el-option label="老板" value="老板" />
+             <el-select v-model="currentNode.props.nodeUserList" placeholder="请选择抄送人" class="w-full" multiple>
+              <el-option-group v-for="dept in deptTree" :key="dept.id" :label="dept.name">
+                <el-option v-for="member in getAllMembers(dept)" :key="member.empNo" :label="member.name" :value="member.name" />
+              </el-option-group>
             </el-select>
           </el-form-item>
-          <div class="tip-text">抄送人将在流程到达此节点时收到通知，无需进行审批操作。</div>
         </template>
 
         <!-- 条件节点配置 -->
         <template v-else-if="currentNode.type === 'condition'">
-          <!-- 基本信息 -->
           <div class="config-section">
             <div class="section-title">基本信息</div>
             <div class="form-row">
@@ -110,37 +198,26 @@
             </div>
           </div>
 
-          <!-- 配置条件 -->
           <div class="config-section mt-24">
-            <div class="section-title">
-              配置条件 
-              <el-tooltip content="如果有多个条件，则同时满足时执行该分支" placement="top">
-                <el-icon class="title-hint"><InfoFilled /></el-icon>
-              </el-tooltip>
-              <span class="title-desc">如有多个条件，则同时满足时执行该分支</span>
-            </div>
-            
+            <div class="section-title">配置条件</div>
             <div class="condition-rules-box">
               <div v-for="(rule, index) in conditionRules" :key="index" class="rule-row">
-                <el-select v-model="rule.field" placeholder="请选择字段" class="rule-select" size="default">
-                  <el-option label="采购员" value="buyer" />
+                <el-select v-model="rule.field" placeholder="字段" class="rule-select">
+                  <el-option label="发起人部门" value="dept" />
+                  <el-option label="发起人角色" value="role" />
                   <el-option label="采购金额" value="amount" />
                   <el-option label="商品类型" value="type" />
                 </el-select>
-                <el-select v-model="rule.operator" placeholder="请选择" class="rule-select" size="default">
-                  <el-option label="等于" value="=" />
-                  <el-option label="不等于" value="!=" />
-                  <el-option label="包含" value="contains" />
-                  <el-option label="大于" value=">" />
-                  <el-option label="小于" value="<" />
+                <el-select v-model="rule.operator" placeholder="逻辑" class="rule-select" style="width: 80px">
+                  <el-option label="=" value="=" />
+                  <el-option label="!=" value="!=" />
+                  <el-option label=">" value=">" />
+                  <el-option label="<" value="<" />
                 </el-select>
-                <el-input v-model="rule.value" placeholder="请输入" class="rule-input" size="default" />
-                <el-icon class="delete-icon" @click="removeRule(index)"><Delete /></el-icon>
+                <el-input v-model="rule.value" placeholder="值" class="rule-input" />
+                <el-icon class="delete-icon" @click="removeCondition(index)"><Delete /></el-icon>
               </div>
-              
-              <el-button class="add-rule-btn" plain @click="addRule">
-                <el-icon><Plus /></el-icon> 条件
-              </el-button>
+              <el-button class="add-rule-btn" plain @click="addCondition"><el-icon><Plus /></el-icon> 条件</el-button>
             </div>
           </div>
         </template>
@@ -149,80 +226,129 @@
     <template #footer>
       <div class="drawer-footer">
         <el-button @click="visible = false">取消</el-button>
-        <el-button type="primary" @click="handleSave">确定</el-button>
+        <el-button type="primary" @click="handleSave">保存配置</el-button>
       </div>
     </template>
   </el-drawer>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { InfoFilled, Delete, Plus, Setting, User, UserFilled, Edit } from '@element-plus/icons-vue'
+import { ref, computed, reactive } from 'vue'
+import { 
+  InfoFilled, Delete, Plus, Setting, User, UserFilled, 
+  Edit, Document, Share, Close, Avatar, Checked, Cpu
+} from '@element-plus/icons-vue'
+import { deptTree } from '@/store/orgData'
 
 const visible = ref(false)
 const currentNode = ref<any>(null)
-let originalNodeRef: any = null // 引用原始节点用于保存
+let originalNodeRef: any = null
 
-// 条件规则列表
-const conditionRules = ref<any[]>([])
+const emit = defineEmits(['save'])
+
+// 映射字典
+const formFieldMap: Record<string, string> = {
+  'purchaser': '采购员',
+  'projectLead': '项目负责人',
+  'techSupport': '技术支持',
+  'requester': '需求人',
+  'operator': '运营人员'
+}
+const levelMap: Record<string, string> = { '1': '一级主管', '2': '二级主管', '3': '三级主管' }
+const systemActionMap: Record<string, string> = {
+  'match_material': '自动匹配关联物料',
+  'sync_erp': '自动同步至 ERP',
+  'update_status': '自动更新单据状态',
+  'gen_pdf': '生成 PDF 归档'
+}
+
+// 规则配置状态
+const activeRuleType = ref('')
+const tempRuleData = reactive<any>({ users: [], level: '1', field: '' })
+
+const activeRuleTitle = computed(() => {
+  const map: any = { user: '指定用户', director: '发起人的主管', form: '表单人员', form_director: '表单人员的主管', optional: '发起人自选' }
+  return map[activeRuleType.value] || ''
+})
 
 const drawerTitle = computed(() => {
   if (!currentNode.value) return '节点配置'
   switch (currentNode.value.type) {
     case 'approver': return '审批人配置'
+    case 'task': return '处理人配置'
+    case 'system': return '系统自动处理'
     case 'cc': return '抄送人配置'
     case 'condition': return '条件设置'
     default: return '节点配置'
   }
 })
 
+const getAllMembers = (dept: any): any[] => {
+  let members = [...(dept.members || [])]
+  if (dept.children) dept.children.forEach((c: any) => members = [...members, ...getAllMembers(c)])
+  return members
+}
+
 const open = (node: any) => {
   originalNodeRef = node
-  // 深拷贝一份用于编辑，避免实时污染画布
   currentNode.value = JSON.parse(JSON.stringify(node))
+  if (!currentNode.value.props) currentNode.value.props = {}
+  if (!currentNode.value.props.approverRules) currentNode.value.props.approverRules = []
   
-  // 确保 props 存在
-  if (!currentNode.value.props) {
-    currentNode.value.props = {}
-  }
-
-  // 初始化条件规则
   if (currentNode.value.type === 'condition') {
-    conditionRules.value = currentNode.value.props.rules || [
-      { field: 'buyer', operator: '=', value: '' }
-    ]
+    conditionRules.value = currentNode.value.props.rules || [{ field: 'dept', operator: '=', value: '' }]
   }
-  
   visible.value = true
 }
 
-const emit = defineEmits(['save'])
-
-const addRule = () => {
-  conditionRules.value.push({ field: '', operator: '=', value: '' })
+// 规则管理
+const handleAddRule = (type: string) => {
+  activeRuleType.value = type
+  tempRuleData.users = []
+  tempRuleData.level = '1'
+  tempRuleData.field = 'purchaser'
 }
 
-const removeRule = (index: number) => {
-  conditionRules.value.splice(index, 1)
+const confirmAddRule = () => {
+  const rule: any = { type: activeRuleType.value }
+  if (activeRuleType.value === 'user') rule.value = [...tempRuleData.users]
+  else if (activeRuleType.value === 'director') rule.level = tempRuleData.level
+  else if (activeRuleType.value === 'form' || activeRuleType.value === 'form_director') rule.field = tempRuleData.field
+  
+  currentNode.value.props.approverRules.push(rule)
+  activeRuleType.value = ''
 }
+
+const removeRule = (index: number) => currentNode.value.props.approverRules.splice(index, 1)
+
+const getRuleLabel = (rule: any) => {
+  if (rule.type === 'user') return rule.value.join(', ')
+  if (rule.type === 'director') return `发起人的${levelMap[rule.level]}`
+  if (rule.type === 'form') return `表单内: ${formFieldMap[rule.field]}`
+  if (rule.type === 'form_director') return `[${formFieldMap[rule.field]}] 的主管`
+  return '发起人自选'
+}
+
+// 条件逻辑
+const conditionRules = ref<any[]>([])
+const addCondition = () => conditionRules.value.push({ field: '', operator: '=', value: '' })
+const removeCondition = (index: number) => conditionRules.value.splice(index, 1)
 
 const handleSave = () => {
-  // 根据不同的配置更新显示内容(简化的逻辑)
-  if (currentNode.value.type === 'approver') {
-    if (currentNode.value.props.assigneeType === 'director') currentNode.value.content = '直属主管'
-    if (currentNode.value.props.assigneeType === 'optional') currentNode.value.content = '发起人自选'
-  } else if (currentNode.value.type === 'condition') {
-    currentNode.value.props.rules = conditionRules.value
-    // 简易拼装描述显示在节点卡片上
-    if (conditionRules.value.length > 0) {
-      const firstRule = conditionRules.value[0]
-      currentNode.value.content = firstRule.field ? `${firstRule.field} ${firstRule.operator} ${firstRule.value} ...` : '请设置条件'
+  const props = currentNode.value.props
+  if (currentNode.value.type === 'approver' || currentNode.value.type === 'task') {
+    if (props.approverRules?.length > 0) {
+      currentNode.value.content = props.approverRules.map((r: any) => getRuleLabel(r)).join(' + ')
     } else {
-      currentNode.value.content = '请设置条件'
+      currentNode.value.content = currentNode.value.type === 'approver' ? '未配置审批人' : '未配置处理人'
     }
+  } else if (currentNode.value.type === 'system') {
+    currentNode.value.content = systemActionMap[props.action] || '自动处理任务'
+  } else if (currentNode.value.type === 'condition') {
+    props.rules = conditionRules.value
+    currentNode.value.content = conditionRules.value[0]?.field ? `${conditionRules.value[0].field}...` : '请设置条件'
   }
   
-  // 将修改合并回原始节点
   Object.assign(originalNodeRef, currentNode.value)
   visible.value = false
   emit('save', originalNodeRef)
@@ -231,158 +357,52 @@ const handleSave = () => {
 defineExpose({ open })
 </script>
 
+<script lang="ts">
+export default { name: 'NodeConfigDrawer' }
+</script>
+
 <style lang="scss" scoped>
 .node-config-drawer {
-  .drawer-content {
-    padding: 0 10px;
-  }
-  
-  .assignee-type-group {
-    width: 100%;
+  .drawer-content { padding: 0 20px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+  .flex-center { display: flex; align-items: center; font-size: 13px; color: #4b5563; }
+  .w-full { width: 100%; }
+
+  .selected-rules-wrap {
     display: flex;
-    :deep(.el-radio-button) {
-      flex: 1;
-      .el-radio-button__inner {
-        width: 100%;
-      }
-    }
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 6px;
+    min-height: 40px;
   }
 
-  .w-full {
-    width: 100%;
-  }
-
-  .tip-text {
+  .empty-rules-tip {
     font-size: 12px;
     color: #94a3b8;
-    line-height: 1.5;
+    text-align: center;
+    padding: 10px;
   }
-  
-  .mt-2 { margin-top: 8px; }
 
-  .condition-group-mock {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+  .rule-config-panel {
+    background: #f1f5f9;
+    border-radius: 8px;
     padding: 16px;
-    border-radius: 6px;
-    width: 100%;
+    position: relative;
 
-    .cg-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: #334155;
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
       margin-bottom: 12px;
+      .panel-title { font-size: 13px; font-weight: bold; color: #1e293b; }
+      .close-panel { cursor: pointer; color: #64748b; &:hover { color: #f87171; } }
     }
   }
 
-  /* 新版条件配置样式 */
-  .config-section {
-    margin-bottom: 24px;
-    
-    &.mt-24 {
-      margin-top: 24px;
-    }
-
-    .section-title {
-      font-size: 14px;
-      font-weight: bold;
-      color: #333;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      
-      &::before {
-        content: '';
-        display: inline-block;
-        width: 3px;
-        height: 14px;
-        background-color: #e6a23c; /* 橙色竖线 */
-        margin-right: 8px;
-        border-radius: 2px;
-      }
-
-      .title-hint {
-        color: #1890ff;
-        margin-left: 8px;
-        margin-right: 4px;
-        font-size: 14px;
-      }
-
-      .title-desc {
-        font-size: 12px;
-        color: #909399;
-        font-weight: normal;
-      }
-    }
-
-    .form-row {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      
-      .row-label {
-        font-size: 13px;
-        color: #606266;
-        white-space: nowrap;
-      }
-      
-      .flex-1 {
-        flex: 1;
-      }
-    }
-  }
-
-  .condition-rules-box {
-    background-color: #f5f7fa;
-    padding: 16px;
-    border-radius: 6px;
-
-    .rule-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-
-      .rule-select {
-        flex: 1;
-      }
-
-      .rule-input {
-        flex: 1.5;
-      }
-
-      .delete-icon {
-        color: #f56c6c;
-        font-size: 16px;
-        cursor: pointer;
-        padding: 4px;
-        transition: opacity 0.3s;
-        
-        &:hover {
-          opacity: 0.7;
-        }
-      }
-    }
-
-    .add-rule-btn {
-      width: 100%;
-      border-style: dashed;
-      color: #606266;
-      background: transparent;
-      
-      &:hover {
-        color: #1890ff;
-        border-color: #1890ff;
-      }
-    }
-  }
-
-  /* 审批人节点配置新样式 */
   .config-block {
-    margin-bottom: 24px;
-    
-    &.mt-24 { margin-top: 24px; }
-
     .block-title {
       font-size: 13px;
       font-weight: 700;
@@ -390,110 +410,35 @@ defineExpose({ open })
       margin-bottom: 16px;
       display: flex;
       align-items: center;
-
-      .title-icon {
-        font-size: 16px;
-        color: #4b5563;
-        margin-right: 8px;
-      }
-      
-      &.no-icon {
-        padding-left: 0; /* 取消对齐缩进 */
-        font-size: 13px;
-        color: #4b5563;
-      }
+      .title-icon { margin-right: 8px; }
     }
 
-    .modern-radio-group {
-      display: flex;
-      gap: 32px;
-      padding-left: 0; /* 取消缩进 */
-      
-      :deep(.el-radio) {
-        margin-right: 0;
-        .el-radio__label {
-          color: #4b5563;
-          font-size: 13px;
-        }
-        &.is-checked .el-radio__label {
-          color: #3b82f6;
-          font-weight: 600;
-        }
-      }
-    }
-
-    .sub-options {
-      margin-top: 16px;
-      
-      &.indented {
-        padding-left: 0; /* 取消缩进 */
-      }
-
-      .director-select-row {
-        display: flex;
-        align-items: center;
-        font-size: 13px;
-        color: #4b5563;
-
-        .sub-icon {
-          margin-right: 6px;
-          font-size: 15px;
-          color: #6b7280;
-        }
-
-        .select-wrapper {
-          display: flex;
-          align-items: center;
-          margin-left: 8px;
-          background: #ffffff;
-          padding: 4px 10px;
-          border-radius: 4px;
-          border: 1px solid #d1d5db;
-
-          .info-icon {
-            color: #9ca3af;
-            font-size: 14px;
-            cursor: help;
-          }
-        }
-      }
-    }
-
-    .vertical-radio-group,
-    .vertical-checkbox-group {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      
-      &.indented-more {
-        padding-left: 0; /* 取消缩进 */
-      }
-
+    .vertical-radio-group, .vertical-checkbox-group {
+      display: block;
       :deep(.el-radio), :deep(.el-checkbox) {
-        margin-right: 0;
-        white-space: normal;
-        height: auto;
-        
-        .el-radio__label, .el-checkbox__label {
-          color: #4b5563;
-          line-height: 1.5;
-          font-size: 13px;
-        }
-      }
-    }
-
-    .indented {
-      margin-left: 0; /* 取消缩进 */
-      :deep(.el-checkbox__label) { 
-        color: #4b5563; 
-        font-size: 13px;
+        display: flex;
+        margin: 0 0 12px 0;
+        align-items: flex-start;
+        .el-radio__label, .el-checkbox__label { font-size: 13px; color: #4b5563; line-height: 1.6; white-space: normal; }
       }
     }
   }
 
-  .slim-divider {
-    margin: 24px 0;
-    border-color: #f3f4f6;
+  .condition-rules-box {
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 6px;
+    .rule-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      .rule-select { width: 120px; }
+      .delete-icon { color: #f87171; cursor: pointer; }
+    }
+    .add-rule-btn { width: 100%; border-style: dashed; }
   }
+
+  .slim-divider { margin: 24px 0; border-color: #f3f4f6; }
 }
 </style>

@@ -101,6 +101,14 @@ const handleAddNode = ({ parentNode, type }: any) => {
     newNode.name = '审批人'
     newNode.content = '请设置审批人'
     newNode.props = { assigneeType: 'director', signType: 'and' }
+  } else if (type === 'task') {
+    newNode.name = '处理人'
+    newNode.content = '请设置处理人'
+    newNode.props = { assigneeType: 'form' }
+  } else if (type === 'system') {
+    newNode.name = '系统自动处理'
+    newNode.content = '自动匹配关联物料'
+    newNode.props = { action: 'match_material' }
   } else if (type === 'cc') {
     newNode.name = '抄送人'
     newNode.content = '请设置抄送人'

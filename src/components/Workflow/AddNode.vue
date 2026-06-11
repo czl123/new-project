@@ -12,6 +12,14 @@
             <el-icon class="icon approver"><Avatar /></el-icon>
             <span>审批人</span>
           </div>
+          <div class="item" @click="handleAdd('task')">
+            <el-icon class="icon task"><Checked /></el-icon>
+            <span>处理人</span>
+          </div>
+          <div class="item" @click="handleAdd('system')">
+            <el-icon class="icon system"><Cpu /></el-icon>
+            <span>系统处理</span>
+          </div>
           <div class="item" @click="handleAdd('cc')">
             <el-icon class="icon cc"><Position /></el-icon>
             <span>抄送人</span>
@@ -27,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { Plus, Avatar, Position, Share } from '@element-plus/icons-vue'
+import { Plus, Avatar, Position, Share, Checked, Cpu } from '@element-plus/icons-vue'
 
 const emit = defineEmits(['add-node'])
 
@@ -117,6 +125,8 @@ const handleAdd = (type: string) => {
       color: #fff;
       
       &.approver { background: #3b82f6; }
+      &.task { background: #f59e0b; }
+      &.system { background: #8b5cf6; }
       &.cc { background: #10b981; }
       &.condition { background: #8b5cf6; }
     }
