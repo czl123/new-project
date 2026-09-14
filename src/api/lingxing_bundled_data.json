@@ -1,0 +1,7 @@
+{
+  "code": -999,
+  "msg": "未登录或登录已过期 [请求码:9CDFDB]",
+  "require_id": "35690D23-0171-C079-E0D8-FC04459CDFDB",
+  "req_time_sequence": "/api/module/product/product.view/bundledLists$$2",
+  "update_code": 1
+}

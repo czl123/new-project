@@ -1,0 +1,151 @@
+{
+  "asinTrack": [
+    {
+      "account": "BYH",
+      "site": "US",
+      "countryFlag": "🇺🇸",
+      "asin": "B0GVS3WMPB",
+      "sku": "FBM-BYH-00004A",
+      "materialCode": "IF260050",
+      "status": "正常跟踪",
+      "addTime": "2026/9/14 17:01:",
+      "id": "asin_1789376496163"
+    }
+  ],
+  "materialBindings": [
+    {
+      "id": "bind_1789376451733",
+      "parentCode": "IF260050",
+      "sku": "",
+      "productName": "压缩沙发-4人位+1脚踏-高弹力海绵+雪尼尔绒面料-----0",
+      "comboType": "单品多包",
+      "tpWh": "万邑通",
+      "status": "已绑定",
+      "updateTime": "2026/9/14 17:00:51",
+      "boundChildren": [
+        {
+          "childCode": "IF260050-A",
+          "childName": "压缩沙发-4人位+1脚踏-高弹力海绵+雪尼尔绒面料-----0",
+          "ratio": 1
+        },
+        {
+          "childCode": "IF260050-B",
+          "childName": "压缩沙发-4人位+1脚踏-高弹力海绵+雪尼尔绒面料-----0",
+          "ratio": 1
+        },
+        {
+          "childCode": "IF260050-C",
+          "childName": "压缩沙发-4人位+1脚踏-高弹力海绵+雪尼尔绒面料-----0",
+          "ratio": 1
+        }
+      ]
+    }
+  ],
+  "childPhysicalStocks": [
+    {
+      "id": "child_stock_1789376972705_47jg",
+      "childCode": "IF260050-C",
+      "childName": "压缩沙发-4人位+1脚踏-高弹力海绵+雪尼尔绒面料-----0",
+      "spec": "通用规格",
+      "tpWh": "西邮",
+      "whName": "WPLA16",
+      "availableQty": 1,
+      "transitQty": 0,
+      "linkedParents": []
+    },
+    {
+      "id": "child_stock_1789376965130_qx4u",
+      "childCode": "IF260050-B",
+      "childName": "压缩沙发-4人位+1脚踏-高弹力海绵+雪尼尔绒面料-----0",
+      "spec": "通用规格",
+      "tpWh": "西邮",
+      "whName": "WPLA16",
+      "availableQty": 2,
+      "transitQty": 0,
+      "linkedParents": []
+    },
+    {
+      "id": "child_stock_1789376958153_vsbo",
+      "childCode": "IF260050-A",
+      "childName": "压缩沙发-4人位+1脚踏-高弹力海绵+雪尼尔绒面料-----0",
+      "spec": "通用规格",
+      "tpWh": "西邮",
+      "whName": "WPLA16",
+      "availableQty": 4,
+      "transitQty": 0,
+      "linkedParents": []
+    },
+    {
+      "id": "child_stock_1789376945424_zkn9",
+      "childCode": "IF260050-C",
+      "childName": "压缩沙发-4人位+1脚踏-高弹力海绵+雪尼尔绒面料-----0",
+      "spec": "通用规格",
+      "tpWh": "西邮",
+      "whName": "HOU4-WP",
+      "availableQty": 3,
+      "transitQty": 0,
+      "linkedParents": []
+    },
+    {
+      "id": "child_stock_1789376934814_w9fs",
+      "childCode": "IF260050-B",
+      "childName": "压缩沙发-4人位+1脚踏-高弹力海绵+雪尼尔绒面料-----0",
+      "spec": "通用规格",
+      "tpWh": "西邮",
+      "whName": "HOU4-WP",
+      "availableQty": 3,
+      "transitQty": 0,
+      "linkedParents": []
+    },
+    {
+      "id": "child_stock_1789376923634_eiyn",
+      "childCode": "IF260050-A",
+      "childName": "压缩沙发-4人位+1脚踏-高弹力海绵+雪尼尔绒面料-----0",
+      "spec": "通用规格",
+      "tpWh": "西邮",
+      "whName": "HOU4-WP",
+      "availableQty": 3,
+      "transitQty": 0,
+      "linkedParents": []
+    },
+    {
+      "id": "child_stock_1789376758569",
+      "childCode": "IF260050-A",
+      "childName": "压缩沙发-4人位+1脚踏-高弹力海绵+雪尼尔绒面料-----0",
+      "spec": "通用规格",
+      "tpWh": "西邮",
+      "whName": "WPNJ7",
+      "availableQty": 11,
+      "transitQty": 0,
+      "linkedParents": [
+        "IF260050"
+      ]
+    },
+    {
+      "id": "c_auto_IF260050-B",
+      "childCode": "IF260050-B",
+      "childName": "压缩沙发-4人位+1脚踏-高弹力海绵+雪尼尔绒面料-----0",
+      "spec": "通用规格",
+      "tpWh": "西邮",
+      "whName": "WPNJ7",
+      "availableQty": 11,
+      "transitQty": 0,
+      "linkedParents": [
+        "IF260050"
+      ]
+    },
+    {
+      "id": "c_auto_IF260050-C",
+      "childCode": "IF260050-C",
+      "childName": "压缩沙发-4人位+1脚踏-高弹力海绵+雪尼尔绒面料-----0",
+      "spec": "通用规格",
+      "tpWh": "西邮",
+      "whName": "WPNJ7",
+      "availableQty": 11,
+      "transitQty": 0,
+      "linkedParents": [
+        "IF260050"
+      ]
+    }
+  ]
+}

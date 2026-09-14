@@ -73,6 +73,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '样品主列表', icon: 'Memo' }
       },
       {
+        path: 'sc/os/sku-kanban',
+        name: 'SkuOsKanban',
+        component: () => import('@/views/supply-chain/os/sku-kanban.vue'),
+        meta: { title: 'SKU海外仓库存看板', icon: 'DataAnalysis' }
+      },
+      {
         path: 'product/:pathMatch(.*)*',
         name: 'ProductPlaceholder',
         component: () => import('@/views/example/standard-list.vue'),
