@@ -505,30 +505,127 @@
             <span class="filter-label">组合类型:</span>
             <el-radio-group v-model="comboTypeFilter" size="default">
               <el-radio-button label="全部">全部 ({{ bindingTableData.length }})</el-radio-button>
-              <el-radio-button label="单品多量">单品多量 ({{ countSingleQty }})</el-radio-button>
-              <el-radio-button label="单品多包">单品多包 ({{ countSinglePkg }})</el-radio-button>
-              <el-radio-button label="多品多包">多品多包 ({{ countMultiPkg }})</el-radio-button>
+              <el-radio-button label="多件打包">多件打包 ({{ countMultiPack }})</el-radio-button>
+              <el-radio-button label="一物多包">一物多包 ({{ countSingleMultiPkg }})</el-radio-button>
+              <el-radio-button label="主附搭配">主附搭配 ({{ countMainSub }})</el-radio-button>
+              <el-radio-button label="成套组合">成套组合 ({{ countCompleteSet }})</el-radio-button>
             </el-radio-group>
+
+            <el-tooltip content="点击展开或收起4大组合类型标准业务定义、判定法则及案例对照" placement="top">
+              <el-button
+                :type="showComboTypeLegend ? 'primary' : 'default'"
+                plain
+                size="default"
+                class="guide-toggle-btn ml-8"
+                @click="showComboTypeLegend = !showComboTypeLegend"
+              >
+                <el-icon><InfoFilled /></el-icon>
+                <span>{{ showComboTypeLegend ? '收起定义指南' : '导图定义指南' }}</span>
+              </el-button>
+            </el-tooltip>
           </div>
 
-          <div class="filter-actions">
-            <el-button type="primary" icon="Plus" size="default" @click="handleOpenAddBinding">
-              + 新增父子物料绑定
+          <div class="filter-actions flex-center gap-10">
+            <el-button type="success" plain icon="DocumentCopy" size="default" @click="openBaseLibraryBrowser">
+              组合物料库 (待添加 {{ unaddedComboCount }} 款)
             </el-button>
           </div>
         </div>
+
+        <!-- 组合类型标准定义说明卡片指南 (精致紧凑版) -->
+        <el-collapse-transition>
+          <div v-if="showComboTypeLegend" class="combo-type-legend-container mt-12">
+            <div class="legend-header flex-between mb-10">
+              <div class="legend-title flex-center gap-8">
+                <span class="title-badge">业务规范</span>
+                <span class="font-bold text-slate-800 text-sm">4 大组合类型定义与判别指南</span>
+                <span class="text-xs text-secondary">（点击任一卡片可直接联动表格筛选）</span>
+              </div>
+              <div class="flex-center gap-8">
+                <el-tag v-if="comboTypeFilter !== '全部'" size="small" type="primary" effect="plain" class="active-filter-tag">
+                  当前已筛选: {{ comboTypeFilter }}
+                </el-tag>
+                <el-button type="info" link size="small" @click="showComboTypeLegend = false">
+                  收起 ✕
+                </el-button>
+              </div>
+            </div>
+
+            <div class="legend-grid">
+              <div
+                v-for="item in COMBO_TYPE_LIST"
+                :key="item.type"
+                class="legend-card"
+                :class="[item.type, { active: comboTypeFilter === item.type }]"
+                @click="comboTypeFilter = comboTypeFilter === item.type ? '全部' : item.type"
+              >
+                <div class="card-top flex-between">
+                  <div class="type-name-box flex-center gap-6">
+                    <span class="type-dot" :class="item.type"></span>
+                    <span class="type-title font-bold">{{ item.name }}</span>
+                  </div>
+                  <span class="core-rule-badge" :class="item.type">{{ item.coreRule }}</span>
+                </div>
+
+                <div class="card-desc text-xs text-secondary mt-6">
+                  {{ item.detailDesc }}
+                </div>
+
+                <div class="card-example-pill mt-6">
+                  <span class="pill-tag">示例</span>
+                  <span class="pill-text" :title="item.example">{{ item.example }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-collapse-transition>
       </div>
 
       <div class="main-content-card">
-        <div class="table-toolbar mb-16">
-          <div class="toolbar-left">
+        <div class="table-toolbar mb-16 flex-between">
+          <div class="toolbar-left flex-center gap-12">
             <span class="result-count">
               共 <b>{{ filteredBindingTableData.length }}</b> 项父子物料 BOM 绑定关系
             </span>
+            <span v-if="selectedBindingRows.length" class="text-xs text-primary font-bold">
+              (已勾选 {{ selectedBindingRows.length }} 项)
+            </span>
+          </div>
+          <div class="toolbar-right flex-center gap-10">
+            <el-button
+              type="danger"
+              plain
+              icon="Delete"
+              size="default"
+              :disabled="selectedBindingRows.length === 0"
+              @click="handleBatchUnbindSelected"
+            >
+              批量解绑已选 ({{ selectedBindingRows.length }})
+            </el-button>
+            <el-button
+              type="danger"
+              size="default"
+              :disabled="filteredBindingTableData.length === 0"
+              @click="handleUnbindAll"
+            >
+              全选解绑 (全部 {{ filteredBindingTableData.length }} 款)
+            </el-button>
           </div>
         </div>
 
-        <el-table :data="filteredBindingTableData" border stripe size="default" style="width: 100%;">
+        <el-table
+          ref="bindingTableRef"
+          :data="filteredBindingTableData"
+          row-key="parentCode"
+          border
+          stripe
+          size="default"
+          style="width: 100%;"
+          @selection-change="handleBindingSelectionChange"
+        >
+          <!-- 多选列: 支持表格表头全选与单选 -->
+          <el-table-column type="selection" width="45" align="center" fixed="left" />
+
           <!-- 展开列: 展示父 SKU 绑定的所有子 SKU 明细清单 -->
           <el-table-column type="expand" width="45">
             <template #default="{ row }">
@@ -547,15 +644,70 @@
                 </div>
 
                 <el-table v-if="row.boundChildren && row.boundChildren.length" :data="row.boundChildren" border size="small" class="sub-table">
-                  <el-table-column label="子 SKU / 子物料编码" prop="childCode" width="220">
+                  <el-table-column label="子 SKU / 子物料编码" prop="childCode" width="160">
                     <template #default="{ row: sub }">
                       <span class="child-code font-bold">{{ sub.childCode }}</span>
                     </template>
                   </el-table-column>
 
-                  <el-table-column label="子物料名称" prop="childName" min-width="260" show-overflow-tooltip />
+                  <el-table-column label="子物料名称" min-width="160" show-overflow-tooltip>
+                    <template #default="{ row: sub }">
+                      <span>{{ sub.childName || getFurnitureChildMeta(sub.childCode)?.childName || sub.childCode }}</span>
+                    </template>
+                  </el-table-column>
 
-                  <el-table-column label="绑定用量配比" prop="ratio" width="160" align="center">
+                  <!-- 展开子物料在名称后增加显示：款式 主材料 适用品牌或对象 型号 公司品牌 图案 颜色 包装数量 -->
+                  <el-table-column label="款式" width="110" align="center">
+                    <template #default="{ row: sub }">
+                      <span class="font-medium text-slate-700">{{ sub.childStyle || getFurnitureChildMeta(sub.childCode)?.childStyle || '-' }}</span>
+                    </template>
+                  </el-table-column>
+
+                  <el-table-column label="主材料" min-width="130" show-overflow-tooltip>
+                    <template #default="{ row: sub }">
+                      <span>{{ sub.childMaterial || getFurnitureChildMeta(sub.childCode)?.childMaterial || '-' }}</span>
+                    </template>
+                  </el-table-column>
+
+                  <el-table-column label="适用品牌或对象" width="120" align="center">
+                    <template #default="{ row: sub }">
+                      <span>{{ sub.childTarget || getFurnitureChildMeta(sub.childCode)?.childTarget || '通用' }}</span>
+                    </template>
+                  </el-table-column>
+
+                  <el-table-column label="型号" width="90" align="center">
+                    <template #default="{ row: sub }">
+                      <span>{{ sub.childModel || getFurnitureChildMeta(sub.childCode)?.childModel || '通用' }}</span>
+                    </template>
+                  </el-table-column>
+
+                  <el-table-column label="公司品牌" width="95" align="center">
+                    <template #default="{ row: sub }">
+                      <el-tag size="small" type="info" effect="plain">{{ sub.childBrand || getFurnitureChildMeta(sub.childCode)?.childBrand || '中性' }}</el-tag>
+                    </template>
+                  </el-table-column>
+
+                  <el-table-column label="图案" width="115" align="center">
+                    <template #default="{ row: sub }">
+                      <span>{{ sub.childPattern || getFurnitureChildMeta(sub.childCode)?.childPattern || '-' }}</span>
+                    </template>
+                  </el-table-column>
+
+                  <el-table-column label="颜色" width="105" align="center">
+                    <template #default="{ row: sub }">
+                      <el-tag size="small" :type="(sub.childColor || getFurnitureChildMeta(sub.childCode)?.childColor || '').includes('黑') ? 'info' : 'warning'" effect="light">
+                        {{ sub.childColor || getFurnitureChildMeta(sub.childCode)?.childColor || '-' }}
+                      </el-tag>
+                    </template>
+                  </el-table-column>
+
+                  <el-table-column label="包装数量" width="95" align="center">
+                    <template #default="{ row: sub }">
+                      <span class="font-bold font-mono">{{ sub.childPackQty || getFurnitureChildMeta(sub.childCode)?.childPackQty || '1pack' }}</span>
+                    </template>
+                  </el-table-column>
+
+                  <el-table-column label="绑定用量配比" prop="ratio" width="130" align="center">
                     <template #default="{ row: sub }">
                       <el-tag size="small" type="primary" effect="light" class="ratio-badge">
                         1 父 : {{ sub.ratio }} 子
@@ -568,7 +720,7 @@
           </el-table-column>
 
           <!-- 1. 父物料编码 (父 SKU) -->
-          <el-table-column label="父物料编码 (父SKU)" prop="parentCode" min-width="220" show-overflow-tooltip>
+          <el-table-column label="父物料编码 (父SKU)" prop="parentCode" min-width="210" show-overflow-tooltip>
             <template #default="{ row }">
               <div class="parent-mat-cell flex-center">
                 <el-tag size="small" type="warning" effect="dark" class="parent-badge mr-6">父SKU</el-tag>
@@ -588,18 +740,80 @@
           </el-table-column>
 
           <!-- 2. 产品名称 -->
-          <el-table-column label="产品名称" prop="productName" min-width="240" show-overflow-tooltip />
+          <el-table-column label="产品名称" prop="productName" width="115" align="center" show-overflow-tooltip>
+            <template #default="{ row }">
+              <span class="product-name font-medium">{{ row.productName || getFurnitureComboMeta(row.parentCode)?.productName || '-' }}</span>
+            </template>
+          </el-table-column>
+
+          <!-- 父子绑定关系在产品名称后新增：款式 主材料 公司品牌 颜色 包装数量 -->
+          <el-table-column label="款式" min-width="160" show-overflow-tooltip>
+            <template #default="{ row }">
+              <span class="font-medium text-slate-800">{{ row.style || getFurnitureComboMeta(row.parentCode)?.style || '-' }}</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="主材料" min-width="145" show-overflow-tooltip>
+            <template #default="{ row }">
+              <span>{{ row.material || getFurnitureComboMeta(row.parentCode)?.material || '-' }}</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="公司品牌" width="95" align="center">
+            <template #default="{ row }">
+              <el-tag size="small" type="info" effect="plain">{{ row.brand || getFurnitureComboMeta(row.parentCode)?.brand || '中性' }}</el-tag>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="颜色" width="105" align="center">
+            <template #default="{ row }">
+              <el-tag size="small" :type="(row.color || getFurnitureComboMeta(row.parentCode)?.color || '').includes('黑') ? 'info' : 'warning'" effect="light">
+                {{ row.color || getFurnitureComboMeta(row.parentCode)?.color || '-' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="包装数量" width="95" align="center">
+            <template #default="{ row }">
+              <span class="font-bold font-mono text-primary">{{ row.packQty || getFurnitureComboMeta(row.parentCode)?.packQty || '-' }}</span>
+            </template>
+          </el-table-column>
 
           <!-- 3. 组合类型 -->
-          <el-table-column label="组合类型" prop="comboType" width="130" align="center">
+          <el-table-column label="组合类型" prop="comboType" width="125" align="center">
             <template #default="{ row }">
-              <el-tag
-                :type="row.comboType === '单品多量' ? 'primary' : row.comboType === '单品多包' ? 'warning' : 'success'"
-                effect="dark"
-                size="small"
-                class="combo-type-tag"
+              <el-tooltip
+                v-if="getComboTypeMeta(row.comboType)"
+                placement="top"
+                :show-after="200"
               >
-                {{ row.comboType || '单品多量' }}
+                <template #content>
+                  <div style="max-width: 280px; line-height: 1.5; padding: 2px;">
+                    <div style="font-weight: 700; color: #60a5fa; margin-bottom: 3px;">
+                      【{{ getComboTypeMeta(row.comboType).name }}】
+                    </div>
+                    <div style="font-size: 12px; margin-bottom: 4px; color: #ffffff;">
+                      {{ getComboTypeMeta(row.comboType).detailDesc }}
+                    </div>
+                    <div style="font-size: 11px; color: #cbd5e1;">
+                      法则：{{ getComboTypeMeta(row.comboType).coreRule }}
+                    </div>
+                    <div style="font-size: 11px; color: #93c5fd; margin-top: 3px;">
+                      示例：{{ getComboTypeMeta(row.comboType).example }}
+                    </div>
+                  </div>
+                </template>
+                <el-tag
+                  :type="getComboTypeMeta(row.comboType).tagType"
+                  effect="dark"
+                  size="small"
+                  class="combo-type-tag cursor-pointer"
+                >
+                  {{ getComboTypeMeta(row.comboType).name }}
+                </el-tag>
+              </el-tooltip>
+              <el-tag v-else effect="dark" size="small" type="info">
+                {{ row.comboType || '多件打包' }}
               </el-tag>
             </template>
           </el-table-column>
@@ -656,7 +870,7 @@
       <div class="main-content-card">
         <div class="table-toolbar mb-16">
           <div class="toolbar-left">
-            <span class="result-count">全仓共有 <b>{{ childPhysicalStockData.length }}</b> 项物理子物料存放于海外仓</span>
+            <span class="result-count">全仓共有 <b>{{ childPhysicalStockData.length }}</b> 款物理子物料（严格来源于当前父子物料绑定关系所用子物料）</span>
           </div>
           <div class="toolbar-right">
             <el-button type="primary" plain size="small" icon="Plus" @click="handleNewChildStock">新增子物料盘点</el-button>
@@ -664,7 +878,7 @@
         </div>
 
         <el-table :data="childPhysicalStockData" border stripe size="default" style="width: 100%;">
-          <el-table-column label="子物料编码" prop="childCode" min-width="180">
+          <el-table-column label="子物料编码" prop="childCode" min-width="170">
             <template #default="{ row }">
               <div class="flex-center">
                 <span class="child-code font-bold mr-6">{{ row.childCode }}</span>
@@ -681,7 +895,7 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="子物料名称" prop="childName" min-width="240" show-overflow-tooltip>
+          <el-table-column label="子物料名称" prop="childName" min-width="220" show-overflow-tooltip>
             <template #default="{ row }">
               <div class="flex-center">
                 <span class="mr-6 font-medium overflow-ellipsis">{{ row.childName }}</span>
@@ -698,7 +912,28 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="三方海外仓" prop="tpWh" width="140" align="center" />
+
+          <!-- 关联父物料 (明确来源于父子物料绑定关系) -->
+          <el-table-column label="关联父物料 (来源于BOM绑定)" min-width="240" show-overflow-tooltip>
+            <template #default="{ row }">
+              <div v-if="row.linkedParents && row.linkedParents.length" class="flex-center">
+                <el-tooltip
+                  placement="top"
+                  :content="'绑定的父物料清单 (' + row.linkedParents.length + '款)：' + row.linkedParents.join('、')"
+                >
+                  <el-tag size="small" type="primary" effect="plain" class="mr-6 cursor-pointer">
+                    已绑定 {{ row.linkedParents.length }} 款父物料
+                  </el-tag>
+                </el-tooltip>
+                <span class="text-xs text-secondary font-mono overflow-ellipsis">
+                  {{ row.linkedParents.slice(0, 2).join(', ') }}{{ row.linkedParents.length > 2 ? ' 等' : '' }}
+                </span>
+              </div>
+              <span v-else class="text-muted text-xs">暂无绑定父物料</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="三方海外仓" prop="tpWh" width="130" align="center" />
           <el-table-column label="物理仓库名称" prop="whName" min-width="180" show-overflow-tooltip>
             <template #default="{ row }">
               <div class="flex-center">
@@ -967,30 +1202,178 @@
     <el-dialog
       v-model="bindingDialogVisible"
       :title="isEditBinding ? '编辑父子物料 BOM 绑定关系' : '新增父子物料 BOM 绑定关系'"
-      width="640px"
+      width="720px"
       destroy-on-close
     >
+      <!-- 从基础数据库快捷选择 (仅新增模式) -->
+      <div v-if="!isEditBinding" class="base-data-picker-box mb-16">
+        <div class="picker-header flex-between">
+          <div class="picker-title flex-center gap-6">
+            <el-icon color="#2563eb"><MagicStick /></el-icon>
+            <span class="font-bold text-primary">从组合物料库快速选用</span>
+            <el-tag size="small" type="success" effect="plain" class="ml-4">待添加 {{ unaddedComboCount }} 款</el-tag>
+          </div>
+          <el-button type="primary" link size="small" @click="openBaseLibraryBrowser">
+            全览组合物料库手册 &gt;
+          </el-button>
+        </div>
+        <div class="picker-body mt-8">
+          <el-select
+            v-model="selectedBaseComboCode"
+            filterable
+            clearable
+            placeholder="🔍 输入未添加的组合物料编码、款式、品名搜索选用..."
+            style="width: 100%;"
+            @change="handleSelectBaseComboFromSelect"
+          >
+            <el-option
+              v-for="item in unaddedFurnitureComboList"
+              :key="item.parentCode"
+              :label="`${item.parentCode} - ${item.productName} (${item.style} / ${item.color} / ${item.packQty})`"
+              :value="item.parentCode"
+            >
+              <div class="combo-option-row">
+                <div class="flex-between">
+                  <span class="font-bold text-primary font-mono">{{ item.parentCode }}</span>
+                  <el-tag size="small" :type="getComboTypeMeta(item.comboType).tagType" effect="light">
+                    {{ item.comboType }} · {{ item.packQty }}
+                  </el-tag>
+                </div>
+                <div class="option-desc text-secondary text-xs mt-2 flex-between">
+                  <span>{{ item.productName }} · {{ item.style }} · {{ item.color }} · {{ item.material }}</span>
+                  <span class="text-xs font-mono text-muted">[{{ item.children.map(c => `${c.childCode}×${c.ratio}`).join(', ') }}]</span>
+                </div>
+              </div>
+            </el-option>
+          </el-select>
+        </div>
+        <div v-if="selectedBaseComboCode" class="picker-tip mt-6 text-xs text-green flex-center gap-4">
+          <span>✨ 已载入组合物料库 BOM：父编码、品名、组合类型 [{{ bindingForm.comboType }}] 及 {{ bindingForm.children.length }} 项子物料用量，可根据需要微调。</span>
+        </div>
+      </div>
+
       <el-form :model="bindingForm" label-width="120px" size="default">
         <el-form-item label="父物料编码" required>
-          <el-input v-model="bindingForm.parentCode" placeholder="如: MAT-P8801" />
+          <el-input v-model="bindingForm.parentCode" placeholder="如: CB-B01*2-PBM-YL-2 或 MAT-P8801" />
         </el-form-item>
         <el-form-item label="产品名称" required>
-          <el-input v-model="bindingForm.productName" placeholder="如: 多功能磁吸无线充电器 15W" />
+          <el-input v-model="bindingForm.productName" placeholder="如: 餐边柜" />
         </el-form-item>
+
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="款式">
+              <el-input v-model="bindingForm.style" placeholder="如: AuraB01*2" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="主材料">
+              <el-input v-model="bindingForm.material" placeholder="如: 刨花板+MDF" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="12">
+          <el-col :span="8">
+            <el-form-item label="公司品牌">
+              <el-input v-model="bindingForm.brand" placeholder="如: 中性" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="颜色">
+              <el-input v-model="bindingForm.color" placeholder="如: 原木色" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="包装数量">
+              <el-input v-model="bindingForm.packQty" placeholder="如: 2pack" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
         <el-form-item label="组合类型" required>
           <el-select v-model="bindingForm.comboType" placeholder="请选择组合类型" style="width: 100%;">
-            <el-option label="单品多量" value="单品多量" />
-            <el-option label="单品多包" value="单品多包" />
-            <el-option label="多品多包" value="多品多包" />
+            <el-option
+              v-for="item in COMBO_TYPE_LIST"
+              :key="item.type"
+              :label="`${item.name} (${item.shortDesc})`"
+              :value="item.type"
+            >
+              <div class="combo-type-opt-row">
+                <div class="flex-between">
+                  <span class="font-bold">
+                    <el-tag size="small" :type="item.tagType" effect="dark" class="mr-6">{{ item.name }}</el-tag>
+                    <span>{{ item.shortDesc }}</span>
+                  </span>
+                  <span class="text-xs text-primary font-bold">【{{ item.coreRule }}】</span>
+                </div>
+                <div class="opt-desc text-secondary text-xs mt-2 flex-between">
+                  <span>{{ item.detailDesc }}</span>
+                  <span class="text-muted ml-8 font-mono">示例: {{ item.example }}</span>
+                </div>
+              </div>
+            </el-option>
           </el-select>
+
+          <!-- 动态提示当前选中的组合类型定义说明 (按思维导图标准定义) -->
+          <div v-if="activeComboTypeDefinition" class="combo-definition-card mt-8">
+            <div class="def-header flex-between">
+              <div class="flex-center gap-6">
+                <el-tag size="small" :type="activeComboTypeDefinition.tagType" effect="dark">
+                  {{ activeComboTypeDefinition.name }}
+                </el-tag>
+                <span class="font-bold text-xs text-primary">核心法则：{{ activeComboTypeDefinition.coreRule }}</span>
+              </div>
+              <span class="text-xs text-secondary">{{ activeComboTypeDefinition.shortDesc }}</span>
+            </div>
+            <div class="def-detail text-xs text-secondary mt-4">
+              {{ activeComboTypeDefinition.detailDesc }}
+            </div>
+            <div class="def-example text-xs mt-3 font-mono">
+              <span class="example-tag">典型示例</span> {{ activeComboTypeDefinition.example }}
+            </div>
+          </div>
         </el-form-item>
 
         <el-divider content-position="left">绑定子物料列表及用量配比</el-divider>
 
-        <div v-for="(item, idx) in bindingForm.children" :key="idx" class="form-child-row mb-10">
-          <el-input v-model="item.childCode" placeholder="子物料编码" style="width: 180px;" />
-          <el-input v-model="item.childName" placeholder="子物料名称" style="width: 200px;" />
-          <el-input-number v-model="item.ratio" :min="1" placeholder="配比" style="width: 100px;" />
+        <div v-for="(item, idx) in bindingForm.children" :key="idx" class="form-child-row mb-10 flex-center gap-8">
+          <el-select
+            v-model="item.childCode"
+            filterable
+            allow-create
+            default-first-option
+            placeholder="子物料编码/从基础库选择"
+            style="width: 240px;"
+            @change="(val: string) => handleChildCodeChangeInRow(item, val)"
+          >
+            <el-option-group label="22 款基础家具物理子物料">
+              <el-option
+                v-for="c in FURNITURE_CHILD_MATERIALS"
+                :key="c.childCode"
+                :label="`${c.childCode} - ${c.childName}`"
+                :value="c.childCode"
+              >
+                <div class="flex-between" style="width: 100%;">
+                  <span class="font-bold font-mono">{{ c.childCode }}</span>
+                  <span class="text-secondary text-xs">{{ c.childName }} ({{ c.model }}/{{ c.color }})</span>
+                </div>
+              </el-option>
+            </el-option-group>
+            <el-option-group v-if="existingOtherChildOptions.length" label="其他现有子物料">
+              <el-option
+                v-for="c in existingOtherChildOptions"
+                :key="c.childCode"
+                :label="`${c.childCode} - ${c.childName}`"
+                :value="c.childCode"
+              />
+            </el-option-group>
+          </el-select>
+          <el-input v-model="item.childName" placeholder="子物料名称" style="flex: 1;" />
+          <div class="flex-center">
+            <span class="text-xs text-secondary mr-4">配比:</span>
+            <el-input-number v-model="item.ratio" :min="1" placeholder="配比" style="width: 95px;" />
+          </div>
           <el-button type="danger" icon="Delete" circle size="small" @click="handleRemoveChildForm(idx)" />
         </div>
 
@@ -1017,7 +1400,7 @@
           <el-select
             v-if="!isEditChildStock"
             v-model="childStockForm.childCode"
-            placeholder="请选择绑定关系中的子物料编码"
+            placeholder="请选择父子物料绑定关系中的子物料编码"
             filterable
             style="width: 100%;"
             @change="handleChildCodeSelectInForm"
@@ -1025,11 +1408,21 @@
             <el-option
               v-for="c in allChildMaterialOptions"
               :key="c.childCode"
-              :label="c.childCode + ' (' + c.childName + ')'"
+              :label="`${c.childCode} - ${c.childName} (绑定${c.linkedParents.length}款父SKU)`"
               :value="c.childCode"
-            />
+            >
+              <div class="flex-between">
+                <span class="font-bold font-mono">{{ c.childCode }}</span>
+                <span class="text-xs text-secondary">{{ c.childName }}</span>
+                <el-tag size="small" type="primary" effect="plain">绑定{{ c.linkedParents.length }}款父SKU</el-tag>
+              </div>
+            </el-option>
           </el-select>
           <el-input v-else :value="childStockForm.childCode" disabled />
+          <div v-if="selectedChildLinkedParents.length" class="text-xs text-secondary mt-4 font-mono">
+            🔗 来源于父子物料绑定关系（已关联 {{ selectedChildLinkedParents.length }} 款父物料：
+            <span class="text-primary">{{ selectedChildLinkedParents.slice(0, 3).join(', ') }}{{ selectedChildLinkedParents.length > 3 ? ' 等' : '' }}</span>）
+          </div>
         </el-form-item>
 
         <el-form-item label="子物料名称" required>
@@ -1063,6 +1456,231 @@
         <el-button type="primary" @click="handleSaveChildStockForm">保存库存明细</el-button>
       </template>
     </el-dialog>
+
+    <!-- 弹窗 6: 组合物料库手册 Dialog (已添加的组合不展示) -->
+    <el-dialog
+      v-model="furnitureLibraryDialogVisible"
+      title="组合物料库手册 (已添加的组合不在此展示)"
+      width="1120px"
+      top="4vh"
+      destroy-on-close
+    >
+      <div class="furniture-lib-dialog">
+        <!-- 统计面板 -->
+        <div class="furniture-stat-row mb-12">
+          <div class="stat-pill primary">
+            <span class="stat-label">待添加组合</span>
+            <span class="stat-val">{{ unaddedComboCount }} 款</span>
+          </div>
+          <div class="stat-pill success">
+            <span class="stat-label">已添加组合</span>
+            <span class="stat-val">{{ addedParentCodeSet.size }} 款</span>
+          </div>
+          <div class="stat-pill info">
+            <span class="stat-label">餐边柜</span>
+            <span class="stat-val">{{ unaddedCountByCategory['餐边柜'] || 0 }} 款待选</span>
+          </div>
+          <div class="stat-pill info">
+            <span class="stat-label">电视柜</span>
+            <span class="stat-val">{{ unaddedCountByCategory['电视柜'] || 0 }} 款待选</span>
+          </div>
+          <div class="stat-pill info">
+            <span class="stat-label">书柜</span>
+            <span class="stat-val">{{ unaddedCountByCategory['书柜'] || 0 }} 款待选</span>
+          </div>
+          <div class="stat-pill info">
+            <span class="stat-label">组合电视柜</span>
+            <span class="stat-val">{{ unaddedCountByCategory['组合电视柜'] || 0 }} 款待选</span>
+          </div>
+          <div class="stat-pill info">
+            <span class="stat-label">食品储藏柜</span>
+            <span class="stat-val">{{ unaddedCountByCategory['食品储藏柜'] || 0 }} 款待选</span>
+          </div>
+          <div class="stat-pill info">
+            <span class="stat-label">斗柜</span>
+            <span class="stat-val">{{ unaddedCountByCategory['斗柜'] || 0 }} 款待选</span>
+          </div>
+        </div>
+
+        <!-- 筛选与搜索 -->
+        <div class="furniture-filter-row mb-12">
+          <div class="flex-center gap-8">
+            <span class="text-xs text-secondary font-bold">品类:</span>
+            <el-radio-group v-model="furnitureLibCategory" size="small">
+              <el-radio-button label="全部">全部 ({{ unaddedComboCount }})</el-radio-button>
+              <el-radio-button label="餐边柜">餐边柜 ({{ unaddedCountByCategory['餐边柜'] || 0 }})</el-radio-button>
+              <el-radio-button label="电视柜">电视柜 ({{ unaddedCountByCategory['电视柜'] || 0 }})</el-radio-button>
+              <el-radio-button label="书柜">书柜 ({{ unaddedCountByCategory['书柜'] || 0 }})</el-radio-button>
+              <el-radio-button label="组合电视柜">组合电视柜 ({{ unaddedCountByCategory['组合电视柜'] || 0 }})</el-radio-button>
+              <el-radio-button label="食品储藏柜">食品储藏柜 ({{ unaddedCountByCategory['食品储藏柜'] || 0 }})</el-radio-button>
+              <el-radio-button label="斗柜">斗柜 ({{ unaddedCountByCategory['斗柜'] || 0 }})</el-radio-button>
+            </el-radio-group>
+          </div>
+
+          <div class="flex-center gap-12 mt-8">
+            <div class="flex-center gap-6">
+              <span class="text-xs text-secondary font-bold">颜色:</span>
+              <el-radio-group v-model="furnitureLibColor" size="small">
+                <el-radio-button label="全部">全部</el-radio-button>
+                <el-radio-button label="原木色">原木色</el-radio-button>
+                <el-radio-button label="黑色">黑色/黑木</el-radio-button>
+              </el-radio-group>
+            </div>
+
+            <div class="flex-center gap-6">
+              <span class="text-xs text-secondary font-bold">包装数:</span>
+              <el-select v-model="furnitureLibPack" size="small" style="width: 105px;">
+                <el-option label="全部包装" value="全部" />
+                <el-option label="2pack" value="2pack" />
+                <el-option label="3pack" value="3pack" />
+                <el-option label="4pack" value="4pack" />
+                <el-option label="6pack" value="6pack" />
+                <el-option label="7pack" value="7pack" />
+              </el-select>
+            </div>
+
+            <div class="flex-center gap-6">
+              <span class="text-xs text-secondary font-bold">组合类型:</span>
+              <el-select v-model="furnitureLibComboType" size="small" style="width: 110px;">
+                <el-option label="全部类型" value="全部" />
+                <el-option
+                  v-for="ct in COMBO_TYPE_LIST"
+                  :key="ct.type"
+                  :label="ct.name"
+                  :value="ct.type"
+                />
+              </el-select>
+            </div>
+
+            <el-input
+              v-model="furnitureLibSearch"
+              placeholder="🔍 快速搜索编码、款式、材质、子物料..."
+              prefix-icon="Search"
+              clearable
+              size="small"
+              style="width: 260px; margin-left: auto;"
+            />
+          </div>
+        </div>
+
+        <!-- 基础库表格 -->
+        <el-table
+          :data="filteredFurnitureLibrary"
+          border
+          stripe
+          size="small"
+          height="450px"
+          @selection-change="handleFurnitureSelectionChange"
+        >
+          <el-table-column type="selection" width="45" align="center" />
+          <el-table-column label="组合物料编码" prop="parentCode" min-width="220" show-overflow-tooltip>
+            <template #default="{ row }">
+              <div class="flex-center gap-6">
+                <span class="font-bold font-mono text-primary">{{ row.parentCode }}</span>
+                <el-tooltip content="复制物料编码" placement="top" :hide-after="1000">
+                  <el-button
+                    type="primary"
+                    link
+                    size="small"
+                    :icon="CopyDocument"
+                    @click="handleCopyText(row.parentCode, '组合物料编码')"
+                  />
+                </el-tooltip>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="产品名称" prop="productName" width="100" align="center" />
+          <el-table-column label="款式" prop="style" width="160" show-overflow-tooltip />
+          <el-table-column label="主材料" prop="material" width="140" show-overflow-tooltip />
+          <el-table-column label="公司品牌" prop="brand" width="90" align="center">
+            <template #default="{ row }">
+              <el-tag size="small" type="info" effect="plain">{{ row.brand || '中性' }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="颜色" prop="color" width="95" align="center" />
+          <el-table-column label="包装数量" prop="packQty" width="85" align="center" />
+          <el-table-column label="组合类型" width="105" align="center">
+            <template #default="{ row }">
+              <el-tooltip
+                v-if="getComboTypeMeta(row.comboType)"
+                placement="top"
+                :show-after="200"
+              >
+                <template #content>
+                  <div style="max-width: 260px; line-height: 1.4; padding: 2px;">
+                    <div style="font-weight: 700; color: #60a5fa; margin-bottom: 2px;">
+                      {{ getComboTypeMeta(row.comboType).name }}（{{ getComboTypeMeta(row.comboType).shortDesc }}）
+                    </div>
+                    <div style="font-size: 11px; margin-bottom: 2px; color: #fff;">
+                      {{ getComboTypeMeta(row.comboType).detailDesc }}
+                    </div>
+                    <div style="font-size: 10px; color: #cbd5e1;">
+                      法则：{{ getComboTypeMeta(row.comboType).coreRule }}
+                    </div>
+                  </div>
+                </template>
+                <el-tag size="small" :type="getComboTypeMeta(row.comboType).tagType" effect="dark" class="cursor-pointer">
+                  {{ row.comboType }}
+                </el-tag>
+              </el-tooltip>
+              <el-tag v-else size="small" type="info">{{ row.comboType }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="子物料 BOM 组成" min-width="230">
+            <template #default="{ row }">
+              <div class="child-chips-preview">
+                <el-tooltip
+                  v-for="(sub, sIdx) in row.children"
+                  :key="sIdx"
+                  :content="`${sub.childName} (用量: ${sub.ratio})`"
+                  placement="top"
+                >
+                  <el-tag size="small" type="success" effect="light" class="mr-4 mb-4">
+                    {{ sub.childCode }} × {{ sub.ratio }}
+                  </el-tag>
+                </el-tooltip>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="105" align="center" fixed="right">
+            <template #default="{ row }">
+              <el-button type="primary" size="small" @click="handleChooseComboFromLibrary(row)">
+                选用此BOM
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <template #footer>
+        <div class="flex-between">
+          <span class="text-secondary text-xs">
+            当前筛选共 <b>{{ filteredFurnitureLibrary.length }}</b> 款组合物料
+            <span v-if="furnitureLibSelection.length" class="text-primary font-bold ml-8">
+              (已勾选 {{ furnitureLibSelection.length }} 项)
+            </span>
+          </span>
+          <div class="flex-center gap-8">
+            <el-button
+              type="primary"
+              plain
+              :disabled="furnitureLibSelection.length === 0"
+              @click="handleBatchImportSelectedBoms"
+            >
+              批量导入已勾选项 ({{ furnitureLibSelection.length }})
+            </el-button>
+            <el-button
+              type="success"
+              :disabled="unaddedComboCount === 0"
+              @click="handleImportAllUnaddedBoms"
+            >
+              {{ unaddedComboCount > 0 ? `一键导入全部未添加组合 (${unaddedComboCount} 款)` : '全部组合已添加完成' }}
+            </el-button>
+            <el-button @click="furnitureLibraryDialogVisible = false">关闭</el-button>
+          </div>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -1071,15 +1689,25 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   DataAnalysis, Timer, Refresh, Download, Goods, Box, Van, Odometer, Warning,
-  Search, RefreshLeft, Connection, Promotion, Plus, Edit, Delete, Setting, CopyDocument, MagicStick, DocumentCopy
+  Search, RefreshLeft, Connection, Promotion, Plus, Edit, Delete, Setting, CopyDocument, MagicStick, DocumentCopy, InfoFilled
 } from '@element-plus/icons-vue'
 import {
   fetchLingxingBundleMaterials, testLingxingApiAuth, saveLingxingRawJsonData, LINGXING_API_CONFIG,
   type LingxingBundleMaterialRecord
 } from '@/api/lingxing'
 import {
+  FURNITURE_COMBO_BOM_LIBRARY,
+  FURNITURE_CHILD_MATERIALS,
+  COMBO_TYPE_DEFINITIONS,
+  getFurnitureChildMeta,
+  getFurnitureComboMeta,
+  type FurnitureComboRecord,
+  type ComboType,
+  type ComboTypeDefinition
+} from '@/data/furniture-bom-library'
+import {
   dbFetchAsinTracks, dbSaveAsinTrack, dbDeleteAsinTrack, dbBatchImportAsinTracks,
-  dbFetchMaterialBindings, dbSaveMaterialBinding, dbDeleteMaterialBinding,
+  dbFetchMaterialBindings, dbSaveMaterialBinding, dbDeleteMaterialBinding, dbBatchDeleteMaterialBindings, dbBatchImportMaterialBindings,
   dbFetchChildPhysicalStocks, dbUpdateChildStock, dbSaveChildPhysicalStock, dbDeleteChildPhysicalStock,
   dbFetchPenetratedKanbanData, dbFetchCompletenessAlerts, dbResetAllDataToDefault, dbClearAllData, initBackendStoreData,
   type AsinTrackRecord, type MaterialBindingRecord, type ChildPhysicalStockRecord,
@@ -1161,32 +1789,148 @@ const bindingForm = ref<{
   parentCode: string
   sku: string
   productName: string
-  comboType: '单品多量' | '单品多包' | '多品多包'
+  style?: string
+  material?: string
+  brand?: string
+  color?: string
+  packQty?: string
+  comboType: ComboType
   tpWh: string
-  children: { childCode: string; childName: string; ratio: number }[]
+  children: {
+    childCode: string
+    childName: string
+    ratio: number
+    childProductName?: string
+    childStyle?: string
+    childMaterial?: string
+    childTarget?: string
+    childModel?: string
+    childBrand?: string
+    childPattern?: string
+    childColor?: string
+    childPackQty?: string
+  }[]
 }>({
   parentCode: '',
   sku: '',
   productName: '',
-  comboType: '单品多量',
+  style: '',
+  material: '',
+  brand: '中性',
+  color: '',
+  packQty: '',
+  comboType: '多件打包',
   tpWh: '万邑通',
   children: [
     { childCode: '', childName: '', ratio: 1 }
   ]
 })
 
-const comboTypeFilter = ref('全部')
-const bindingSearchKey = ref('')
+// 组合类型标准定义与计算
+const COMBO_TYPE_LIST = computed(() => Object.values(COMBO_TYPE_DEFINITIONS))
+
+const getComboTypeMeta = (type?: string): ComboTypeDefinition => {
+  if (type && COMBO_TYPE_DEFINITIONS[type as ComboType]) {
+    return COMBO_TYPE_DEFINITIONS[type as ComboType]
+  }
+  if (type === '单品多量') return COMBO_TYPE_DEFINITIONS['多件打包']
+  if (type === '单品多包') return COMBO_TYPE_DEFINITIONS['一物多包']
+  if (type === '多品多包') return COMBO_TYPE_DEFINITIONS['成套组合']
+  return COMBO_TYPE_DEFINITIONS['多件打包']
+}
+
+const activeComboTypeDefinition = computed(() => {
+  return getComboTypeMeta(bindingForm.value.comboType)
+})
+
+const showComboTypeLegend = ref(false)
+
+// 基础数据选用状态 (来源于组合家具物料命名汇总确认版)
 const bindingTableData = ref<MaterialBindingRecord[]>([])
 
-const countSingleQty = computed(() => bindingTableData.value.filter(b => (b.comboType || '单品多量') === '单品多量').length)
-const countSinglePkg = computed(() => bindingTableData.value.filter(b => b.comboType === '单品多包').length)
-const countMultiPkg = computed(() => bindingTableData.value.filter(b => b.comboType === '多品多包').length)
+// 已添加的组合物料编码集合 (已添加的组合不展示在基础数据手册中)
+const addedParentCodeSet = computed(() => new Set(bindingTableData.value.map(b => b.parentCode)))
+
+// 组合物料库中尚未添加的组合物料清单
+const unaddedFurnitureComboList = computed(() => {
+  return FURNITURE_COMBO_BOM_LIBRARY.filter(item => !addedParentCodeSet.value.has(item.parentCode))
+})
+
+// 待添加组合物料总数
+const unaddedComboCount = computed(() => unaddedFurnitureComboList.value.length)
+
+// 各品类待添加数量统计
+const unaddedCountByCategory = computed(() => {
+  const counts: Record<string, number> = {
+    '餐边柜': 0,
+    '电视柜': 0,
+    '书柜': 0,
+    '组合电视柜': 0,
+    '食品储藏柜': 0,
+    '斗柜': 0
+  }
+  unaddedFurnitureComboList.value.forEach(item => {
+    if (counts[item.productName] !== undefined) {
+      counts[item.productName]++
+    }
+  })
+  return counts
+})
+
+// 组合物料库手册选用状态
+const selectedBaseComboCode = ref('')
+const furnitureLibraryDialogVisible = ref(false)
+const furnitureLibCategory = ref('全部')
+const furnitureLibColor = ref('全部')
+const furnitureLibPack = ref('全部')
+const furnitureLibComboType = ref('全部')
+const furnitureLibSearch = ref('')
+const furnitureLibSelection = ref<FurnitureComboRecord[]>([])
+
+const filteredFurnitureLibrary = computed(() => {
+  return unaddedFurnitureComboList.value.filter(item => {
+    if (furnitureLibCategory.value !== '全部' && item.productName !== furnitureLibCategory.value) {
+      return false
+    }
+    if (furnitureLibColor.value !== '全部') {
+      if (furnitureLibColor.value === '原木色' && !item.color.includes('原木色')) return false
+      if (furnitureLibColor.value === '黑色' && !item.color.includes('黑')) return false
+    }
+    if (furnitureLibPack.value !== '全部' && item.packQty !== furnitureLibPack.value) {
+      return false
+    }
+    if (furnitureLibComboType.value !== '全部' && item.comboType !== furnitureLibComboType.value) {
+      return false
+    }
+    if (furnitureLibSearch.value) {
+      const q = furnitureLibSearch.value.toLowerCase().trim()
+      const mCode = item.parentCode.toLowerCase().includes(q)
+      const mName = item.productName.toLowerCase().includes(q)
+      const mStyle = item.style.toLowerCase().includes(q)
+      const mColor = item.color.toLowerCase().includes(q)
+      const mChild = item.children.some(c => c.childCode.toLowerCase().includes(q) || c.childName.toLowerCase().includes(q))
+      if (!mCode && !mName && !mStyle && !mColor && !mChild) return false
+    }
+    return true
+  })
+})
+
+const comboTypeFilter = ref('全部')
+const bindingSearchKey = ref('')
+
+// 组合类型对应数据统计
+const countMultiPack = computed(() => bindingTableData.value.filter(b => getComboTypeMeta(b.comboType).type === '多件打包').length)
+const countSingleMultiPkg = computed(() => bindingTableData.value.filter(b => getComboTypeMeta(b.comboType).type === '一物多包').length)
+const countMainSub = computed(() => bindingTableData.value.filter(b => getComboTypeMeta(b.comboType).type === '主附搭配').length)
+const countCompleteSet = computed(() => bindingTableData.value.filter(b => getComboTypeMeta(b.comboType).type === '成套组合').length)
 
 const filteredBindingTableData = computed(() => {
   return bindingTableData.value.filter(item => {
-    if (comboTypeFilter.value !== '全部' && (item.comboType || '单品多量') !== comboTypeFilter.value) {
-      return false
+    if (comboTypeFilter.value !== '全部') {
+      const curType = getComboTypeMeta(item.comboType).type
+      if (curType !== comboTypeFilter.value) {
+        return false
+      }
     }
     if (bindingSearchKey.value) {
       const k = bindingSearchKey.value.toLowerCase()
@@ -1511,7 +2255,7 @@ const handleEditParentBindingFromKanban = (row: any) => {
       parentCode: row.parentMaterialCode,
       sku: row.sku,
       productName: row.productName,
-      comboType: '单品多量',
+      comboType: row.childMaterials && row.childMaterials.length > 1 ? '成套组合' : '多件打包',
       tpWh: row.tpOverseasWh || '万邑通',
       children: row.childMaterials ? row.childMaterials.map((c: any) => ({ childCode: c.childCode, childName: c.childName, ratio: c.bomRatio })) : [{ childCode: '', childName: '', ratio: 1 }]
     }
@@ -1521,8 +2265,165 @@ const handleEditParentBindingFromKanban = (row: any) => {
 
 const handleOpenAddBinding = () => {
   isEditBinding.value = false
-  bindingForm.value = { parentCode: '', sku: '', productName: '', comboType: '单品多量', tpWh: '万邑通', children: [{ childCode: '', childName: '', ratio: 1 }] }
+  selectedBaseComboCode.value = ''
+  bindingForm.value = { parentCode: '', sku: '', productName: '', comboType: '多件打包', tpWh: '万邑通', children: [{ childCode: '', childName: '', ratio: 1 }] }
   bindingDialogVisible.value = true
+}
+
+const applyBaseComboToBindingForm = (combo: FurnitureComboRecord) => {
+  bindingForm.value.parentCode = combo.parentCode
+  bindingForm.value.sku = combo.parentCode
+  bindingForm.value.productName = combo.productName
+  bindingForm.value.style = combo.style
+  bindingForm.value.material = combo.material
+  bindingForm.value.brand = combo.brand
+  bindingForm.value.color = combo.color
+  bindingForm.value.packQty = combo.packQty
+  bindingForm.value.comboType = combo.comboType
+  bindingForm.value.children = combo.children.map(c => ({
+    childCode: c.childCode,
+    childName: c.childName,
+    ratio: c.ratio,
+    childProductName: c.childProductName,
+    childStyle: c.childStyle,
+    childMaterial: c.childMaterial,
+    childTarget: c.childTarget,
+    childModel: c.childModel,
+    childBrand: c.childBrand,
+    childPattern: c.childPattern,
+    childColor: c.childColor,
+    childPackQty: c.childPackQty
+  }))
+  selectedBaseComboCode.value = combo.parentCode
+  ElMessage.success(`已选用基础库 [${combo.parentCode}]，自动载入 ${combo.children.length} 款子物料配比！`)
+}
+
+const handleSelectBaseComboFromSelect = (code: string) => {
+  if (!code) return
+  const found = FURNITURE_COMBO_BOM_LIBRARY.find(c => c.parentCode === code)
+  if (found) {
+    applyBaseComboToBindingForm(found)
+  }
+}
+
+const handleChooseComboFromLibrary = (row: FurnitureComboRecord) => {
+  isEditBinding.value = false
+  applyBaseComboToBindingForm(row)
+  furnitureLibraryDialogVisible.value = false
+  bindingDialogVisible.value = true
+}
+
+const openBaseLibraryBrowser = () => {
+  furnitureLibSelection.value = []
+  furnitureLibraryDialogVisible.value = true
+}
+
+const handleFurnitureSelectionChange = (selection: FurnitureComboRecord[]) => {
+  furnitureLibSelection.value = selection
+}
+
+const handleBatchImportSelectedBoms = async () => {
+  if (furnitureLibSelection.value.length === 0) {
+    ElMessage.warning('请先勾选需要导入的组合物料')
+    return
+  }
+  const count = await dbBatchImportMaterialBindings(furnitureLibSelection.value.map(item => ({
+    parentCode: item.parentCode,
+    sku: item.parentCode,
+    productName: item.productName,
+    style: item.style,
+    material: item.material,
+    brand: item.brand,
+    color: item.color,
+    packQty: item.packQty,
+    comboType: item.comboType,
+    tpWh: '万邑通',
+    status: '已绑定',
+    updateTime: new Date().toLocaleString(),
+    boundChildren: item.children.map(c => ({
+      childCode: c.childCode,
+      childName: c.childName,
+      ratio: c.ratio,
+      childProductName: c.childProductName,
+      childStyle: c.childStyle,
+      childMaterial: c.childMaterial,
+      childTarget: c.childTarget,
+      childModel: c.childModel,
+      childBrand: c.childBrand,
+      childPattern: c.childPattern,
+      childColor: c.childColor,
+      childPackQty: c.childPackQty
+    }))
+  })))
+  await refreshAllBackendData()
+  furnitureLibraryDialogVisible.value = false
+  ElMessage.success(`成功将勾选的 ${count} 款组合物料 BOM 关系批量导入系统！`)
+}
+
+const handleImportAllUnaddedBoms = () => {
+  if (unaddedFurnitureComboList.value.length === 0) {
+    ElMessage.info('所有组合物料已添加完成，无需导入')
+    return
+  }
+  ElMessageBox.confirm(
+    `确定要将当前未添加的 ${unaddedComboCount.value} 款组合物料 BOM 数据批量导入到父子物料绑定关系中吗？`,
+    '批量导入未添加组合物料',
+    { confirmButtonText: `确定导入全部未添加 (${unaddedComboCount.value}款)`, cancelButtonText: '取消', type: 'success' }
+  ).then(async () => {
+    const count = await dbBatchImportMaterialBindings(unaddedFurnitureComboList.value.map(item => ({
+      parentCode: item.parentCode,
+      sku: item.parentCode,
+      productName: item.productName,
+      style: item.style,
+      material: item.material,
+      brand: item.brand,
+      color: item.color,
+      packQty: item.packQty,
+      comboType: item.comboType,
+      tpWh: '万邑通',
+      status: '已绑定',
+      updateTime: new Date().toLocaleString(),
+      boundChildren: item.children.map(c => ({
+        childCode: c.childCode,
+        childName: c.childName,
+        ratio: c.ratio,
+        childProductName: c.childProductName,
+        childStyle: c.childStyle,
+        childMaterial: c.childMaterial,
+        childTarget: c.childTarget,
+        childModel: c.childModel,
+        childBrand: c.childBrand,
+        childPattern: c.childPattern,
+        childColor: c.childColor,
+        childPackQty: c.childPackQty
+      }))
+    })))
+    await refreshAllBackendData()
+    furnitureLibraryDialogVisible.value = false
+    ElMessage.success(`已成功批量导入 ${count} 款组合物料 BOM 绑定数据！`)
+  }).catch(() => {})
+}
+
+const handleChildCodeChangeInRow = (item: any, code: string) => {
+  if (!code) return
+  const foundInBase = FURNITURE_CHILD_MATERIALS.find(c => c.childCode === code)
+  if (foundInBase) {
+    item.childName = foundInBase.childName
+    item.childProductName = foundInBase.childProductName
+    item.childStyle = foundInBase.childStyle
+    item.childMaterial = foundInBase.childMaterial
+    item.childTarget = foundInBase.childTarget
+    item.childModel = foundInBase.childModel
+    item.childBrand = foundInBase.childBrand
+    item.childPattern = foundInBase.childPattern
+    item.childColor = foundInBase.childColor
+    item.childPackQty = foundInBase.childPackQty
+    return
+  }
+  const foundInExisting = allChildMaterialOptions.value.find(c => c.childCode === code)
+  if (foundInExisting) {
+    item.childName = foundInExisting.childName
+  }
 }
 
 const handleEditBinding = (row: MaterialBindingRecord) => {
@@ -1531,7 +2432,12 @@ const handleEditBinding = (row: MaterialBindingRecord) => {
     parentCode: row.parentCode,
     sku: row.sku,
     productName: row.productName,
-    comboType: row.comboType || '单品多量',
+    style: row.style,
+    material: row.material,
+    brand: row.brand,
+    color: row.color,
+    packQty: row.packQty,
+    comboType: getComboTypeMeta(row.comboType).type,
     tpWh: row.tpWh,
     children: row.boundChildren.map(b => ({ ...b }))
   }
@@ -1551,16 +2457,41 @@ const handleSaveBinding = async () => {
     parentCode: bindingForm.value.parentCode,
     sku: bindingForm.value.sku,
     productName: bindingForm.value.productName || '多功能组装件',
+    style: bindingForm.value.style,
+    material: bindingForm.value.material,
+    brand: bindingForm.value.brand,
+    color: bindingForm.value.color,
+    packQty: bindingForm.value.packQty,
     comboType: bindingForm.value.comboType,
     tpWh: bindingForm.value.tpWh,
     status: bindingForm.value.children.length > 0 ? '已绑定' : '未绑定',
     updateTime: new Date().toLocaleString(),
-    boundChildren: bindingForm.value.children.map(c => ({ childCode: c.childCode, childName: c.childName || c.childCode, ratio: c.ratio || 1 }))
+    boundChildren: bindingForm.value.children.map(c => ({
+      childCode: c.childCode,
+      childName: c.childName || c.childCode,
+      ratio: c.ratio || 1,
+      childProductName: c.childProductName,
+      childStyle: c.childStyle,
+      childMaterial: c.childMaterial,
+      childTarget: c.childTarget,
+      childModel: c.childModel,
+      childBrand: c.childBrand,
+      childPattern: c.childPattern,
+      childColor: c.childColor,
+      childPackQty: c.childPackQty
+    }))
   })
 
   await refreshAllBackendData()
   bindingDialogVisible.value = false
   ElMessage.success(`成功保存父物料 [${bindingForm.value.parentCode}] 的 BOM 绑定关系与组合类型 [${bindingForm.value.comboType}]！`)
+}
+
+const bindingTableRef = ref()
+const selectedBindingRows = ref<MaterialBindingRecord[]>([])
+
+const handleBindingSelectionChange = (rows: MaterialBindingRecord[]) => {
+  selectedBindingRows.value = rows
 }
 
 const handleUnbind = (row: MaterialBindingRecord) => {
@@ -1572,24 +2503,86 @@ const handleUnbind = (row: MaterialBindingRecord) => {
     }).catch(() => {})
 }
 
-// 从父子物料绑定关系中提取所有可供选择的子物料
-const allChildMaterialOptions = computed(() => {
+// 批量解绑已选中的绑定关系
+const handleBatchUnbindSelected = () => {
+  if (selectedBindingRows.value.length === 0) {
+    ElMessage.warning('请先勾选需要解绑的父子物料项')
+    return
+  }
+  const count = selectedBindingRows.value.length
+  ElMessageBox.confirm(
+    `确定要批量解除已勾选的 ${count} 款父子物料 BOM 绑定关系吗？\n解绑后，这些物料将重新回到组合物料库待添加列表中。`,
+    '批量解绑确认',
+    { confirmButtonText: `确定解绑已选 (${count}款)`, cancelButtonText: '取消', type: 'warning' }
+  ).then(async () => {
+    const codes = selectedBindingRows.value.map(r => r.parentCode)
+    await dbBatchDeleteMaterialBindings(codes)
+    await refreshAllBackendData()
+    selectedBindingRows.value = []
+    ElMessage.success(`已成功批量解除 ${count} 款物料的父子 BOM 绑定关系！`)
+  }).catch(() => {})
+}
+
+// 全选解绑全部已添加的绑定关系
+const handleUnbindAll = () => {
+  if (filteredBindingTableData.value.length === 0) {
+    ElMessage.info('当前无可解绑的绑定关系')
+    return
+  }
+  const count = filteredBindingTableData.value.length
+  ElMessageBox.confirm(
+    `确定要全选解除当前展示的全部 ${count} 款父子物料 BOM 绑定关系吗？\n解绑后所有物料将全部恢复至组合物料库待添加列表中。`,
+    '全选解绑确认 (高危操作)',
+    { confirmButtonText: `确定全部解绑 (${count}款)`, cancelButtonText: '取消', type: 'error' }
+  ).then(async () => {
+    const codes = filteredBindingTableData.value.map(r => r.parentCode)
+    await dbBatchDeleteMaterialBindings(codes)
+    await refreshAllBackendData()
+    selectedBindingRows.value = []
+    ElMessage.success(`已成功全选解除全部 ${count} 款父子物料绑定关系！`)
+  }).catch(() => {})
+}
+
+// 现有其他子物料（排除 22 款基础物料）
+const existingOtherChildOptions = computed(() => {
+  const baseCodes = new Set(FURNITURE_CHILD_MATERIALS.map(c => c.childCode))
   const list: { childCode: string; childName: string }[] = []
   const seen = new Set<string>()
   bindingTableData.value.forEach(parent => {
     if (parent.boundChildren) {
       parent.boundChildren.forEach(child => {
-        if (child.childCode && !seen.has(child.childCode)) {
+        if (child.childCode && !baseCodes.has(child.childCode) && !seen.has(child.childCode)) {
           seen.add(child.childCode)
-          list.push({
-            childCode: child.childCode,
-            childName: child.childName
-          })
+          list.push({ childCode: child.childCode, childName: child.childName })
         }
       })
     }
   })
   return list
+})
+
+// 子物料物理库存明细的子物料选项严格来源于父子物料绑定关系的子物料
+const allChildMaterialOptions = computed(() => {
+  const map = new Map<string, { childCode: string; childName: string; linkedParents: string[] }>()
+  bindingTableData.value.forEach(parent => {
+    if (parent.boundChildren) {
+      parent.boundChildren.forEach(child => {
+        if (!child.childCode) return
+        if (!map.has(child.childCode)) {
+          const cMeta = getFurnitureChildMeta(child.childCode)
+          map.set(child.childCode, {
+            childCode: child.childCode,
+            childName: child.childName || cMeta?.childName || ('子物料 ' + child.childCode),
+            linkedParents: []
+          })
+        }
+        if (!map.get(child.childCode)!.linkedParents.includes(parent.parentCode)) {
+          map.get(child.childCode)!.linkedParents.push(parent.parentCode)
+        }
+      })
+    }
+  })
+  return Array.from(map.values())
 })
 
 const childStockDialogVisible = ref(false)
@@ -1617,6 +2610,12 @@ const handleChildCodeSelectInForm = (code: string) => {
     childStockForm.value.childName = match.childName
   }
 }
+
+const selectedChildLinkedParents = computed(() => {
+  if (!childStockForm.value.childCode) return []
+  const match = allChildMaterialOptions.value.find(c => c.childCode === childStockForm.value.childCode)
+  return match ? match.linkedParents : []
+})
 
 const handleNewChildStock = () => {
   isEditChildStock.value = false
@@ -1692,11 +2691,15 @@ const handleDeleteChildStock = (row: ChildPhysicalStockRecord) => {
   }).catch(() => {})
 }
 
-const handleEmergencyRestock = async (row: CompletenessAlertRecord) => {
+const handleEmergencyRestock = async (row: any) => {
   const targetStock = row.otherMaxStock
-  await dbUpdateChildStock(row.bottleneckChildCode, targetStock)
-  await refreshAllBackendData()
-  ElMessage.success(`已为短板子物料 [${row.bottleneckChildCode}] 紧急加补 ${row.suggestedQty} 件，缺料告警已接触！`)
+  const bottleneckCode = row.bottleneckChildCode || row.shortageItems?.[0]?.childCode
+  const suggestedQty = row.suggestedQty || row.shortageItems?.[0]?.suggestedQty || 0
+  if (bottleneckCode) {
+    await dbUpdateChildStock(bottleneckCode, targetStock)
+    await refreshAllBackendData()
+    ElMessage.success(`已为短板子物料 [${bottleneckCode}] 紧急加补 ${suggestedQty} 件，缺料告警已接触！`)
+  }
 }
 </script>
 
@@ -1865,4 +2868,231 @@ const handleEmergencyRestock = async (row: CompletenessAlertRecord) => {
 }
 
 .pagination-wrapper { display: flex; justify-content: flex-end; }
+
+// 基础数据选择卡片样式
+.base-data-picker-box {
+  background: #f0f7ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 12px 16px;
+  .picker-title {
+    font-size: 13px;
+  }
+}
+
+.combo-option-row {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+  .option-desc {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+  }
+}
+
+// 基础物料库手册弹窗样式
+.furniture-lib-dialog {
+  .furniture-stat-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    .stat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      &.primary { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; .stat-val { font-weight: 700; color: #2563eb; } }
+      &.success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; .stat-val { font-weight: 700; color: #16a34a; } }
+      &.info { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; .stat-val { font-weight: 700; color: #0f172a; } }
+    }
+  }
+  .furniture-filter-row {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+}
+
+// 组合类型标准定义卡片指南容器
+.combo-type-legend-container {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-top: 12px;
+
+  .legend-header {
+    .legend-title {
+      font-size: 13px;
+      .title-badge {
+        background: #2563eb;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 4px;
+        letter-spacing: 0.5px;
+      }
+    }
+  }
+
+  .legend-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+
+    @media (max-width: 1200px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .legend-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+
+      &:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+        transform: translateY(-2px);
+      }
+
+      &.active {
+        border-color: #2563eb;
+        background: #f0f7ff;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+      }
+
+      .card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .type-name-box {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+
+          .type-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            &.多件打包 { background: #64748b; }
+            &.一物多包 { background: #f59e0b; }
+            &.主附搭配 { background: #ef4444; }
+            &.成套组合 { background: #2563eb; }
+          }
+
+          .type-title {
+            font-size: 13px;
+            color: #0f172a;
+          }
+        }
+
+        .core-rule-badge {
+          font-size: 11px;
+          padding: 1px 6px;
+          border-radius: 4px;
+          font-weight: 600;
+          white-space: nowrap;
+
+          &.多件打包 { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+          &.一物多包 { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+          &.主附搭配 { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+          &.成套组合 { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        }
+      }
+
+      .card-desc {
+        color: #475569;
+        font-size: 12px;
+        line-height: 1.45;
+        min-height: 34px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .card-example-pill {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: #f8fafc;
+        border: 1px solid #f1f5f9;
+        border-radius: 4px;
+        padding: 3px 6px;
+        font-size: 11px;
+        overflow: hidden;
+
+        .pill-tag {
+          background: #e2e8f0;
+          color: #475569;
+          font-size: 10px;
+          font-weight: 700;
+          padding: 0 4px;
+          border-radius: 3px;
+          flex-shrink: 0;
+        }
+
+        .pill-text {
+          color: #64748b;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+  }
+}
+
+// 弹窗中组合类型下拉选项与卡片
+.combo-type-opt-row {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+  width: 100%;
+}
+
+.combo-definition-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #2563eb;
+  border-radius: 6px;
+  padding: 8px 12px;
+
+  .def-header {
+    font-size: 12px;
+  }
+  .def-detail {
+    line-height: 1.4;
+    color: #475569;
+    font-size: 12px;
+  }
+  .def-example {
+    color: #1e40af;
+    background: #eff6ff;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    .example-tag {
+      font-weight: 700;
+      color: #2563eb;
+      margin-right: 4px;
+    }
+  }
+}
 </style>

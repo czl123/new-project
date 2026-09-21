@@ -179,7 +179,7 @@ const financeSubMenu = {
 
 const operationSubMenu = {
   columns: [
-    [{ title: '备货管理', icon: 'Box', items: [{ title: '每日备货推荐', path: '/op/stock/daily-rec' }, { title: '日常备货申请', path: '/op/stock/normal-apply' }, { title: '日常备货Team审核', path: '/op/stock/team-audit' }, { title: '日常备货事业部审核', path: '/op/stock/dept-audit' }, { title: '特殊备货申请', path: '/op/stock/special-apply' }, { title: '计划部审批', path: '/op/stock/plan-audit' }, { title: 'PMC审批', path: '/op/stock/pmc-audit' }, { title: '下单申请记录', path: '/op/stock/order-log' }, { title: '备货监控', path: '/op/stock/monitor' }, { title: '发货方式设置', path: '/op/stock/ship-set' }, { title: '备货申请记录', path: '/op/stock/apply-log' }, { title: '安全天数设置', path: '/op/stock/safe-days' }, { title: '备货天数设置', path: '/op/stock/stock-days' }, { title: '物流天数设置', path: '/op/stock/log-days' }, { title: '季节系数设置', path: '/op/stock/season-set' }, { title: '自动审核设置', path: '/op/stock/auto-audit' }, { title: '新品备货申请', path: '/op/stock/new-apply' }, { title: '备货数据权限设置', path: '/op/stock/auth-set' }, { title: '黑名单ASIN-AREA', path: '/op/stock/blacklist' }, { title: '备货店铺开票配置', path: '/op/stock/invoice-set' }] }],
+    [{ title: '备货管理3.0', icon: 'Box', items: [{ title: '每日备货推荐', path: '/op/stock/daily-rec' }, { title: '日常备货申请', path: '/op/stock/normal-apply' }, { title: '日常备货Team审核', path: '/op/stock/team-audit' }, { title: '日常备货事业部审核', path: '/op/stock/dept-audit' }, { title: '特殊备货申请', path: '/op/stock/special-apply' }, { title: '计划部审批', path: '/op/stock/plan-audit' }, { title: 'PMC审批', path: '/op/stock/pmc-audit' }, { title: '下单申请记录', path: '/op/stock/order-log' }, { title: '备货监控', path: '/op/stock/monitor' }, { title: '发货方式设置', path: '/op/stock/ship-set' }, { title: '备货申请记录', path: '/op/stock/apply-log' }, { title: '安全天数设置', path: '/op/stock/safe-days' }, { title: '备货天数设置', path: '/op/stock/stock-days' }, { title: '物流天数设置', path: '/op/stock/log-days' }, { title: '季节系数设置', path: '/op/stock/season-set' }, { title: '自动审核设置', path: '/op/stock/auto-audit' }, { title: '新品备货申请', path: '/op/stock/new-apply' }, { title: '备货数据权限设置', path: '/op/stock/auth-set' }, { title: '黑名单ASIN-AREA', path: '/op/stock/blacklist' }, { title: '备货店铺开票配置', path: '/op/stock/invoice-set' }] }],
     [{ title: '发货管理', icon: 'Van', items: [{ title: '每日发货推荐', path: '/op/ship/daily-rec' }, { title: '发货申请', path: '/op/ship/apply' }, { title: '发货申请审核', path: '/op/ship/audit' }, { title: '发货申请跟踪', path: '/op/ship/track' }, { title: '发货看板', path: '/op/ship/board' }, { title: '标签打印申请', path: '/op/ship/label' }, { title: '发货安全天数', path: '/op/ship/safe-days' }] },
      { title: '品牌业务', icon: 'Stamp', items: [{ title: '商标管理', path: '/op/brand/tm-manage' }, { title: '商标追踪报表', path: '/op/brand/tm-rep' }, { title: '商标证书', path: '/op/brand/tm-cert' }, { title: '品牌管理', path: '/op/brand/manage' }] },
      { title: '图文描述', icon: 'Edit', items: [{ title: '图文描述任务管理', path: '/op/desc/task' }, { title: '图文额度审核', path: '/op/desc/quota' }, { title: '图文描述文案设计', path: '/op/desc/copy' }, { title: '图文描述文案翻译', path: '/op/desc/trans' }, { title: '图文描述图片设计', path: '/op/desc/img' }, { title: '图文描述审核及应用', path: '/op/desc/apply' }, { title: '图文描述管理', path: '/op/desc/manage' }, { title: '图文描述应用列表', path: '/op/desc/list' }] }],
@@ -340,5 +340,18 @@ const closeSubMenu = () => { showSubMenu.value = false; activeSubMenu.value = ''
 .portal-fade-enter-active, .portal-fade-leave-active { transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
 .portal-fade-enter-from, .portal-fade-leave-to { opacity: 0; transform: translateX(-20px); }
 .search-result-item { display: flex; align-items: center; gap: 8px; .category { color: #909399; font-size: 12px; } .divider-icon { font-size: 10px; color: #c0c4cc; } .title { color: #303133; font-weight: 500; } }
-.app-main { flex: 1; background-color: var(--color-bg-page); display: flex; flex-direction: column; overflow: hidden; .view-content { flex: 1; overflow: hidden; } }
+.app-main { 
+  flex: 1; 
+  background-color: var(--color-bg-page); 
+  display: flex; 
+  flex-direction: column; 
+  overflow: hidden; 
+  min-height: 0;
+  .view-content { 
+    flex: 1; 
+    overflow-y: auto; 
+    overflow-x: hidden; 
+    min-height: 0;
+  } 
+}
 </style>

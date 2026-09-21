@@ -21,6 +21,26 @@ export interface ChildBomItem {
   childName: string
   ratio: number
   unitCost?: number
+  childProductName?: string
+  childStyle?: string
+  childMaterial?: string
+  childTarget?: string
+  childModel?: string
+  childBrand?: string
+  childPattern?: string
+  childColor?: string
+  childPackQty?: string
+}
+
+import { type ComboType, getFurnitureChildMeta, getFurnitureComboMeta } from '@/data/furniture-bom-library'
+
+export function normalizeComboType(type?: string): ComboType {
+  if (!type) return '多件打包'
+  if (type === '单品多量') return '多件打包'
+  if (type === '单品多包') return '一物多包'
+  if (type === '多品多包') return '成套组合'
+  if (type === '多件打包' || type === '一物多包' || type === '主附搭配' || type === '成套组合') return type
+  return '多件打包'
 }
 
 export interface MaterialBindingRecord {
@@ -28,7 +48,12 @@ export interface MaterialBindingRecord {
   parentCode: string
   sku: string
   productName: string
-  comboType?: '单品多量' | '单品多包' | '多品多包'
+  style?: string
+  material?: string
+  brand?: string
+  color?: string
+  packQty?: string
+  comboType?: ComboType
   tpWh: string
   status: '已绑定' | '部分绑定' | '未绑定'
   updateTime: string
@@ -399,6 +424,24 @@ export async function dbFetchMaterialBindings(): Promise<MaterialBindingRecord[]
 export async function dbSaveMaterialBinding(binding: Omit<MaterialBindingRecord, 'id'> & { id?: string }): Promise<MaterialBindingRecord> {
   const list = loadFromStorage(STORAGE_KEYS.MATERIAL_BINDINGS, INITIAL_MATERIAL_BINDINGS)
   let saved: MaterialBindingRecord
+  const comboMeta = getFurnitureComboMeta(binding.parentCode)
+
+  const enrichedChildren: ChildBomItem[] = (binding.boundChildren || []).map(child => {
+    const cMeta = getFurnitureChildMeta(child.childCode)
+    return {
+      ...child,
+      childName: child.childName || cMeta?.childName || child.childCode,
+      childProductName: child.childProductName || cMeta?.childProductName || '',
+      childStyle: child.childStyle || cMeta?.childStyle || '',
+      childMaterial: child.childMaterial || cMeta?.childMaterial || '',
+      childTarget: child.childTarget || cMeta?.childTarget || '通用',
+      childModel: child.childModel || cMeta?.childModel || '通用',
+      childBrand: child.childBrand || cMeta?.childBrand || '中性',
+      childPattern: child.childPattern || cMeta?.childPattern || '',
+      childColor: child.childColor || cMeta?.childColor || '',
+      childPackQty: child.childPackQty || cMeta?.childPackQty || '1pack'
+    }
+  })
 
   const idx = list.findIndex(item => item.parentCode === binding.parentCode)
   const fullItem: MaterialBindingRecord = {
@@ -406,11 +449,16 @@ export async function dbSaveMaterialBinding(binding: Omit<MaterialBindingRecord,
     parentCode: binding.parentCode,
     sku: binding.sku || '',
     productName: binding.productName,
-    comboType: binding.comboType || '单品多量',
+    style: binding.style || comboMeta?.style || '',
+    material: binding.material || comboMeta?.material || '',
+    brand: binding.brand || comboMeta?.brand || '中性',
+    color: binding.color || comboMeta?.color || '',
+    packQty: binding.packQty || comboMeta?.packQty || '',
+    comboType: normalizeComboType(binding.comboType || comboMeta?.comboType),
     tpWh: binding.tpWh || '万邑通',
-    status: binding.boundChildren && binding.boundChildren.length > 0 ? '已绑定' : '未绑定',
+    status: enrichedChildren.length > 0 ? '已绑定' : '未绑定',
     updateTime: new Date().toLocaleString(),
-    boundChildren: binding.boundChildren || []
+    boundChildren: enrichedChildren
   }
 
   if (idx > -1) {
@@ -432,36 +480,134 @@ export async function dbDeleteMaterialBinding(parentCode: string): Promise<boole
   return true
 }
 
-// --- 子物料物理库存后台 API (与父子物料绑定关系的子物料关联同步) ---
+export async function dbBatchDeleteMaterialBindings(parentCodes: string[]): Promise<number> {
+  const codeSet = new Set(parentCodes)
+  const list = loadFromStorage(STORAGE_KEYS.MATERIAL_BINDINGS, INITIAL_MATERIAL_BINDINGS)
+  const newList = list.filter(item => !codeSet.has(item.parentCode))
+  saveToStorage(STORAGE_KEYS.MATERIAL_BINDINGS, newList)
+  return list.length - newList.length
+}
+
+export async function dbBatchImportMaterialBindings(bindings: (Omit<MaterialBindingRecord, 'id'> & { id?: string })[]): Promise<number> {
+  const list = loadFromStorage(STORAGE_KEYS.MATERIAL_BINDINGS, INITIAL_MATERIAL_BINDINGS)
+  let count = 0
+  const nowStr = new Date().toLocaleString()
+  bindings.forEach(b => {
+    if (!b.parentCode) return
+    const comboMeta = getFurnitureComboMeta(b.parentCode)
+    const enrichedChildren: ChildBomItem[] = (b.boundChildren || []).map(child => {
+      const cMeta = getFurnitureChildMeta(child.childCode)
+      return {
+        ...child,
+        childName: child.childName || cMeta?.childName || child.childCode,
+        childProductName: child.childProductName || cMeta?.childProductName || '',
+        childStyle: child.childStyle || cMeta?.childStyle || '',
+        childMaterial: child.childMaterial || cMeta?.childMaterial || '',
+        childTarget: child.childTarget || cMeta?.childTarget || '通用',
+        childModel: child.childModel || cMeta?.childModel || '通用',
+        childBrand: child.childBrand || cMeta?.childBrand || '中性',
+        childPattern: child.childPattern || cMeta?.childPattern || '',
+        childColor: child.childColor || cMeta?.childColor || '',
+        childPackQty: child.childPackQty || cMeta?.childPackQty || '1pack'
+      }
+    })
+
+    const idx = list.findIndex(item => item.parentCode === b.parentCode)
+    const fullItem: MaterialBindingRecord = {
+      id: b.id || ('bind_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6)),
+      parentCode: b.parentCode,
+      sku: b.sku || b.parentCode,
+      productName: b.productName,
+      style: b.style || comboMeta?.style || '',
+      material: b.material || comboMeta?.material || '',
+      brand: b.brand || comboMeta?.brand || '中性',
+      color: b.color || comboMeta?.color || '',
+      packQty: b.packQty || comboMeta?.packQty || '',
+      comboType: normalizeComboType(b.comboType || comboMeta?.comboType),
+      tpWh: b.tpWh || '万邑通',
+      status: enrichedChildren.length > 0 ? '已绑定' : '未绑定',
+      updateTime: nowStr,
+      boundChildren: enrichedChildren
+    }
+    if (idx > -1) {
+      list[idx] = fullItem
+    } else {
+      list.unshift(fullItem)
+    }
+    count++
+  })
+  saveToStorage(STORAGE_KEYS.MATERIAL_BINDINGS, list)
+  return count
+}
+
+// --- 子物料物理库存后台 API (子物料严格来源于父子物料绑定关系的子物料) ---
 export async function dbFetchChildPhysicalStocks(): Promise<ChildPhysicalStockRecord[]> {
   const bindings = loadFromStorage(STORAGE_KEYS.MATERIAL_BINDINGS, INITIAL_MATERIAL_BINDINGS)
   const list = loadFromStorage(STORAGE_KEYS.CHILD_PHYSICAL_STOCKS, INITIAL_CHILD_PHYSICAL_STOCKS)
 
-  const existingChildCodes = new Set(list.map(item => item.childCode))
+  // 1. 严格从当前父子物料绑定关系中提取全部绑定的子物料及关联父物料集合
+  const bindingChildMap = new Map<string, {
+    childCode: string
+    childName: string
+    spec: string
+    tpWh: string
+    parents: Set<string>
+  }>()
 
   bindings.forEach(parent => {
     if (parent.boundChildren) {
       parent.boundChildren.forEach(child => {
-        if (!child.childCode || existingChildCodes.has(child.childCode)) return
-        existingChildCodes.add(child.childCode)
-        const defaultWh = parent.tpWh === '谷仓' ? '德法兰克福1仓' : parent.tpWh === '递四方' ? '英伦敦1仓' : parent.tpWh === '乐歌' ? '美东新泽西2仓' : '美西洛杉矶1仓'
-        list.push({
-          id: 'c_auto_' + child.childCode + '_' + Date.now(),
-          childCode: child.childCode,
-          childName: child.childName || ('子物料 ' + child.childCode),
-          spec: '通用规格',
-          tpWh: parent.tpWh || '西邮',
-          whName: defaultWh,
-          availableQty: 500,
-          transitQty: 200,
-          linkedParents: [parent.parentCode]
-        })
+        if (!child.childCode) return
+        if (!bindingChildMap.has(child.childCode)) {
+          const cMeta = getFurnitureChildMeta(child.childCode)
+          const childName = child.childName || cMeta?.childName || ('子物料 ' + child.childCode)
+          bindingChildMap.set(child.childCode, {
+            childCode: child.childCode,
+            childName,
+            spec: cMeta?.childStyle || '通用规格',
+            tpWh: parent.tpWh || '西邮',
+            parents: new Set()
+          })
+        }
+        bindingChildMap.get(child.childCode)!.parents.add(parent.parentCode)
       })
     }
   })
 
-  saveToStorage(STORAGE_KEYS.CHILD_PHYSICAL_STOCKS, list)
-  return list
+  // 2. 过滤现有库存记录：只保留严格存在于父子物料绑定关系中的子物料
+  const existingMap = new Map<string, ChildPhysicalStockRecord>()
+  list.forEach(item => {
+    if (bindingChildMap.has(item.childCode)) {
+      existingMap.set(item.childCode, item)
+    }
+  })
+
+  // 3. 构造最新且完整的子物料物理库存列表，并同步补齐 linkedParents
+  const resultList: ChildPhysicalStockRecord[] = []
+  bindingChildMap.forEach((info, code) => {
+    const existing = existingMap.get(code)
+    if (existing) {
+      existing.childName = info.childName
+      existing.linkedParents = Array.from(info.parents)
+      resultList.push(existing)
+    } else {
+      const defaultWh = info.tpWh === '谷仓' ? '德法兰克福1仓' : info.tpWh === '递四方' ? '英伦敦1仓' : info.tpWh === '乐歌' ? '美东新泽西2仓' : '美西洛杉矶1仓'
+      resultList.push({
+        id: 'c_auto_' + code + '_' + Date.now(),
+        childCode: code,
+        childName: info.childName,
+        spec: info.spec,
+        tpWh: info.tpWh,
+        whName: defaultWh,
+        availableQty: 500,
+        transitQty: 200,
+        linkedParents: Array.from(info.parents)
+      })
+    }
+  })
+
+  saveToStorage(STORAGE_KEYS.CHILD_PHYSICAL_STOCKS, resultList)
+  return resultList
 }
 
 export async function dbUpdateChildStock(childCode: string, availableQty: number, transitQty?: number): Promise<ChildPhysicalStockRecord | null> {

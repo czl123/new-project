@@ -79,6 +79,28 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'SKU海外仓库存看板', icon: 'DataAnalysis' }
       },
       {
+        path: 'op/stock/plan-audit',
+        name: 'PlanAudit',
+        component: () => import('@/views/operation/stock/plan-audit.vue'),
+        meta: { title: '计划部审批', icon: 'Stamp' }
+      },
+      {
+        path: 'operation/stock/plan-audit',
+        redirect: '/op/stock/plan-audit'
+      },
+      {
+        path: 'product/material/combo',
+        name: 'ProductMaterialCombo',
+        component: () => import('@/views/product/material/combo.vue'),
+        meta: { title: '组合物料', icon: 'Box' }
+      },
+      {
+        path: 'product/line',
+        name: 'ProductLineManage',
+        component: () => import('@/views/product/line/index.vue'),
+        meta: { title: '产品线管理', icon: 'Connection' }
+      },
+      {
         path: 'product/:pathMatch(.*)*',
         name: 'ProductPlaceholder',
         component: () => import('@/views/example/standard-list.vue'),

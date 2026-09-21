@@ -49,6 +49,10 @@ const router = useRouter()
 const bizType = ref('')
 const workflowData = ref(JSON.parse(JSON.stringify(mockWorkflowData)))
 
+const goBack = () => {
+  router.back()
+}
+
 const loadConfig = async () => {
   if (!bizType.value) return
   
