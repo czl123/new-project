@@ -53,11 +53,34 @@ export interface MaterialBindingRecord {
   brand?: string
   color?: string
   packQty?: string
+  category?: string
+  salesPlatform?: string
   comboType?: ComboType
   tpWh: string
   status: '已绑定' | '部分绑定' | '未绑定'
+  auditStatus?: string
+  productLineLeader?: string
+  productManager?: string
+  purchaser?: string
+  operator?: string
+  targetBrandOrAudience?: string
+  model?: string
+  pattern?: string
+  size?: string
+  holidayTag?: string
+  seasonTag?: string
+  isCeCategory?: string
+  hasBattery?: string
+  applicableModel?: string
+  materialDetail?: string
+  colorCode?: string
+  spec?: string
+  specModelDesc?: string
+  warehouseLabelDesc?: string
+  workflowNo?: string
   updateTime: string
   boundChildren: ChildBomItem[]
+  children?: ChildBomItem[]
 }
 
 export interface ChildWarehouseDist {
@@ -426,7 +449,7 @@ export async function dbSaveMaterialBinding(binding: Omit<MaterialBindingRecord,
   let saved: MaterialBindingRecord
   const comboMeta = getFurnitureComboMeta(binding.parentCode)
 
-  const enrichedChildren: ChildBomItem[] = (binding.boundChildren || []).map(child => {
+  const enrichedChildren: ChildBomItem[] = (binding.boundChildren || []).map((child: ChildBomItem) => {
     const cMeta = getFurnitureChildMeta(child.childCode)
     return {
       ...child,
@@ -445,6 +468,7 @@ export async function dbSaveMaterialBinding(binding: Omit<MaterialBindingRecord,
 
   const idx = list.findIndex(item => item.parentCode === binding.parentCode)
   const fullItem: MaterialBindingRecord = {
+    ...binding,
     id: binding.id || 'bind_' + Date.now(),
     parentCode: binding.parentCode,
     sku: binding.sku || '',
@@ -495,7 +519,7 @@ export async function dbBatchImportMaterialBindings(bindings: (Omit<MaterialBind
   bindings.forEach(b => {
     if (!b.parentCode) return
     const comboMeta = getFurnitureComboMeta(b.parentCode)
-    const enrichedChildren: ChildBomItem[] = (b.boundChildren || []).map(child => {
+    const enrichedChildren: ChildBomItem[] = (b.boundChildren || []).map((child: ChildBomItem) => {
       const cMeta = getFurnitureChildMeta(child.childCode)
       return {
         ...child,
@@ -514,6 +538,7 @@ export async function dbBatchImportMaterialBindings(bindings: (Omit<MaterialBind
 
     const idx = list.findIndex(item => item.parentCode === b.parentCode)
     const fullItem: MaterialBindingRecord = {
+      ...b,
       id: b.id || ('bind_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6)),
       parentCode: b.parentCode,
       sku: b.sku || b.parentCode,
@@ -525,7 +550,8 @@ export async function dbBatchImportMaterialBindings(bindings: (Omit<MaterialBind
       packQty: b.packQty || comboMeta?.packQty || '',
       comboType: normalizeComboType(b.comboType || comboMeta?.comboType),
       tpWh: b.tpWh || '万邑通',
-      status: enrichedChildren.length > 0 ? '已绑定' : '未绑定',
+      status: b.status || (enrichedChildren.length > 0 ? '已绑定' : '未绑定'),
+      auditStatus: b.auditStatus || '待提交',
       updateTime: nowStr,
       boundChildren: enrichedChildren
     }

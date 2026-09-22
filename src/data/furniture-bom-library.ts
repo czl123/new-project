@@ -69,6 +69,7 @@ export interface FurnitureChildMaterial {
   childPattern: string
   childColor: string
   childPackQty: string
+  image?: string
 }
 
 export interface FurnitureComboBomItem {
@@ -84,6 +85,7 @@ export interface FurnitureComboBomItem {
   childPattern: string
   childColor: string
   childPackQty: string
+  image?: string
 }
 
 export interface FurnitureComboRecord {
