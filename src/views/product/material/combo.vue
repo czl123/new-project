@@ -1,87 +1,148 @@
 <template>
   <div class="combo-material-container">
-    <!-- 1. 顶部数据看板 & 组合类型透视 -->
+    <!-- 1. 顶部数据看板 & 组合类型透视 (共 6 张分类看板) -->
     <div class="stat-overview-row">
+      <!-- 1. 全部组合物料 -->
       <div 
-        class="stat-card" 
+        class="stat-card card-all" 
         :class="{ active: filterForm.comboType === '' && filterForm.status === '' }"
         @click="handleFilterAll"
       >
-        <div class="stat-content">
-          <div class="stat-label">组合物料总数</div>
-          <div class="stat-num text-primary">{{ totalComboCount }} <span class="unit">款</span></div>
-          <div class="stat-desc">涵盖多包、打包、搭配、套系</div>
-        </div>
-        <div class="stat-icon-box bg-blue">
-          <el-icon><Box /></el-icon>
+        <div class="stat-card-inner">
+          <div class="stat-card-header">
+            <span class="type-badge badge-blue">全部物料</span>
+            <div class="stat-icon-box bg-blue">
+              <el-icon><Box /></el-icon>
+            </div>
+          </div>
+          <div class="stat-num-row">
+            <span class="stat-num text-blue">{{ totalComboCount }}</span>
+            <span class="unit">款</span>
+          </div>
+          <div class="stat-desc-row">
+            <span class="stat-desc">全库总览 · 涵盖 4 大业务类型</span>
+            <span v-if="filterForm.comboType === '' && filterForm.status === ''" class="active-indicator">已选</span>
+          </div>
         </div>
       </div>
 
+      <!-- 2. 审批中 -->
       <div 
-        class="stat-card" 
+        class="stat-card card-pending" 
         :class="{ active: filterForm.status === '待审核' }"
         @click="handleFilterPendingAudit"
       >
-        <div class="stat-content">
-          <div class="stat-label">
+        <div class="stat-card-inner">
+          <div class="stat-card-header">
             <span class="type-badge badge-warning">审批中</span>
+            <div class="stat-icon-box bg-amber">
+              <el-icon><Stamp /></el-icon>
+            </div>
           </div>
-          <div class="stat-num text-warning">{{ pendingAuditCount }} <span class="unit">款</span></div>
-          <div class="stat-desc">新提交物料 · 等待主管审核</div>
-        </div>
-        <div class="stat-icon-box bg-amber">
-          <el-icon><Stamp /></el-icon>
+          <div class="stat-num-row">
+            <span class="stat-num text-amber">{{ pendingAuditCount }}</span>
+            <span class="unit">款</span>
+          </div>
+          <div class="stat-desc-row">
+            <span class="stat-desc">流转中 · 等待产品线负责人审核</span>
+            <span v-if="filterForm.status === '待审核'" class="active-indicator">已选</span>
+          </div>
         </div>
       </div>
 
+      <!-- 3. 多件打包 (1物*N) -->
       <div 
-        class="stat-card" 
+        class="stat-card card-multi-pack" 
         :class="{ active: filterForm.comboType === '多件打包' }"
         @click="filterForm.comboType = filterForm.comboType === '多件打包' ? '' : '多件打包'"
       >
-        <div class="stat-content">
-          <div class="stat-label">
+        <div class="stat-card-inner">
+          <div class="stat-card-header">
             <span class="type-badge badge-gray">多件打包</span>
+            <div class="stat-icon-box bg-slate">
+              <el-icon><CopyDocument /></el-icon>
+            </div>
           </div>
-          <div class="stat-num">{{ statsByType['多件打包'] || 0 }} <span class="unit">款</span></div>
-          <div class="stat-desc">同款多件 · 原箱乘倍销售</div>
-        </div>
-        <div class="stat-icon-box bg-slate">
-          <el-icon><CopyDocument /></el-icon>
+          <div class="stat-num-row">
+            <span class="stat-num text-slate">{{ statsByType['多件打包'] || 0 }}</span>
+            <span class="unit">款</span>
+          </div>
+          <div class="stat-desc-row">
+            <span class="stat-desc">同款多件 · 原箱乘倍出库销售</span>
+            <span v-if="filterForm.comboType === '多件打包'" class="active-indicator">已选</span>
+          </div>
         </div>
       </div>
 
+      <!-- 4. 一物多包 (A+B+C) -->
       <div 
-        class="stat-card" 
+        class="stat-card card-multi-box" 
         :class="{ active: filterForm.comboType === '一物多包' }"
         @click="filterForm.comboType = filterForm.comboType === '一物多包' ? '' : '一物多包'"
       >
-        <div class="stat-content">
-          <div class="stat-label">
-            <span class="type-badge badge-warning">一物多包</span>
+        <div class="stat-card-inner">
+          <div class="stat-card-header">
+            <span class="type-badge badge-orange">一物多包</span>
+            <div class="stat-icon-box bg-orange">
+              <el-icon><Grid /></el-icon>
+            </div>
           </div>
-          <div class="stat-num text-amber-600">{{ statsByType['一物多包'] || 0 }} <span class="unit">款</span></div>
-          <div class="stat-desc">单品超大拆多箱 · 缺一不可</div>
-        </div>
-        <div class="stat-icon-box bg-amber-gradient">
-          <el-icon><Grid /></el-icon>
+          <div class="stat-num-row">
+            <span class="stat-num text-orange">{{ statsByType['一物多包'] || 0 }}</span>
+            <span class="unit">款</span>
+          </div>
+          <div class="stat-desc-row">
+            <span class="stat-desc">单品超大拆多箱 · 缺一不可</span>
+            <span v-if="filterForm.comboType === '一物多包'" class="active-indicator">已选</span>
+          </div>
         </div>
       </div>
 
+      <!-- 5. 主附搭配 (主+附) - 补齐核心模式 -->
       <div 
-        class="stat-card" 
+        class="stat-card card-main-attach" 
+        :class="{ active: filterForm.comboType === '主附搭配' }"
+        @click="filterForm.comboType = filterForm.comboType === '主附搭配' ? '' : '主附搭配'"
+      >
+        <div class="stat-card-inner">
+          <div class="stat-card-header">
+            <span class="type-badge badge-danger">主附搭配</span>
+            <div class="stat-icon-box bg-rose">
+              <el-icon><Link /></el-icon>
+            </div>
+          </div>
+          <div class="stat-num-row">
+            <span class="stat-num text-rose">{{ statsByType['主附搭配'] || 0 }}</span>
+            <span class="unit">款</span>
+          </div>
+          <div class="stat-desc-row">
+            <span class="stat-desc">专用主体 + 通用配件共享</span>
+            <span v-if="filterForm.comboType === '主附搭配'" class="active-indicator">已选</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. 成套组合 (套系) -->
+      <div 
+        class="stat-card card-suite" 
         :class="{ active: filterForm.comboType === '成套组合' }"
         @click="filterForm.comboType = filterForm.comboType === '成套组合' ? '' : '成套组合'"
       >
-        <div class="stat-content">
-          <div class="stat-label">
-            <span class="type-badge badge-primary">成套组合</span>
+        <div class="stat-card-inner">
+          <div class="stat-card-header">
+            <span class="type-badge badge-purple">成套组合</span>
+            <div class="stat-icon-box bg-purple">
+              <el-icon><Collection /></el-icon>
+            </div>
           </div>
-          <div class="stat-num text-indigo">{{ statsByType['成套组合'] || 0 }} <span class="unit">款</span></div>
-          <div class="stat-desc">独立家具整合 · 大套系销售</div>
-        </div>
-        <div class="stat-icon-box bg-purple">
-          <el-icon><Collection /></el-icon>
+          <div class="stat-num-row">
+            <span class="stat-num text-purple">{{ statsByType['成套组合'] || 0 }}</span>
+            <span class="unit">款</span>
+          </div>
+          <div class="stat-desc-row">
+            <span class="stat-desc">独立单品集结 · 大套系搭配</span>
+            <span v-if="filterForm.comboType === '成套组合'" class="active-indicator">已选</span>
+          </div>
         </div>
       </div>
     </div>
@@ -159,20 +220,84 @@
           批量导入组合物料
         </el-button>
         <el-button 
+          type="primary" 
+          plain 
+          icon="Promotion" 
+          size="small" 
+          :disabled="!selectedRows.length"
+          @click="handleBatchSubmit"
+        >
+          批量提交 {{ selectedRows.length ? `(${selectedRows.length})` : '' }}
+        </el-button>
+        <el-button 
+          type="warning" 
+          plain 
+          icon="Stamp" 
+          size="small" 
+          :disabled="!selectedRows.length"
+          @click="handleOpenBatchAuditModal"
+        >
+          批量审核 {{ selectedRows.length ? `(${selectedRows.length})` : '' }}
+        </el-button>
+        <el-button 
           type="danger" 
+          plain
           icon="Delete" 
           size="small" 
           :disabled="!selectedRows.length"
           @click="handleBatchDelete"
         >
-          批量删除 ({{ selectedRows.length }})
+          批量删除 {{ selectedRows.length ? `(${selectedRows.length})` : '' }}
         </el-button>
-        <el-button icon="Download" size="small" @click="handleExportCsv">
+        <el-button icon="Download" size="small" @click="handleExportExcel">
           导出 BOM 清单
         </el-button>
       </div>
 
       <div class="ak-table-btn">
+        <!-- 登录身份切换器 (演示与多角色审批权限验证) -->
+        <el-dropdown trigger="click" @command="handleSwitchUser">
+          <div class="login-user-pill">
+            <el-icon class="mr-1 text-slate-500"><UserFilled /></el-icon>
+            <span class="user-name">当前登录：<b>{{ currentUser.name }}</b></span>
+            <el-tag 
+              size="small" 
+              :type="currentUser.role === 'admin' ? 'danger' : 'primary'" 
+              effect="plain" 
+              class="user-role-tag ml-1"
+            >
+              {{ currentUser.role === 'admin' ? '系统管理员' : '负责人' }}
+            </el-tag>
+            <el-icon class="el-icon--right text-slate-400"><ArrowDown /></el-icon>
+          </div>
+          <template #dropdown>
+            <el-dropdown-menu class="user-switch-menu">
+              <div class="px-3 py-1.5 text-xs text-slate-400 border-b border-slate-100 mb-1">
+                切换审批登录账号与角色
+              </div>
+              <el-dropdown-item 
+                v-for="u in userOptions" 
+                :key="u.name" 
+                :command="u"
+                :divided="u.role === 'admin'"
+              >
+                <div class="flex items-center justify-between gap-3 min-w-[210px] py-0.5">
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-medium text-slate-800">{{ u.name }}</span>
+                    <el-tag size="small" :type="u.role === 'admin' ? 'danger' : 'info'" effect="light" class="text-[11px] px-1">
+                      {{ u.role === 'admin' ? '全量超管' : '产品线' }}
+                    </el-tag>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <span class="text-xs text-slate-400">{{ u.roleName }}</span>
+                    <el-icon v-if="currentUser.name === u.name" class="text-primary font-bold"><Check /></el-icon>
+                  </div>
+                </div>
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+
         <el-button 
           link 
           type="primary" 
@@ -196,53 +321,6 @@
         </el-tooltip>
       </div>
     </div>
-
-    <!-- 本次导入结果提示与操作快捷条 -->
-    <transition name="el-zoom-in-top">
-      <div v-if="newlyImportedCodes.length > 0" class="newly-imported-banner">
-        <div class="banner-left">
-          <div class="banner-icon-box">
-            <el-icon><CircleCheckFilled /></el-icon>
-          </div>
-          <div class="banner-info">
-            <span class="banner-title">
-              本次成功导入 <b>{{ newlyImportedCodes.length }}</b> 款组合物料
-            </span>
-            <span class="banner-desc">（已为您在列表中优先置顶并进行淡绿高亮标注）</span>
-          </div>
-          <el-tag size="small" :type="lastImportTargetStatus === '待审核' ? 'warning' : 'info'" effect="light" class="ml-2">
-            业务状态：{{ lastImportTargetStatus === '待审核' ? '待产品线负责人审核' : '暂存待提交草稿' }}
-          </el-tag>
-        </div>
-        <div class="banner-right">
-          <el-button 
-            size="small" 
-            :type="isFilteringOnlyImported ? 'primary' : 'default'" 
-            plain 
-            @click="isFilteringOnlyImported = !isFilteringOnlyImported"
-          >
-            <el-icon class="mr-1"><Filter /></el-icon>
-            {{ isFilteringOnlyImported ? '显示全部物料' : '仅看本次导入' }}
-          </el-button>
-          <el-button 
-            size="small" 
-            link 
-            type="primary" 
-            @click="importResultDialogVisible = true"
-          >
-            <el-icon class="mr-1"><Document /></el-icon> 查看导入报告
-          </el-button>
-          <el-button 
-            size="small" 
-            link 
-            type="info" 
-            @click="handleClearImportHighlight"
-          >
-            <el-icon class="mr-1"><Close /></el-icon> 清除高亮
-          </el-button>
-        </div>
-      </div>
-    </transition>
 
     <!-- 4. 主表格：父物料及其 BOM 树形穿透视图 -->
     <div class="table-card">
@@ -296,7 +374,7 @@
                     </div>
                   </template>
                 </el-table-column>
-                <el-table-column label="物料编码" prop="childCode" min-width="150">
+                <el-table-column label="子物料编码" prop="childCode" min-width="150">
                   <template #default="{ row: child }">
                     <div class="code-copy-cell">
                       <span class="child-code font-mono">{{ child.childCode }}</span>
@@ -317,47 +395,48 @@
                 </el-table-column>
                 <el-table-column label="产品名称" prop="childProductName" min-width="140" show-overflow-tooltip>
                   <template #default="{ row: child }">
-                    <span class="font-medium text-slate-800">{{ child.childProductName || child.childName }}</span>
+                    <span class="font-medium text-slate-800">{{ child.childProductName || child.childName || child.productName }}</span>
                   </template>
                 </el-table-column>
                 <el-table-column label="款式" prop="childStyle" width="110" show-overflow-tooltip>
                   <template #default="{ row: child }">
-                    <span>{{ child.childStyle || '-' }}</span>
+                    <span>{{ child.childStyle || child.style || '-' }}</span>
                   </template>
                 </el-table-column>
                 <el-table-column label="主材料" prop="childMaterial" min-width="130" show-overflow-tooltip>
                   <template #default="{ row: child }">
-                    <span>{{ child.childMaterial || '-' }}</span>
+                    <span>{{ child.childMaterial || child.material || '-' }}</span>
                   </template>
                 </el-table-column>
-                <el-table-column label="适用品牌或对象" prop="childTarget" width="130" show-overflow-tooltip>
+                <el-table-column label="适用品牌或机型" prop="childTarget" width="130" show-overflow-tooltip>
                   <template #default="{ row: child }">
-                    <span class="text-xs text-gray-600">{{ child.childTarget || '通用' }}</span>
+                    <span class="text-xs text-gray-600">{{ child.applicableBrandOrModel || child.childTarget || child.targetBrandOrAudience || child.applicableModel || '通用' }}</span>
                   </template>
                 </el-table-column>
                 <el-table-column label="型号" prop="childModel" width="110" show-overflow-tooltip>
                   <template #default="{ row: child }">
-                    <span class="font-mono text-xs">{{ child.childModel || '-' }}</span>
+                    <span class="font-mono text-xs">{{ child.childModel || child.model || '-' }}</span>
                   </template>
                 </el-table-column>
                 <el-table-column label="公司品牌" prop="childBrand" width="95" align="center">
                   <template #default="{ row: child }">
-                    <el-tag size="small" effect="plain" type="info">{{ child.childBrand || '中性' }}</el-tag>
-                  </template>
-                </el-table-column>
-                <el-table-column label="颜色" prop="childColor" width="100" align="center">
-                  <template #default="{ row: child }">
-                    <el-tag v-if="child.childColor" size="small" effect="plain" type="success">
-                      {{ child.childColor }}
-                    </el-tag>
-                    <span v-else class="text-gray-400">-</span>
+                    <el-tag size="small" effect="plain" type="info">{{ child.childBrand || child.brand || '中性' }}</el-tag>
                   </template>
                 </el-table-column>
                 <el-table-column label="包装数量" prop="childPackQty" width="95" align="center">
                   <template #default="{ row: child }">
-                    <span class="font-mono text-gray-600">{{ child.childPackQty || '1pack' }}</span>
+                    <span class="font-mono text-gray-600">{{ child.childPackQty || child.packQty || '1pack' }}</span>
                   </template>
-                </el-table-column></el-table>
+                </el-table-column>
+                <el-table-column label="颜色" prop="childColor" width="100" align="center">
+                  <template #default="{ row: child }">
+                    <el-tag v-if="child.childColor || child.color" size="small" effect="plain" type="success">
+                      {{ child.childColor || child.color }}
+                    </el-tag>
+                    <span v-else class="text-gray-400">-</span>
+                  </template>
+                </el-table-column>
+              </el-table>
             </div>
           </template>
         </el-table-column>
@@ -382,15 +461,6 @@
                   </el-icon>
                 </el-tooltip>
               </div>
-              <el-tag 
-                v-if="row.isNewlyImported" 
-                size="small" 
-                type="success" 
-                effect="dark" 
-                class="newly-imported-tag"
-              >
-                本次导入
-              </el-tag>
             </div>
           </template>
         </el-table-column>
@@ -584,7 +654,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="210" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
 
             <!-- 待审核时提供专门的审核按钮 (含通过、不通过、驳回) -->
@@ -597,6 +667,18 @@
               @click="handleOpenAuditModal(row)"
             >
               审核
+            </el-button>
+
+            <!-- 待提交或已驳回时提供快捷提交按钮 -->
+            <el-button 
+              v-if="row.auditStatus === '待提交' || row.auditStatus === '草稿' || row.auditStatus === '已驳回'"
+              type="success" 
+              link 
+              size="small" 
+              icon="Promotion" 
+              @click="handleSingleSubmit(row)"
+            >
+              提交
             </el-button>
 
             <!-- 编辑按钮：待提交和驳回允许编辑，其余状态禁用 -->
@@ -1759,72 +1841,643 @@
     <!-- 6.5. 对话框：【组合物料审批处理弹窗 (通过/不通过/驳回)】 -->
     <el-dialog
       v-model="auditModalVisible"
-      title="组合物料业务审核处理"
-      width="560px"
+      width="880px"
       destroy-on-close
       class="audit-action-dialog"
+      :close-on-click-modal="false"
     >
-      <div v-if="activeAuditRow" class="audit-action-modal-body">
-        <div class="audit-target-card">
+      <template #header>
+        <div class="audit-action-dialog-header">
+          <div class="header-left">
+            <span class="header-title">组合物料审核处理</span>
+            <span class="header-sub-tag">产品线审批流</span>
+          </div>
+          <div class="header-right">
+            <span class="text-xs text-slate-400">单据流转工作台</span>
+          </div>
+        </div>
+      </template>
 
-          <div class="target-item">
-            <span class="label">组合品名：</span>
-            <span class="val font-medium text-slate-800">{{ activeAuditRow.productName }}</span>
+      <div v-if="activeAuditRow" class="audit-action-modal-body">
+        <!-- 1. 待审核单据状态条 -->
+        <div class="audit-status-strip">
+          <div class="strip-left">
+            <span class="strip-icon-circle">
+              <el-icon><Stamp /></el-icon>
+            </span>
+            <div class="strip-text">
+              <span class="strip-main">
+                正在审核物料：<b>{{ activeAuditRow.productName }}</b>
+              </span>
+              <span class="strip-hint">
+                · 审批通过后系统将自动生成正式组合编码并生效备货
+              </span>
+            </div>
           </div>
-          <div class="target-item">
-            <span class="label">组合类型：</span>
-            <span class="val">{{ activeAuditRow.comboType }}</span>
-          </div>
-          <div class="target-item">
-            <span class="label">当前状态：</span>
-            <el-tag size="small" type="warning" effect="light"><el-icon class="mr-1"><Clock /></el-icon>待审核</el-tag>
-          </div>
-          <div class="target-item">
-            <span class="label">审批责任人：</span>
-            <span class="val font-bold text-emerald-600">{{ activeAuditRow.productLineLeader || '夏忠保 (产品线负责人)' }}</span>
+          <div class="strip-right">
+            <el-tag size="small" type="warning" effect="light" class="audit-status-badge">
+              <el-icon class="mr-1"><Clock /></el-icon> 待产品线审核
+            </el-tag>
           </div>
         </div>
 
-        <el-form label-width="90px" class="mt-4 audit-decision-form">
-          <el-form-item label="审核结果" required>
-            <el-radio-group v-model="auditDecision">
-              <el-radio label="pass">
-                <span class="text-success font-bold text-sm">通过</span>
-                <span class="text-xs text-gray-400 font-normal">（自动分配正式物料编码，单据生效不可删）</span>
-              </el-radio>
-              <el-radio label="reject">
-                <span class="text-warning font-bold text-sm">驳回</span>
-                <span class="text-xs text-gray-400 font-normal">（单据退回可编辑，操作员可修改后重提）</span>
-              </el-radio>
-              <el-radio label="disapprove">
-                <span class="text-danger font-bold text-sm">不通过</span>
-                <span class="text-xs text-gray-400 font-normal">（审批不通过归档，不可删除）</span>
-              </el-radio>
-            </el-radio-group>
-          </el-form-item>
+        <!-- 2. 单据基础属性与 BOM 子件核对 -->
+        <div class="audit-target-details-section">
+          <div class="section-title-bar">
+            <div class="title-left">
+              <span class="bar-title">单据核对信息</span>
+            </div>
+            <div class="title-right">
+              <span class="text-xs text-slate-400">审批责任人：<b class="text-slate-700 font-semibold">{{ activeAuditRow.productLineLeader || '夏忠保' }}</b></span>
+            </div>
+          </div>
 
-          <el-form-item 
-            label="审核意见" 
-            :required="auditDecision !== 'pass'"
-          >
-            <el-input 
-              v-model="auditRemark" 
-              type="textarea" 
-              :rows="3" 
-              :placeholder="auditDecision === 'pass' ? '可输入审核附言（选填）...' : (auditDecision === 'reject' ? '请输入驳回原因，便于操作人员据此修改后重新提交（必填）...' : '请输入不通过原因说明（必填）...')" 
-            />
-          </el-form-item>
-        </el-form>
+          <!-- 属性概览小网格 -->
+          <div class="meta-info-grid mb-2.5">
+            <div class="meta-cell">
+              <span class="cell-label">组合品名：</span>
+              <span class="cell-val font-semibold text-slate-800">{{ activeAuditRow.productName }}</span>
+            </div>
+            <div class="meta-cell">
+              <span class="cell-label">组合类型：</span>
+              <span class="type-badge" :class="getComboTypeBadgeClass(activeAuditRow.comboType)">{{ activeAuditRow.comboType }}</span>
+            </div>
+            <div class="meta-cell">
+              <span class="cell-label">销售平台：</span>
+              <el-tag size="small" effect="plain">{{ activeAuditRow.salesPlatform || 'Amazon' }}</el-tag>
+            </div>
+            <div class="meta-cell">
+              <span class="cell-label">运营大类：</span>
+              <span class="cell-val">{{ activeAuditRow.category || '家具/室内家具' }}</span>
+            </div>
+          </div>
+
+          <!-- 子件列表表格简略核对 (若有子部件) -->
+          <div v-if="(activeAuditRow.boundChildren || activeAuditRow.children || []).length" class="audit-bom-mini-table">
+            <div class="bom-table-title flex items-center justify-between mb-1.5">
+              <span class="text-xs font-semibold text-slate-700">关联 BOM 子部件清单 (共 {{ (activeAuditRow.boundChildren || activeAuditRow.children || []).length }} 项)：</span>
+              <span class="text-xs text-slate-400">请核对单套配比与规格信息</span>
+            </div>
+            <el-table 
+              :data="activeAuditRow.boundChildren || activeAuditRow.children || []" 
+              border 
+              size="small" 
+              max-height="160" 
+              stripe 
+              class="bom-preview-table"
+            >
+              <el-table-column type="index" label="#" width="40" align="center" />
+              <el-table-column label="子物料编码" prop="childCode" min-width="145">
+                <template #default="{ row: c }">
+                  <span class="font-mono text-xs font-semibold text-primary whitespace-nowrap">{{ c.childCode }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="单套配比" prop="ratio" width="85" align="center">
+                <template #default="{ row: c }">
+                  <el-tag size="small" type="primary" effect="dark" class="font-bold font-mono">1:{{ c.ratio }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="产品名称" prop="childProductName" min-width="150" show-overflow-tooltip>
+                <template #default="{ row: c }">
+                  <span class="font-medium text-slate-800">{{ c.childProductName || c.childName || c.productName }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="款式" prop="childStyle" width="95" show-overflow-tooltip>
+                <template #default="{ row: c }">
+                  <span>{{ c.childStyle || c.style || '-' }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="主材料" prop="childMaterial" width="100" show-overflow-tooltip>
+                <template #default="{ row: c }">
+                  <span>{{ c.childMaterial || c.material || '-' }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="适用品牌或机型" prop="childTarget" width="125" show-overflow-tooltip>
+                <template #default="{ row: c }">
+                  <span class="text-xs text-gray-600">{{ c.applicableBrandOrModel || c.childTarget || c.targetBrandOrAudience || c.applicableModel || '通用' }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="型号" prop="childModel" width="95" show-overflow-tooltip>
+                <template #default="{ row: c }">
+                  <span class="font-mono text-xs">{{ c.childModel || c.model || '-' }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="公司品牌" prop="childBrand" width="90" align="center">
+                <template #default="{ row: c }">
+                  <el-tag size="small" effect="plain" type="info">{{ c.childBrand || c.brand || '中性' }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="包装数量" prop="childPackQty" width="85" align="center">
+                <template #default="{ row: c }">
+                  <span class="font-mono text-gray-600">{{ c.childPackQty || c.packQty || '1pack' }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="颜色" prop="childColor" width="85" align="center">
+                <template #default="{ row: c }">
+                  <el-tag v-if="c.childColor || c.color" size="small" effect="plain" type="success">
+                    {{ c.childColor || c.color }}
+                  </el-tag>
+                  <span v-else class="text-gray-400">-</span>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </div>
+
+        <!-- 3. 审批决策卡片选择 -->
+        <div class="audit-decision-cards-section">
+          <div class="section-title-bar">
+            <div class="title-left">
+              <span class="bar-title">选择审批决策</span>
+              <span class="bar-sub">点击卡片切换审核结果与流转动作</span>
+            </div>
+            <div class="title-right">
+              <span class="text-xs text-slate-400">单选（共 3 项决策）</span>
+            </div>
+          </div>
+
+          <div class="decision-cards-grid">
+            <!-- 1. 通过 -->
+            <div 
+              class="decision-choice-card card-pass" 
+              :class="{ 'is-selected': auditDecision === 'pass' }"
+              @click="auditDecision = 'pass'"
+            >
+              <div class="card-radio-ring">
+                <span class="radio-inner-dot"></span>
+              </div>
+              <div class="card-main">
+                <div class="card-top-line">
+                  <div class="title-wrap">
+                    <el-icon class="status-icon"><CircleCheckFilled /></el-icon>
+                    <span class="decision-name">审核通过</span>
+                  </div>
+                  <span class="status-action-tag pass">准予生效</span>
+                </div>
+                <div class="decision-desc">
+                  自动分配正式组合编码并生效，单据锁定归档不可删除
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. 驳回 -->
+            <div 
+              class="decision-choice-card card-reject" 
+              :class="{ 'is-selected': auditDecision === 'reject' }"
+              @click="auditDecision = 'reject'"
+            >
+              <div class="card-radio-ring">
+                <span class="radio-inner-dot"></span>
+              </div>
+              <div class="card-main">
+                <div class="card-top-line">
+                  <div class="title-wrap">
+                    <el-icon class="status-icon"><RefreshLeft /></el-icon>
+                    <span class="decision-name">审核驳回</span>
+                  </div>
+                  <span class="status-action-tag reject">退回修改</span>
+                </div>
+                <div class="decision-desc">
+                  单据退回可编辑状态，操作员修改 BOM 后可重新提交
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. 不通过 -->
+            <div 
+              class="decision-choice-card card-disapprove" 
+              :class="{ 'is-selected': auditDecision === 'disapprove' }"
+              @click="auditDecision = 'disapprove'"
+            >
+              <div class="card-radio-ring">
+                <span class="radio-inner-dot"></span>
+              </div>
+              <div class="card-main">
+                <div class="card-top-line">
+                  <div class="title-wrap">
+                    <el-icon class="status-icon"><CircleCloseFilled /></el-icon>
+                    <span class="decision-name">审核不通过</span>
+                  </div>
+                  <span class="status-action-tag disapprove">终止归档</span>
+                </div>
+                <div class="decision-desc">
+                  不符合规划规范，单据终审归档留痕不可再重新流转
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. 审核意见说明表单区 -->
+        <div class="audit-remark-section">
+          <div class="remark-title-bar">
+            <div class="title-left">
+              <span class="bar-title">审核意见说明</span>
+              <span v-if="auditDecision !== 'pass'" class="require-tag">* 必填驳回说明</span>
+              <span v-else class="optional-tag">（选填附言）</span>
+            </div>
+            <!-- 快捷预设短语 -->
+            <div class="preset-phrases-group">
+              <span class="preset-label">快捷填入：</span>
+              <button 
+                v-for="(phrase, pIdx) in singleAuditPresets" 
+                :key="pIdx" 
+                type="button"
+                class="phrase-chip-btn"
+                @click="applySingleAuditPreset(phrase)"
+              >
+                {{ phrase }}
+              </button>
+            </div>
+          </div>
+
+          <el-input 
+            v-model="auditRemark" 
+            type="textarea" 
+            :rows="3" 
+            class="remark-textarea"
+            :placeholder="auditDecision === 'pass' ? '可输入审核附言（选填，点击上方快捷短语可直接填入，如：全部核对无误，准予生效备货）...' : (auditDecision === 'reject' ? '请输入驳回原因说明（必填，便于操作人员据此修改后重新提交）...' : '请输入审核不通过原因说明（必填）...')" 
+          />
+        </div>
       </div>
+
       <template #footer>
-        <el-button @click="auditModalVisible = false">取消</el-button>
-        <el-button 
-          :type="auditDecision === 'pass' ? 'success' : (auditDecision === 'reject' ? 'warning' : 'danger')" 
-          :loading="auditSubmitting" 
-          @click="handleConfirmAuditModal"
-        >
-          确定提交审核结果
-        </el-button>
+        <div class="audit-action-dialog-footer">
+          <div class="footer-left-status">
+            <span class="status-label">当前审批决策：</span>
+            <el-tag 
+              :type="auditDecision === 'pass' ? 'success' : (auditDecision === 'reject' ? 'warning' : 'danger')" 
+              effect="light"
+              class="status-tag"
+            >
+              {{ auditDecision === 'pass' ? '审核通过 · 准予生效' : (auditDecision === 'reject' ? '审核驳回 · 退回修改' : '审核不通过 · 终止归档') }}
+            </el-tag>
+          </div>
+          <div class="footer-right-buttons">
+            <el-button @click="auditModalVisible = false">取消</el-button>
+            <el-button 
+              :type="auditDecision === 'pass' ? 'success' : (auditDecision === 'reject' ? 'warning' : 'danger')" 
+              :loading="auditSubmitting" 
+              class="confirm-audit-btn"
+              @click="handleConfirmAuditModal"
+            >
+              <el-icon class="mr-1">
+                <CircleCheckFilled v-if="auditDecision === 'pass'" />
+                <RefreshLeft v-else-if="auditDecision === 'reject'" />
+                <CircleCloseFilled v-else />
+              </el-icon>
+              确定提交审核结果
+            </el-button>
+          </div>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 6.5. 对话框：【批量审核操作弹窗】 -->
+    <el-dialog
+      v-model="batchAuditModalVisible"
+      width="960px"
+      destroy-on-close
+      class="batch-audit-dialog"
+      :close-on-click-modal="false"
+    >
+      <template #header>
+        <div class="batch-audit-dialog-header">
+          <div class="header-left">
+            <span class="header-title">批量审核组合物料</span>
+            <span class="header-sub-tag">产品线审批流</span>
+            <el-tag 
+              size="small" 
+              :type="currentUser.role === 'admin' ? 'danger' : 'primary'" 
+              effect="light" 
+              class="ml-2 font-medium"
+            >
+              当前审批：{{ currentUser.name }}（{{ currentUser.role === 'admin' ? '系统管理员 · 全量权限' : currentUser.roleName }}）
+            </el-tag>
+          </div>
+          <div class="header-right">
+            <span class="text-xs text-slate-400">集中审批工作台</span>
+          </div>
+        </div>
+      </template>
+
+      <div class="batch-audit-modal-body">
+        <!-- 1. 待审核单据状态条 -->
+        <div class="batch-audit-status-strip">
+          <div class="strip-left">
+            <span class="strip-icon-circle">
+              <el-icon><Stamp /></el-icon>
+            </span>
+            <div class="strip-text">
+              <span class="strip-main">
+                共识别到 <b>{{ batchAuditTargetList.length }}</b> 款待审核组合物料
+              </span>
+              <span class="strip-hint">
+                · 审批通过后系统将自动分配正式组合物料编码并生效备货
+              </span>
+            </div>
+          </div>
+          <div class="strip-right flex items-center gap-2">
+            <span v-if="batchAuditSkippedLeaderCount > 0" class="skipped-pill text-amber-700 bg-amber-50 border-amber-300">
+              已自动过滤 {{ batchAuditSkippedLeaderCount }} 款非本人负责单据
+            </span>
+            <span v-if="batchAuditSkippedCount > 0" class="skipped-pill">
+              已自动过滤 {{ batchAuditSkippedCount }} 款非待审单据
+            </span>
+            <span v-if="batchAuditSkippedLeaderCount === 0 && batchAuditSkippedCount === 0" class="all-valid-pill">
+              {{ currentUser.role === 'admin' ? '超管权限已生效 · 选中待审单据全量准入' : '已选单据均符合审核权限' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- 2. 待审核明细清单表格 -->
+        <div class="batch-audit-table-section">
+          <div class="section-title-bar">
+            <div class="title-left">
+              <span class="bar-title">待审核物料清单</span>
+              <span class="bar-badge">{{ batchAuditTargetList.length }} 款</span>
+            </div>
+            <div class="title-right">
+              <span class="text-xs text-slate-400">点击行首箭头展开查看子件清单</span>
+            </div>
+          </div>
+          <el-table 
+            :data="batchAuditTargetList" 
+            border 
+            size="small" 
+            max-height="250" 
+            stripe 
+            class="batch-audit-table"
+          >
+            <!-- 展开显示子件清单 -->
+            <el-table-column type="expand" width="40">
+              <template #default="{ row }">
+                <div class="batch-expand-bom-wrap">
+                  <div class="expand-header flex items-center justify-between mb-1.5">
+                    <span class="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                      <el-icon class="text-primary"><Connection /></el-icon>
+                      【{{ row.productName }}】BOM 子件清单（共 {{ (row.children || row.boundChildren || []).length }} 项）：
+                    </span>
+                    <span class="text-xs text-slate-400">请核对单套配比与规格信息</span>
+                  </div>
+                  <el-table 
+                    :data="row.children || row.boundChildren || []" 
+                    border 
+                    size="small" 
+                    class="inner-bom-table"
+                  >
+                    <el-table-column type="index" label="#" width="40" align="center" />
+                    <el-table-column label="子物料编码" prop="childCode" min-width="140">
+                      <template #default="{ row: c }">
+                        <span class="font-mono text-xs font-semibold text-primary whitespace-nowrap">{{ c.childCode }}</span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="单套配比" prop="ratio" width="85" align="center">
+                      <template #default="{ row: c }">
+                        <el-tag size="small" type="primary" effect="dark" class="font-bold font-mono">1:{{ c.ratio }}</el-tag>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="产品名称" prop="childProductName" min-width="150" show-overflow-tooltip>
+                      <template #default="{ row: c }">
+                        <span class="font-medium text-slate-800">{{ c.childProductName || c.childName || c.productName }}</span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="款式" prop="childStyle" width="95" show-overflow-tooltip>
+                      <template #default="{ row: c }">
+                        <span>{{ c.childStyle || c.style || '-' }}</span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="主材料" prop="childMaterial" width="105" show-overflow-tooltip>
+                      <template #default="{ row: c }">
+                        <span>{{ c.childMaterial || c.material || '-' }}</span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="适用品牌或机型" prop="childTarget" width="125" show-overflow-tooltip>
+                      <template #default="{ row: c }">
+                        <span class="text-xs text-gray-600">{{ c.applicableBrandOrModel || c.childTarget || c.targetBrandOrAudience || c.applicableModel || '通用' }}</span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="型号" prop="childModel" width="95" show-overflow-tooltip>
+                      <template #default="{ row: c }">
+                        <span class="font-mono text-xs">{{ c.childModel || c.model || '-' }}</span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="公司品牌" prop="childBrand" width="90" align="center">
+                      <template #default="{ row: c }">
+                        <el-tag size="small" effect="plain" type="info">{{ c.childBrand || c.brand || '中性' }}</el-tag>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="颜色" prop="childColor" width="80" align="center">
+                      <template #default="{ row: c }">
+                        <el-tag v-if="c.childColor || c.color" size="small" effect="plain" type="success">
+                          {{ c.childColor || c.color }}
+                        </el-tag>
+                        <span v-else class="text-gray-400">-</span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="包装数量" prop="childPackQty" width="85" align="center">
+                      <template #default="{ row: c }">
+                        <span class="font-mono text-gray-600">{{ c.childPackQty || c.packQty || '1pack' }}</span>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+              </template>
+            </el-table-column>
+
+            <el-table-column type="index" label="#" width="40" align="center" />
+            <el-table-column label="组合类型" prop="comboType" width="100" align="center">
+              <template #default="{ row }">
+                <span class="type-badge" :class="getComboTypeBadgeClass(row.comboType)">{{ row.comboType }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="运营大类" prop="category" width="115" show-overflow-tooltip />
+            <el-table-column label="产品名称" prop="productName" min-width="170" show-overflow-tooltip>
+              <template #default="{ row }">
+                <span class="font-medium text-slate-800">{{ row.productName }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="款式" prop="style" width="95" show-overflow-tooltip>
+              <template #default="{ row }">
+                <span>{{ row.style || '-' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="主材料" prop="material" width="105" show-overflow-tooltip>
+              <template #default="{ row }">
+                <span>{{ row.material || '-' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="公司品牌" prop="brand" width="90" align="center">
+              <template #default="{ row }">
+                <el-tag size="small" effect="plain" type="info">{{ row.brand || '中性' }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="颜色" prop="color" width="80" align="center">
+              <template #default="{ row }">
+                <el-tag v-if="row.color" size="small" effect="plain" type="success">{{ row.color }}</el-tag>
+                <span v-else class="text-gray-400">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="包装数量" prop="packQty" width="85" align="center">
+              <template #default="{ row }">
+                <span class="font-mono text-gray-600">{{ row.packQty || '1pack' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="子件数" width="75" align="center">
+              <template #default="{ row }">
+                <span class="font-mono text-xs font-semibold text-slate-700">{{ (row.children || row.boundChildren || []).length }} 项</span>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <!-- 3. 审批决策卡片选择 -->
+        <div class="batch-audit-decision-section">
+          <div class="section-title-bar">
+            <div class="title-left">
+              <span class="bar-title">选择审批决策</span>
+              <span class="bar-sub">点击卡片切换批量审核结果</span>
+            </div>
+            <div class="title-right">
+              <span class="text-xs text-slate-400">单选（共 3 项决策）</span>
+            </div>
+          </div>
+
+          <div class="decision-cards-grid">
+            <!-- 1. 通过 -->
+            <div 
+              class="decision-choice-card card-pass" 
+              :class="{ 'is-selected': batchAuditDecision === 'pass' }"
+              @click="batchAuditDecision = 'pass'"
+            >
+              <div class="card-radio-ring">
+                <span class="radio-inner-dot"></span>
+              </div>
+              <div class="card-main">
+                <div class="card-top-line">
+                  <div class="title-wrap">
+                    <el-icon class="status-icon"><CircleCheckFilled /></el-icon>
+                    <span class="decision-name">审核通过</span>
+                  </div>
+                  <span class="status-action-tag pass">准予生效</span>
+                </div>
+                <div class="decision-desc">
+                  自动分配正式组合编码并生效，单据锁定归档不可删除
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. 驳回 -->
+            <div 
+              class="decision-choice-card card-reject" 
+              :class="{ 'is-selected': batchAuditDecision === 'reject' }"
+              @click="batchAuditDecision = 'reject'"
+            >
+              <div class="card-radio-ring">
+                <span class="radio-inner-dot"></span>
+              </div>
+              <div class="card-main">
+                <div class="card-top-line">
+                  <div class="title-wrap">
+                    <el-icon class="status-icon"><RefreshLeft /></el-icon>
+                    <span class="decision-name">审核驳回</span>
+                  </div>
+                  <span class="status-action-tag reject">退回修改</span>
+                </div>
+                <div class="decision-desc">
+                  单据退回可编辑状态，操作员修改 BOM 后可重新提交
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. 不通过 -->
+            <div 
+              class="decision-choice-card card-disapprove" 
+              :class="{ 'is-selected': batchAuditDecision === 'disapprove' }"
+              @click="batchAuditDecision = 'disapprove'"
+            >
+              <div class="card-radio-ring">
+                <span class="radio-inner-dot"></span>
+              </div>
+              <div class="card-main">
+                <div class="card-top-line">
+                  <div class="title-wrap">
+                    <el-icon class="status-icon"><CircleCloseFilled /></el-icon>
+                    <span class="decision-name">审核不通过</span>
+                  </div>
+                  <span class="status-action-tag disapprove">终止归档</span>
+                </div>
+                <div class="decision-desc">
+                  不符合规划规范，单据终审归档留痕不可再重新流转
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. 审核意见说明表单区 -->
+        <div class="batch-audit-remark-section">
+          <div class="remark-title-bar">
+            <div class="title-left">
+              <span class="bar-title">批量审核意见</span>
+              <span v-if="batchAuditDecision !== 'pass'" class="require-tag">* 必填驳回说明</span>
+              <span v-else class="optional-tag">（选填附言）</span>
+            </div>
+            <!-- 快捷预设短语 -->
+            <div class="preset-phrases-group">
+              <span class="preset-label">快捷填入：</span>
+              <button 
+                v-for="(phrase, pIdx) in batchAuditPresets" 
+                :key="pIdx" 
+                type="button"
+                class="phrase-chip-btn"
+                @click="applyAuditPreset(phrase)"
+              >
+                {{ phrase }}
+              </button>
+            </div>
+          </div>
+
+          <el-input 
+            v-model="batchAuditRemark" 
+            type="textarea" 
+            :rows="3" 
+            class="remark-textarea"
+            :placeholder="batchAuditDecision === 'pass' ? '可输入审核附言（选填，点击上方快捷短语可直接填入，如：全部核对无误，准予生效备货）...' : (batchAuditDecision === 'reject' ? '请输入批量驳回原因说明（必填，便于操作人员据此修改后重新提交）...' : '请输入批量不通过原因说明（必填）...')" 
+          />
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="batch-audit-dialog-footer">
+          <div class="footer-left-status">
+            <span class="status-label">当前审批决策：</span>
+            <el-tag 
+              :type="batchAuditDecision === 'pass' ? 'success' : (batchAuditDecision === 'reject' ? 'warning' : 'danger')" 
+              effect="light"
+              class="status-tag"
+            >
+              {{ batchAuditDecision === 'pass' ? '批量通过 · 准予生效' : (batchAuditDecision === 'reject' ? '批量驳回 · 退回修改' : '批量不通过 · 终止归档') }}
+            </el-tag>
+            <span class="status-count">共 {{ batchAuditTargetList.length }} 款单据</span>
+          </div>
+          <div class="footer-right-buttons">
+            <el-button @click="batchAuditModalVisible = false">取消</el-button>
+            <el-button 
+              :type="batchAuditDecision === 'pass' ? 'success' : (batchAuditDecision === 'reject' ? 'warning' : 'danger')" 
+              :loading="batchAuditSubmitting" 
+              class="confirm-audit-btn"
+              @click="handleConfirmBatchAudit"
+            >
+              <el-icon class="mr-1">
+                <CircleCheckFilled v-if="batchAuditDecision === 'pass'" />
+                <RefreshLeft v-else-if="batchAuditDecision === 'reject'" />
+                <CircleCloseFilled v-else />
+              </el-icon>
+              确定执行批量审核 ({{ batchAuditTargetList.length }} 款)
+            </el-button>
+          </div>
+        </div>
       </template>
     </el-dialog>
 
@@ -2115,245 +2768,528 @@
       </div>
     </el-dialog>
 
-    <!-- 8.5. 对话框：【批量导入组合物料 (含BOM配置规范与模板下载)】 -->
+    <!-- 8.5. 对话框：【批量导入组合物料 (含BOM配置规范与全量预览核对)】 -->
     <el-dialog
       v-model="importDialogVisible"
-      title="批量导入组合物料 (含 BOM 清单与规范字典)"
-      width="920px"
+      :title="importActiveStep === 1 ? '批量导入组合物料 (第 1 步：模板下载与上传文件)' : '批量导入组合物料 - 全量数据校验与预览 (第 2 步：核对无误后再提交)'"
+      :width="importActiveStep === 1 ? '920px' : '1360px'"
       destroy-on-close
       class="import-modal-dialog"
+      :close-on-click-modal="false"
     >
       <div class="import-dialog-body">
-        <!-- 步骤 1：模板下载与字段规范说明 -->
-        <div class="import-step-card mb-3">
-          <div class="step-card-header">
-            <span class="step-badge">步骤 1</span>
-            <span class="step-title">下载标准 Excel 导入模板并按规范填写</span>
-          </div>
-
-          <div class="template-box">
-            <div class="template-left">
-              <div class="excel-icon-pill">
-                <span class="excel-ext">XLSX</span>
-              </div>
-              <div class="template-meta">
-                <div class="template-main-title">
-                  组合物料批量导入标准模板
-                  <span class="version-tag">V2.2 规范版</span>
-                </div>
-                <div class="template-tags-row">
-                  <span class="meta-tag tag-blue">{{ COMBO_TEMPLATE_COLUMNS.length }} 项标准字段</span>
-                  <span class="meta-tag tag-purple">内置 4 大组合类型范例</span>
-                  <span class="meta-tag tag-teal">双 Sheet 规范字典说明</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="template-actions">
-              <el-button type="primary" class="download-btn" size="small" @click="downloadImportTemplate">
-                <el-icon class="mr-1"><Download /></el-icon>
-                下载标准模板 (.xlsx)
-              </el-button>
-              <el-button type="default" size="small" @click="showTemplateSpec = !showTemplateSpec">
-                <el-icon class="mr-1"><Tickets /></el-icon>
-                {{ showTemplateSpec ? '收起填写规范' : `查看字段规范 (${COMBO_TEMPLATE_COLUMNS.length} 项)` }}
-              </el-button>
+        <!-- 阶段指示器 Stepper -->
+        <div class="custom-import-stepper mb-3">
+          <div class="stepper-item" :class="{ 'is-active': importActiveStep === 1, 'is-done': importActiveStep > 1 }">
+            <span class="step-badge-num">
+              <el-icon v-if="importActiveStep > 1"><Check /></el-icon>
+              <span v-else>1</span>
+            </span>
+            <div class="step-text-wrap">
+              <div class="step-title">1. 模板下载与文件上传</div>
+              <div class="step-desc">{{ uploadedFileName ? uploadedFileName : '标准 XLSX/XLS 录入模板' }}</div>
             </div>
           </div>
-
-          <!-- 规范要点提醒条 -->
-          <div class="template-notice-bar">
-            <el-icon class="notice-icon"><InfoFilled /></el-icon>
-            <span><b>填写指引：</b>粉红底色且标“*”为必填字段；子物料与单套配比用英文分号 (;) 分隔；严禁删除或调换表头列顺序。</span>
+          <div class="stepper-arrow-divider">
+            <el-icon><ArrowRight /></el-icon>
           </div>
-
-          <!-- 模板填写规范说明卡片 (展开查看) -->
-          <el-collapse-transition>
-            <div v-show="showTemplateSpec" class="template-spec-table-box mt-2.5">
-              <div class="spec-header-row">
-                <div class="spec-title">
-                  <el-icon class="mr-1 text-primary"><Tickets /></el-icon>
-                  <span>严格按新建页面字段顺序排列的规范清单（共 {{ COMBO_TEMPLATE_COLUMNS.length }} 项）：</span>
-                </div>
-                <span class="spec-required-tip">标有 * 号为必填项</span>
-              </div>
-              <div class="spec-table-scroll">
-                <table class="spec-mini-table">
-                  <thead>
-                    <tr>
-                      <th width="45" align="center">#</th>
-                      <th width="140">字段名称</th>
-                      <th width="85" align="center">必填状态</th>
-                      <th width="130">所属业务模块</th>
-                      <th width="160">示范值</th>
-                      <th>填写规范与说明</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="(col, cIdx) in COMBO_TEMPLATE_COLUMNS" :key="col.key">
-                      <td align="center" class="col-index">{{ cIdx + 1 }}</td>
-                      <td class="col-name">
-                        <span :class="{ 'required-name': col.required }">
-                          {{ col.required ? '* ' : '' }}{{ col.label }}
-                        </span>
-                      </td>
-                      <td align="center">
-                        <span class="status-pill" :class="col.required ? 'pill-req' : 'pill-opt'">
-                          {{ col.required ? '必填' : '非必填' }}
-                        </span>
-                      </td>
-                      <td>
-                        <span class="category-pill">{{ col.category }}</span>
-                      </td>
-                      <td><code class="example-code">{{ col.example }}</code></td>
-                      <td class="col-desc">{{ col.desc }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+          <div class="stepper-item" :class="{ 'is-active': importActiveStep === 2 }">
+            <span class="step-badge-num">
+              <span v-if="importActiveStep === 2" class="step-pulse-dot"></span>
+              <span>2</span>
+            </span>
+            <div class="step-text-wrap">
+              <div class="step-title">2. 全量数据校验与预览 (未入库)</div>
+              <div class="step-desc">{{ importPreviewList.length ? `已识别 ${importPreviewList.length} 款物料，待核对` : '28 项字段与 BOM 穿透核对' }}</div>
             </div>
-          </el-collapse-transition>
+          </div>
+          <div class="stepper-arrow-divider">
+            <el-icon><ArrowRight /></el-icon>
+          </div>
+          <div class="stepper-item is-pending">
+            <span class="step-badge-num">3</span>
+            <div class="step-text-wrap">
+              <div class="step-title">3. 确认入库并流转</div>
+              <div class="step-desc">持久化写入看板并触发业务流</div>
+            </div>
+          </div>
         </div>
 
-        <!-- 步骤 2：上传并解析文件 -->
-        <div class="import-step-card mb-3">
-          <div class="step-card-header">
-            <span class="step-badge">步骤 2</span>
-            <span class="step-title">上传并解析 Excel 模板文件</span>
-          </div>
+        <!-- 阶段 1：模板下载与文件上传 -->
+        <div v-if="importActiveStep === 1" class="step1-container">
+          <!-- 步骤 1：模板下载与字段规范说明 -->
+          <div class="import-step-card mb-3">
+            <div class="step-card-header">
+              <span class="step-badge">步骤 1</span>
+              <span class="step-title">下载标准 Excel 导入模板并按规范填写</span>
+            </div>
 
-          <!-- 未上传状态：现代轻盈上传拖拽框 -->
-          <div v-if="!importPreviewList.length" class="upload-zone-wrapper">
-            <el-upload
-              ref="importUploadRef"
-              drag
-              action=""
-              accept=".csv,.xlsx,.xls"
-              :auto-upload="false"
-              :show-file-list="false"
-              :on-change="handleImportFileChange"
-              class="combo-import-uploader"
-            >
-              <div class="upload-inner-content">
-                <div class="upload-icon-circle">
-                  <el-icon><UploadFilled /></el-icon>
+            <div class="template-box">
+              <div class="template-left">
+                <div class="excel-icon-pill">
+                  <span class="excel-ext">XLSX</span>
                 </div>
-                <div class="upload-main-text">
-                  将填写好的 Excel (.xlsx / .xls) 模板文件拖拽到此处，或 <span class="upload-highlight">点击浏览本地文件</span>
-                </div>
-                <div class="upload-sub-tip">
-                  支持标准 .xlsx / .xls / .csv 格式，单次最大支持解析 500 款组合物料
+                <div class="template-meta">
+                  <div class="template-main-title">
+                    组合物料批量导入标准模板
+                    <span class="version-tag">V2.2 规范版</span>
+                  </div>
+                  <div class="template-tags-row">
+                    <span class="meta-tag tag-blue">{{ COMBO_TEMPLATE_COLUMNS.length }} 项标准字段</span>
+                    <span class="meta-tag tag-purple">内置 4 大组合类型范例</span>
+                    <span class="meta-tag tag-teal">双 Sheet 规范字典说明</span>
+                  </div>
                 </div>
               </div>
-            </el-upload>
+
+              <div class="template-actions">
+                <el-button type="primary" class="download-btn" size="small" @click="downloadImportTemplate">
+                  <el-icon class="mr-1"><Download /></el-icon>
+                  下载标准模板 (.xlsx)
+                </el-button>
+                <el-button type="default" size="small" @click="showTemplateSpec = !showTemplateSpec">
+                  <el-icon class="mr-1"><Tickets /></el-icon>
+                  {{ showTemplateSpec ? '收起填写规范' : `查看字段规范 (${COMBO_TEMPLATE_COLUMNS.length} 项)` }}
+                </el-button>
+              </div>
+            </div>
+
+            <!-- 规范要点提醒条 -->
+            <div class="template-notice-bar">
+              <el-icon class="notice-icon"><InfoFilled /></el-icon>
+              <span><b>填写指引：</b>粉红底色且标“*”为必填字段；子物料与单套配比用英文分号 (;) 分隔；严禁删除或调换表头列顺序。</span>
+            </div>
+
+            <!-- 模板填写规范说明卡片 (展开查看) -->
+            <el-collapse-transition>
+              <div v-show="showTemplateSpec" class="template-spec-table-box mt-2.5">
+                <div class="spec-header-row">
+                  <div class="spec-title">
+                    <el-icon class="mr-1 text-primary"><Tickets /></el-icon>
+                    <span>严格按新建页面字段顺序排列的规范清单（共 {{ COMBO_TEMPLATE_COLUMNS.length }} 项）：</span>
+                  </div>
+                  <span class="spec-required-tip">标有 * 号为必填项</span>
+                </div>
+                <div class="spec-table-scroll">
+                  <table class="spec-mini-table">
+                    <thead>
+                      <tr>
+                        <th width="45" align="center">#</th>
+                        <th width="140">字段名称</th>
+                        <th width="85" align="center">必填状态</th>
+                        <th width="130">所属业务模块</th>
+                        <th width="160">示范值</th>
+                        <th>填写规范与说明</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(col, cIdx) in COMBO_TEMPLATE_COLUMNS" :key="col.key">
+                        <td align="center" class="col-index">{{ cIdx + 1 }}</td>
+                        <td class="col-name">
+                          <span :class="{ 'required-name': col.required }">
+                            {{ col.required ? '* ' : '' }}{{ col.label }}
+                          </span>
+                        </td>
+                        <td align="center">
+                          <span class="status-pill" :class="col.required ? 'pill-req' : 'pill-opt'">
+                            {{ col.required ? '必填' : '非必填' }}
+                          </span>
+                        </td>
+                        <td>
+                          <span class="category-pill">{{ col.category }}</span>
+                        </td>
+                        <td><code class="example-code">{{ col.example }}</code></td>
+                        <td class="col-desc">{{ col.desc }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </el-collapse-transition>
           </div>
 
-          <!-- 已解析状态：精简高颜值文件状态条（避免占用大块多余空间） -->
-          <div v-else class="file-parsed-status-card">
-            <div class="file-info-left">
-              <div class="file-icon-box">
-                <el-icon><Document /></el-icon>
-              </div>
-              <div class="file-text-details">
-                <div class="file-name-line">
-                  <span class="file-name">{{ uploadedFileName || '已解析数据文件.xlsx' }}</span>
-                  <span v-if="uploadedFileSize" class="file-size">({{ uploadedFileSize }})</span>
-                  <span class="parse-success-tag">
-                    <el-icon class="mr-0.5"><SuccessFilled /></el-icon> 解析成功
-                  </span>
+          <!-- 步骤 2：上传并解析文件 -->
+          <div class="import-step-card mb-3">
+            <div class="step-card-header">
+              <span class="step-badge">步骤 2</span>
+              <span class="step-title">上传并解析 Excel 模板文件 (上传后将自动进入全量预览核对)</span>
+            </div>
+
+            <!-- 现代轻盈上传拖拽框 -->
+            <div class="upload-zone-wrapper">
+              <el-upload
+                ref="importUploadRef"
+                drag
+                action=""
+                accept=".csv,.xlsx,.xls"
+                :auto-upload="false"
+                :show-file-list="false"
+                :on-change="handleImportFileChange"
+                class="combo-import-uploader"
+              >
+                <div class="upload-inner-content">
+                  <div class="upload-icon-circle">
+                    <el-icon><UploadFilled /></el-icon>
+                  </div>
+                  <div class="upload-main-text">
+                    将填写好的 Excel (.xlsx / .xls) 模板文件拖拽到此处，或 <span class="upload-highlight">点击浏览本地文件</span>
+                  </div>
+                  <div class="upload-sub-tip">
+                    支持标准 .xlsx / .xls / .csv 格式。上传后系统将先在内存中全量预览，核对无误前<b>绝不写入数据库</b>。
+                  </div>
                 </div>
-                <div class="file-stat-line">
-                  共识别到 <b class="text-primary">{{ importPreviewList.length }}</b> 款有效组合物料，包含 <b class="text-slate-800">{{ totalParsedChildCount }}</b> 项 BOM 子部件关联
+              </el-upload>
+            </div>
+          </div>
+        </div>
+
+        <!-- 阶段 2：全量数据校验与预览核对工作台 (未入库) -->
+        <div v-else class="step2-preview-container">
+          <!-- 醒目安全提示横幅 (沙箱核对模式) -->
+          <div class="preview-notice-callout mb-3">
+            <div class="callout-left">
+              <div class="callout-icon-box">
+                <el-icon><WarningFilled /></el-icon>
+              </div>
+              <div class="callout-text-group">
+                <div class="callout-title-row">
+                  <span class="callout-title">【数据核对阶段 · 尚未写入主列表与数据库】</span>
+                  <span class="callout-tag">前端沙箱隔离</span>
+                </div>
+                <div class="callout-desc">
+                  当前解析数据仅暂存在前端内存中，主看板完全不受影响。您可以点击行首箭头展开查看子部件 BOM 明细，也可单条移出不合规数据。确认完全无误后，再点击下方【确认提交入库】。
                 </div>
               </div>
             </div>
-            <div class="file-actions-right">
-              <el-button size="small" @click="handleResetUpload">
-                <el-icon class="mr-1"><Refresh /></el-icon>
+            <div class="callout-right">
+              <div class="sandbox-ready-pill">
+                <span class="live-dot"></span>
+                <span>内存解析完成 (共 {{ importPreviewList.length }} 款待核)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 核对工作台控制栏 -->
+          <div class="preview-toolbar-card mb-2.5">
+            <div class="toolbar-left">
+              <div class="metric-group-item">
+                <span class="metric-icon blue"><el-icon><Box /></el-icon></span>
+                <span class="metric-title">待入库款式</span>
+                <span class="metric-num blue">{{ importPreviewList.length }}</span>
+                <span class="metric-unit">款</span>
+              </div>
+
+              <div class="toolbar-v-sep"></div>
+
+              <div class="metric-group-item">
+                <span class="metric-icon indigo"><el-icon><Connection /></el-icon></span>
+                <span class="metric-title">BOM 子部件</span>
+                <span class="metric-num indigo">{{ totalParsedChildCount }}</span>
+                <span class="metric-unit">项</span>
+              </div>
+
+              <div class="toolbar-v-sep"></div>
+
+              <div class="metric-status-item">
+                <span class="status-label">入库业务状态：</span>
+                <el-radio-group v-model="importTargetStatus" size="small" class="preview-status-radios">
+                  <el-radio-button value="待提交">
+                    暂存草稿 (待提交)
+                  </el-radio-button>
+                  <el-radio-button value="待审核">
+                    直接提交审批流 (待审核)
+                  </el-radio-button>
+                </el-radio-group>
+              </div>
+            </div>
+
+            <div class="toolbar-right">
+              <el-input 
+                v-model="previewSearchKeyword" 
+                placeholder="在预览中搜索品名/编码/子件..." 
+                prefix-icon="Search" 
+                size="small" 
+                clearable 
+                style="width: 230px;" 
+              />
+              <el-button size="small" @click="handleBackToUpload">
+                <el-icon class="mr-1"><RefreshLeft /></el-icon>
                 重新选择文件
               </el-button>
             </div>
           </div>
-        </div>
 
-        <!-- 步骤 3：数据核对与目标单据状态 -->
-        <div v-if="importPreviewList.length" class="import-step-card">
-          <div class="step-card-header justify-between">
-            <div class="flex items-center gap-2">
-              <span class="step-badge">步骤 3</span>
-              <span class="step-title">核对物料数据并配置单据业务状态</span>
-            </div>
-            <div class="status-selector-row">
-              <span class="selector-label">导入后单据状态：</span>
-              <el-radio-group v-model="importTargetStatus" size="small">
-                <el-radio-button value="待提交">
-                  暂存草稿 (待提交)
-                </el-radio-button>
-                <el-radio-button value="待审核">
-                  直接提交审核 (待审核)
-                </el-radio-button>
-              </el-radio-group>
-            </div>
-          </div>
+          <!-- 全量可展开预览数据表格 -->
+          <div class="full-preview-table-box">
+            <el-table 
+              :data="filteredPreviewList" 
+              border 
+              size="small" 
+              stripe
+              max-height="460" 
+              style="width: 100%"
+              class="full-preview-table"
+            >
+              <!-- 序号与展开 -->
+              <el-table-column type="expand" width="40" fixed="left">
+                <template #default="{ row }">
+                  <div class="expanded-bom-box">
+                    <div class="bom-box-header">
+                      <el-icon class="text-primary mr-1"><Box /></el-icon>
+                      <span class="font-bold text-slate-800">【{{ row.productName }}】BOM 子物料构成明细清单 (共 {{ (row.children || []).length }} 个部件)：</span>
+                      <span class="text-xs text-slate-400 ml-2">海外仓备货齐套依据</span>
+                    </div>
+                    <el-table :data="row.children || []" border size="small" stripe class="bom-sub-table mt-1.5">
+                      <el-table-column type="index" label="#" width="40" align="center" />
+                      <el-table-column label="子物料编码" prop="childCode" width="130">
+                        <template #default="scope">
+                          <span class="code-chip">{{ scope.row.childCode }}</span>
+                        </template>
+                      </el-table-column>
+                      <el-table-column label="单套配比" prop="ratio" width="85" align="center">
+                        <template #default="scope">
+                          <span class="ratio-chip">1 : {{ scope.row.ratio }}</span>
+                        </template>
+                      </el-table-column>
+                      <el-table-column label="产品名称" prop="childProductName" min-width="150" show-overflow-tooltip>
+                        <template #default="scope">
+                          <span class="font-medium text-slate-800">{{ scope.row.childProductName || scope.row.productName || row.productName }}</span>
+                        </template>
+                      </el-table-column>
+                      <el-table-column label="款式" prop="childStyle" width="95" show-overflow-tooltip>
+                        <template #default="scope">
+                          <span>{{ scope.row.childStyle || scope.row.style || row.style || '-' }}</span>
+                        </template>
+                      </el-table-column>
+                      <el-table-column label="主材料" prop="childMaterial" width="110" show-overflow-tooltip>
+                        <template #default="scope">
+                          <span>{{ scope.row.childMaterial || scope.row.material || row.material || '-' }}</span>
+                        </template>
+                      </el-table-column>
+                      <el-table-column label="适用品牌或机型" prop="applicableBrandOrModel" width="125" show-overflow-tooltip>
+                        <template #default="scope">
+                          <span class="text-xs text-slate-600">{{ scope.row.applicableBrandOrModel || scope.row.targetBrandOrAudience || scope.row.applicableModel || row.targetBrandOrAudience || '通用' }}</span>
+                        </template>
+                      </el-table-column>
+                      <el-table-column label="型号" prop="childModel" width="95" show-overflow-tooltip>
+                        <template #default="scope">
+                          <span class="font-mono text-xs">{{ scope.row.childModel || scope.row.model || row.model || '-' }}</span>
+                        </template>
+                      </el-table-column>
+                      <el-table-column label="公司品牌" prop="childBrand" width="90" align="center">
+                        <template #default="scope">
+                          <el-tag size="small" effect="plain" type="info">{{ scope.row.childBrand || scope.row.brand || row.brand || '中性' }}</el-tag>
+                        </template>
+                      </el-table-column>
+                      <el-table-column label="包装数量" prop="childPackQty" width="85" align="center">
+                        <template #default="scope">
+                          <span class="font-mono text-slate-600">{{ scope.row.childPackQty || scope.row.packQty || row.packQty || '1pack' }}</span>
+                        </template>
+                      </el-table-column>
+                      <el-table-column label="颜色" prop="childColor" width="85" align="center">
+                        <template #default="scope">
+                          <el-tag v-if="scope.row.childColor || scope.row.color || row.color" size="small" effect="plain" type="success">
+                            {{ scope.row.childColor || scope.row.color || row.color }}
+                          </el-tag>
+                          <span v-else class="text-slate-400">-</span>
+                        </template>
+                      </el-table-column>
+                    </el-table>
+                  </div>
+                </template>
+              </el-table-column>
 
-          <div class="preview-table-container">
-            <el-table :data="importPreviewList.slice(0, 5)" border size="small" class="styled-preview-table">
-              <el-table-column type="index" label="#" width="45" align="center" />
-              <el-table-column label="组合品名" prop="productName" min-width="160" show-overflow-tooltip>
-                <template #default="{ row }">
-                  <div class="preview-name-cell">
-                    <span class="name-text">{{ row.productName }}</span>
-                    <span v-if="row.style" class="sub-style">{{ row.style }} / {{ row.material || '标准材质' }}</span>
+              <el-table-column type="index" label="#" width="45" align="center" fixed="left" />
+
+              <!-- 分组 1：BOM清单与组合关系 (核心) -->
+              <el-table-column>
+                <template #header>
+                  <div class="group-header-pill group-header-purple">
+                    <el-icon class="mr-1"><Box /></el-icon>
+                    <span>1. BOM清单与组合关系</span>
                   </div>
                 </template>
+                <el-table-column label="子物料编码" min-width="170">
+                  <template #default="{ row }">
+                    <div class="code-chips-wrap">
+                      <span 
+                        v-for="(code, cIdx) in (row.childCodes ? row.childCodes.split(';') : (row.children || []).map((c: any) => c.childCode))" 
+                        :key="cIdx" 
+                        class="code-chip"
+                      >
+                        {{ String(code).trim() }}
+                      </span>
+                    </div>
+                  </template>
+                </el-table-column>
+                <el-table-column label="单套配比" width="95" align="center">
+                  <template #default="{ row }">
+                    <div class="ratio-chips-wrap">
+                      <span 
+                        v-for="(r, rIdx) in (row.ratios ? String(row.ratios).split(';') : (row.children || []).map((c: any) => c.ratio))" 
+                        :key="rIdx" 
+                        class="ratio-chip"
+                      >
+                        {{ String(r).trim() }}
+                      </span>
+                    </div>
+                  </template>
+                </el-table-column>
+                <el-table-column label="组合类型" width="105" align="center">
+                  <template #default="{ row }">
+                    <span class="type-badge" :class="getComboTypeBadgeClass(row.comboType)">{{ row.comboType }}</span>
+                  </template>
+                </el-table-column>
               </el-table-column>
-              <el-table-column label="运营大类" prop="category" width="115" show-overflow-tooltip />
-              <el-table-column label="组合类型" prop="comboType" width="105" align="center">
-                <template #default="{ row }">
-                  <span class="type-badge" :class="getComboTypeBadgeClass(row.comboType)">{{ row.comboType }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column label="BOM 配比清单" min-width="190" show-overflow-tooltip>
-                <template #default="{ row }">
-                  <div class="bom-tags-cell">
-                    <span 
-                      v-for="(c, cIdx) in (row.children || [])" 
-                      :key="cIdx" 
-                      class="bom-item-tag"
-                    >
-                      {{ c.childCode }}<em class="ratio">×{{ c.ratio }}</em>
-                    </span>
+
+              <!-- 分组 2：同款属性 -->
+              <el-table-column>
+                <template #header>
+                  <div class="group-header-pill group-header-sky">
+                    <el-icon class="mr-1"><Tickets /></el-icon>
+                    <span>2. 同款属性</span>
                   </div>
                 </template>
+                <el-table-column label="销售平台" width="95" align="center">
+                  <template #default="{ row }">
+                    <el-tag size="small" effect="plain" class="font-medium">{{ row.salesPlatform || 'Amazon' }}</el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="运营大类" prop="category" width="120" show-overflow-tooltip />
+                <el-table-column label="产品名称" prop="productName" min-width="170" show-overflow-tooltip>
+                  <template #default="{ row }">
+                    <span class="font-bold text-slate-800">{{ row.productName }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="款式" prop="style" width="100" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.style || '-' }}</template>
+                </el-table-column>
+                <el-table-column label="主材料" prop="material" width="120" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.material || '-' }}</template>
+                </el-table-column>
+                <el-table-column label="适用品牌或对象" prop="targetBrandOrAudience" width="120" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.targetBrandOrAudience || '-' }}</template>
+                </el-table-column>
+                <el-table-column label="型号" prop="model" width="100" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.model || '-' }}</template>
+                </el-table-column>
               </el-table-column>
-              <el-table-column label="协同负责人" width="160" show-overflow-tooltip>
-                <template #default="{ row }">
-                  <div class="personnel-cell">
-                    <div class="p-line"><span class="k">产品:</span> {{ row.productManager || '未填' }}</div>
-                    <div class="p-line text-gray-500"><span class="k">采购:</span> {{ row.purchaser || '未填' }} ｜ <span class="k">运营:</span> {{ row.operator || '未填' }}</div>
+
+              <!-- 分组 3：关键属性 -->
+              <el-table-column>
+                <template #header>
+                  <div class="group-header-pill group-header-indigo">
+                    <el-icon class="mr-1"><Key /></el-icon>
+                    <span>3. 关键属性</span>
                   </div>
                 </template>
+                <el-table-column label="公司品牌" prop="brand" width="95" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.brand || '中性' }}</template>
+                </el-table-column>
+                <el-table-column label="图案" prop="pattern" width="85" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.pattern || '-' }}</template>
+                </el-table-column>
+                <el-table-column label="颜色" prop="color" width="85" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.color || '-' }}</template>
+                </el-table-column>
+                <el-table-column label="尺码" prop="size" width="85" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.size || '-' }}</template>
+                </el-table-column>
+                <el-table-column label="包装数量" prop="packQty" width="90" align="center">
+                  <template #default="{ row }">
+                    <span class="font-mono text-xs">{{ row.packQty || '1pack' }}</span>
+                  </template>
+                </el-table-column>
               </el-table-column>
-              <el-table-column label="一般属性" width="130" align="center">
-                <template #default="{ row }">
-                  <div class="flex flex-wrap gap-1 justify-center">
-                    <el-tag size="small" effect="plain" :type="row.hasBattery === '是' ? 'warning' : 'info'">
-                      {{ row.hasBattery === '是' ? '带电' : '普货' }}
+
+              <!-- 分组 4：业务协同负责人 -->
+              <el-table-column>
+                <template #header>
+                  <div class="group-header-pill group-header-orange">
+                    <el-icon class="mr-1"><User /></el-icon>
+                    <span>4. 业务协同负责人</span>
+                  </div>
+                </template>
+                <el-table-column label="产品经理" prop="productManager" width="115" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.productManager || '-' }}</template>
+                </el-table-column>
+                <el-table-column label="采购人员" prop="purchaser" width="115" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.purchaser || '-' }}</template>
+                </el-table-column>
+                <el-table-column label="运营人员" prop="operator" width="115" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.operator || '-' }}</template>
+                </el-table-column>
+                <el-table-column label="产品线负责人" width="115" align="center">
+                  <template #default="{ row }">
+                    <el-tag size="small" type="success" effect="plain" class="leader-tag">
+                      <el-icon class="mr-0.5"><User /></el-icon>{{ resolveLeaderName(row.productLineLeader) }}
                     </el-tag>
-                    <el-tag v-if="row.isCeCategory === '是'" size="small" type="success" effect="plain">
-                      CE认证
-                    </el-tag>
-                    <el-tag v-if="row.seasonTag && row.seasonTag !== '四季通用'" size="small" type="primary" effect="plain">
-                      {{ row.seasonTag }}
-                    </el-tag>
+                  </template>
+                </el-table-column>
+              </el-table-column>
+
+              <!-- 分组 5：一般属性与标签规范 -->
+              <el-table-column>
+                <template #header>
+                  <div class="group-header-pill group-header-slate">
+                    <el-icon class="mr-1"><Document /></el-icon>
+                    <span>5. 一般属性与标签规范</span>
                   </div>
+                </template>
+                <el-table-column label="节日标签" prop="holidayTag" width="95" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.holidayTag || '-' }}</template>
+                </el-table-column>
+                <el-table-column label="季节标签" prop="seasonTag" width="95" align="center">
+                  <template #default="{ row }">
+                    <el-tag v-if="row.seasonTag && row.seasonTag !== '四季通用'" size="small" type="primary" effect="plain">{{ row.seasonTag }}</el-tag>
+                    <span v-else class="text-xs text-slate-400">四季通用</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="是否CE类" prop="isCeCategory" width="85" align="center">
+                  <template #default="{ row }">
+                    <el-tag size="small" :type="row.isCeCategory === '是' ? 'success' : 'info'" effect="plain">{{ row.isCeCategory || '否' }}</el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="是否带电" prop="hasBattery" width="85" align="center">
+                  <template #default="{ row }">
+                    <el-tag size="small" :type="row.hasBattery === '是' ? 'warning' : 'info'" effect="plain">{{ row.hasBattery || '否' }}</el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="适用机型" prop="applicableModel" width="110" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.applicableModel || '-' }}</template>
+                </el-table-column>
+                <el-table-column label="材质明细" prop="materialDetail" width="130" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.materialDetail || '-' }}</template>
+                </el-table-column>
+                <el-table-column label="色号" prop="colorCode" width="95" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.colorCode || '-' }}</template>
+                </el-table-column>
+                <el-table-column label="规格" prop="spec" width="95" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.spec || '-' }}</template>
+                </el-table-column>
+                <el-table-column label="规格型号" prop="specModelDesc" width="120" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.specModelDesc || '-' }}</template>
+                </el-table-column>
+                <el-table-column label="入库标签短描述" prop="warehouseLabelDesc" min-width="130" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.warehouseLabelDesc || '-' }}</template>
+                </el-table-column>
+              </el-table-column>
+
+              <!-- 固定操作列 -->
+              <el-table-column label="操作" width="70" align="center" fixed="right">
+                <template #default="scope">
+                  <el-button 
+                    link 
+                    type="danger" 
+                    size="small" 
+                    icon="Delete" 
+                    @click="handleRemovePreviewItem(scope.$index)"
+                  >
+                    移出
+                  </el-button>
                 </template>
               </el-table-column>
             </el-table>
-
-            <div class="preview-footer-notice">
-              <span>当前展示前 5 条样本预览，确认导入后将完整入库共 <b>{{ importPreviewList.length }}</b> 款组合物料。</span>
-            </div>
           </div>
         </div>
       </div>
@@ -2361,162 +3297,33 @@
       <template #footer>
         <div class="import-dialog-footer">
           <div class="footer-left-tip">
-            <el-icon class="mr-1 text-primary"><InfoFilled /></el-icon>
-            <span>提示：导入完成后数据将实时持久化至看板；若选择【待审核】将自动推送产品线负责人待办。</span>
+            <template v-if="importActiveStep === 1">
+              <el-icon class="mr-1 text-primary"><InfoFilled /></el-icon>
+              <span>提示：上传 Excel 模板后将自动进入全量预览核对，预览无误前不会写入数据库。</span>
+            </template>
+            <template v-else>
+              <div class="preview-footer-status-pill">
+                <el-icon class="text-primary mr-1.5"><InfoFilled /></el-icon>
+                <span class="pill-main">全量待核对：共 <b>{{ filteredPreviewList.length }}</b> 款组合物料（<b>{{ totalParsedChildCount }}</b> 项 BOM 子件）</span>
+                <span class="pill-dot">·</span>
+                <span class="pill-sub">支持点击行首箭头展开明细 · 确认提交前绝不改动主库</span>
+              </div>
+            </template>
           </div>
           <div class="footer-right-actions">
-            <el-button @click="importDialogVisible = false">取消</el-button>
+            <el-button @click="importDialogVisible = false">
+              {{ importActiveStep === 2 ? '放弃并关闭' : '取消' }}
+            </el-button>
             <el-button 
+              v-if="importActiveStep === 2"
               type="primary" 
               class="confirm-import-btn"
               :disabled="!importPreviewList.length" 
               :loading="importLoading"
               @click="handleConfirmImport"
             >
-              确认批量导入 ({{ importPreviewList.length }} 款)
-            </el-button>
-          </div>
-        </div>
-      </template>
-    </el-dialog>
-
-    <!-- 8.1 批量导入结果详细报告面板 -->
-    <el-dialog
-      v-model="importResultDialogVisible"
-      title="批量导入执行报告"
-      width="880px"
-      destroy-on-close
-      class="import-result-dialog"
-      :close-on-click-modal="false"
-    >
-      <!-- 结果横幅头部 -->
-      <div class="result-header-banner">
-        <div class="result-badge-icon">
-          <el-icon><CircleCheckFilled /></el-icon>
-        </div>
-        <div class="result-header-text">
-          <div class="result-header-title">
-            恭喜！批量导入组合物料已完成入库
-          </div>
-          <div class="result-header-desc">
-            本次共解析并录入 <b>{{ importedBatchResult?.count || 0 }}</b> 款组合物料，已生成 <b>{{ importedBatchResult?.childCount || 0 }}</b> 个 BOM 子物料配比项。数据已实时持久化至系统看板！
-          </div>
-        </div>
-        <div class="result-header-status">
-          <el-tag :type="importedBatchResult?.status === '待审核' ? 'warning' : 'info'" size="large" effect="dark" class="status-pill">
-            {{ importedBatchResult?.status === '待审核' ? '流转审批中 (待审核)' : '暂存草稿 (待提交)' }}
-          </el-tag>
-        </div>
-      </div>
-
-      <!-- 核心指标统计卡片 -->
-      <div class="result-metric-grid">
-        <div class="metric-card">
-          <div class="metric-label">导入组合款式</div>
-          <div class="metric-val text-primary">{{ importedBatchResult?.count || 0 }} <span class="unit">款</span></div>
-          <div class="metric-tip">主组合物料已创建</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-label">包含 BOM 子部件</div>
-          <div class="metric-val text-indigo">{{ importedBatchResult?.childCount || 0 }} <span class="unit">个</span></div>
-          <div class="metric-tip">子物料与单套配比</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-label">初始业务状态</div>
-          <div class="metric-val" :class="importedBatchResult?.status === '待审核' ? 'text-warning' : 'text-slate'">
-            {{ importedBatchResult?.status || '待提交' }}
-          </div>
-          <div class="metric-tip">{{ importedBatchResult?.status === '待审核' ? '已自动推送负责人待办' : '可继续编辑并提交' }}</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-label">协同审核负责人</div>
-          <div class="metric-val text-emerald">{{ importedBatchResult?.leaderName || '夏忠保' }}</div>
-          <div class="metric-tip">根据运营大类智能分配</div>
-        </div>
-      </div>
-
-      <!-- 导入明细表格清单 -->
-      <div class="result-table-box">
-        <div class="box-title flex items-center justify-between mb-2">
-          <span class="font-bold text-slate-700 flex items-center gap-1.5">
-            <el-icon class="text-primary"><List /></el-icon> 本次成功入库组合物料清单
-          </span>
-          <span class="text-xs text-slate-400">已在列表中置顶并以淡绿色行高亮标识</span>
-        </div>
-        <el-table :data="importedBatchResult?.items || []" border size="small" max-height="290" stripe>
-          <el-table-column type="index" label="#" width="45" align="center" />
-          <el-table-column label="物料/流程单号" min-width="160">
-            <template #default="{ row }">
-              <span class="font-mono font-bold text-slate-700">{{ row.parentCode }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="产品名称" prop="productName" min-width="160" show-overflow-tooltip />
-          <el-table-column label="运营大类" prop="category" width="115" show-overflow-tooltip />
-          <el-table-column label="组合类型" prop="comboType" width="100">
-            <template #default="{ row }">
-              <el-tag size="small" effect="plain">{{ row.comboType }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="BOM子项" width="95" align="center">
-            <template #default="{ row }">
-              <span class="text-xs text-blue-600 font-semibold">{{ row.children?.length || 0 }} 个部件</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="产品线负责人" width="115" align="center">
-            <template #default="{ row }">
-              <el-tag size="small" type="success" effect="plain">{{ row.productLineLeader || '夏忠保' }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="110" align="center" fixed="right">
-            <template #default="{ row }">
-              <el-button 
-                v-if="row.auditStatus === '待审核'" 
-                link 
-                type="primary" 
-                size="small" 
-                icon="View" 
-                @click="handleViewWorkflowFromResult(row)"
-              >
-                查看流程
-              </el-button>
-              <el-button 
-                v-else 
-                link 
-                type="primary" 
-                size="small" 
-                icon="Edit" 
-                @click="handleEditFromResult(row)"
-              >
-                编辑草稿
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-
-      <template #footer>
-        <div class="result-dialog-footer">
-          <div class="footer-left-tip text-xs text-slate-500 flex items-center">
-            <el-icon class="mr-1 text-success"><CircleCheck /></el-icon>
-            数据已同步至主表格首屏置顶，并以淡绿高亮标注
-          </div>
-          <div class="footer-right-buttons flex items-center gap-2">
-            <el-button 
-              v-if="importedBatchResult?.status === '待审核'" 
-              type="warning" 
-              plain 
-              icon="Compass" 
-              @click="handleViewFirstWorkflowFromResult"
-            >
-              查看首条审批流程
-            </el-button>
-            <el-button 
-              type="primary" 
-              icon="Check" 
-              class="complete-btn"
-              @click="handleCompleteAndHighlight"
-            >
-              在列表中高亮查看 (置顶显示)
+              <el-icon class="mr-1"><Check /></el-icon>
+              确认无误，提交入库 (共 {{ importPreviewList.length }} 款)
             </el-button>
           </div>
         </div>
@@ -2706,9 +3513,10 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import {
   generateStyledComboTemplateExcel,
+  exportComboListToExcel,
   parseComboExcelFile,
   COMBO_TEMPLATE_COLUMNS
 } from '@/utils/combo-excel-template'
@@ -2762,6 +3570,56 @@ const mainTableRef = ref<any>(null)
 const isAllExpanded = ref(false)
 const currentSubmitter = ref('当前登录人 (产品开发部)')
 
+// 当前登录用户与审批权限体系
+export interface CurrentUserInfo {
+  name: string
+  role: 'admin' | 'line_leader'
+  roleName: string
+}
+
+const userOptions: CurrentUserInfo[] = [
+  { name: '夏忠保', role: 'line_leader', roleName: '软包床负责人' },
+  { name: '李丹', role: 'line_leader', roleName: '厨房电器负责人' },
+  { name: '王美艳', role: 'line_leader', roleName: 'Wayfair负责人' },
+  { name: '系统管理员', role: 'admin', roleName: '超级管理员 (可审全量)' }
+]
+
+const currentUser = ref<CurrentUserInfo>(
+  (() => {
+    try {
+      const saved = localStorage.getItem('COMBO_CURRENT_LOGIN_USER')
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return userOptions[0]
+  })()
+)
+
+const handleSwitchUser = (u: CurrentUserInfo) => {
+  currentUser.value = u
+  localStorage.setItem('COMBO_CURRENT_LOGIN_USER', JSON.stringify(u))
+  ElMessage.success(`已切换当前登录身份：${u.name}（${u.roleName}）`)
+}
+
+// 负责人解析辅助方法：保证负责人始终为姓名字符串，兼容历史对象/JSON格式
+const resolveLeaderName = (val: any): string => {
+  if (!val) return '夏忠保'
+  if (typeof val === 'string') {
+    if (val.trim().startsWith('{')) {
+      try {
+        const obj = JSON.parse(val)
+        return obj.leader || '夏忠保'
+      } catch {
+        return val
+      }
+    }
+    return val
+  }
+  if (typeof val === 'object' && val !== null) {
+    return val.leader || val.productLineLeader || '夏忠保'
+  }
+  return String(val)
+}
+
 // 筛选表单
 const filterForm = reactive({
   parentCode: '',
@@ -2792,6 +3650,66 @@ const auditDecision = ref<'pass' | 'reject' | 'disapprove'>('pass')
 const auditRemark = ref('')
 const auditSubmitting = ref(false)
 
+// 批量审核状态
+const batchAuditModalVisible = ref(false)
+const batchAuditTargetList = ref<any[]>([])
+const batchAuditSkippedCount = ref(0)
+const batchAuditSkippedLeaderCount = ref(0)
+const batchAuditDecision = ref<'pass' | 'reject' | 'disapprove'>('pass')
+const batchAuditRemark = ref('')
+const batchAuditSubmitting = ref(false)
+
+const applyAuditPreset = (phrase: string) => {
+  batchAuditRemark.value = phrase
+}
+
+const batchAuditPresets = computed(() => {
+  if (batchAuditDecision.value === 'pass') {
+    return [
+      '全部核对无误，准予生效备货',
+      'BOM齐套完整，配比符合规范',
+      '款式与品类规划一致，通过'
+    ]
+  } else if (batchAuditDecision.value === 'reject') {
+    return [
+      'BOM单套配比有误，请核实后重提',
+      '子部件品名或款式描述不完整',
+      '包装规格与箱数需进一步核查'
+    ]
+  } else {
+    return [
+      '不符合当前运营大类规划，不予通过',
+      '材质参数未达标，终止审批'
+    ]
+  }
+})
+
+// 单个审核快捷短语
+const applySingleAuditPreset = (phrase: string) => {
+  auditRemark.value = phrase
+}
+
+const singleAuditPresets = computed(() => {
+  if (auditDecision.value === 'pass') {
+    return [
+      '全部核对无误，准予生效备货',
+      'BOM齐套完整，配比符合规范',
+      '款式与品类规划一致，通过'
+    ]
+  } else if (auditDecision.value === 'reject') {
+    return [
+      'BOM单套配比有误，请核实后重提',
+      '子部件品名或款式描述不完整',
+      '包装规格与箱数需进一步核查'
+    ]
+  } else {
+    return [
+      '不符合当前运营大类规划，不予通过',
+      '材质参数未达标，终止审批'
+    ]
+  }
+})
+
 // 判断是否允许编辑：待提交、草稿、已驳回
 const canEditRow = (row: any) => {
   const status = row.auditStatus || (row.status === '待审核' ? '待审核' : (row.status === '已启用' ? '审核通过' : '待提交'))
@@ -2819,8 +3737,22 @@ const isRowNonDeletable = (row: any) => {
   return status === '审核通过' || status === '已启用' || status === '已生效' || status === '已绑定' && (!row.auditStatus || row.auditStatus === '已启用') || status === '审核不通过'
 }
 
-// 打开审核操作弹窗
+// 打开审核操作弹窗 (权限校验：仅审批责任人与系统管理员可审核)
 const handleOpenAuditModal = (row: any) => {
+  const isAdmin = currentUser.value.role === 'admin'
+  const leader = resolveLeaderName(row.productLineLeader)
+  if (!isAdmin && leader !== currentUser.value.name) {
+    ElMessageBox.alert(
+      `组合物料【<b>${row.productName}</b>】的审批责任人为 <b class="text-primary">${leader}</b>。<br/><br/>` +
+      `您当前的登录身份为：<b>${currentUser.value.name}</b>（${currentUser.value.roleName}）。<br/><br/>` +
+      `<span class="text-amber-600 font-medium">权限限制：</span>审批人非当前登录人的单据不可操作；产品线负责人仅可审批本人负责的物料。<br/>` +
+      `<span class="text-slate-500 text-xs">提示：系统管理员具备全量跨责任人审批权限，可切换为【系统管理员】身份操作。</span>`,
+      '无审批权限',
+      { dangerouslyUseHTMLString: true, type: 'warning' }
+    )
+    return
+  }
+
   activeAuditRow.value = row
   auditDecision.value = 'pass'
   auditRemark.value = ''
@@ -3461,12 +4393,6 @@ const handleFilterPendingAudit = () => {
 const filteredTableData = computed(() => {
   let list = comboList.value
 
-  // 若开启了【仅看本次导入】
-  if (isFilteringOnlyImported.value && newlyImportedCodes.value.length > 0) {
-    const newlySet = new Set(newlyImportedCodes.value)
-    list = list.filter(item => newlySet.has(item.parentCode))
-  }
-
   if (filterForm.parentCode) {
     const k = filterForm.parentCode.trim().toLowerCase()
     list = list.filter(item => item.parentCode.toLowerCase().includes(k))
@@ -3516,22 +4442,11 @@ const filteredTableData = computed(() => {
     }
   }
 
-  // 若有本次新导入的数据，自动置顶在最上方
-  if (newlyImportedCodes.value.length > 0) {
-    const newlySet = new Set(newlyImportedCodes.value)
-    list = [...list].sort((a, b) => {
-      const aIsNew = newlySet.has(a.parentCode) ? 1 : 0
-      const bIsNew = newlySet.has(b.parentCode) ? 1 : 0
-      return bIsNew - aIsNew
-    })
-  }
-
   return list
 })
 
 const pagedTableData = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
-  const newlySet = new Set(newlyImportedCodes.value)
   return filteredTableData.value.slice(start, start + pageSize.value).map(item => ({
     ...item,
     salesPlatform: item.salesPlatform || 'Amazon',
@@ -3539,18 +4454,12 @@ const pagedTableData = computed(() => {
     brand: item.brand || '中性',
     auditRemark: (item as any).auditRemark || '',
     packQty: item.packQty || (item.boundChildren?.length ? `${item.boundChildren.length}pack` : (item.children?.length ? `${item.children.length}pack` : '1pack')),
-    children: item.boundChildren || item.children || [],
-    isNewlyImported: newlySet.has(item.parentCode)
+    children: item.boundChildren || item.children || []
   }))
 })
 
-// 表格行动态高亮样式类名
-const getTableRowClassName = ({ row }: { row: any }) => {
-  if (newlyImportedCodes.value.includes(row.parentCode)) {
-    return 'row-newly-imported'
-  }
-  return ''
-}
+// 表格行动态样式类名
+const getTableRowClassName = () => ''
 
 const comboTypeGuideList = computed(() => {
   return [
@@ -3644,6 +4553,9 @@ const loadData = async () => {
           st = '审核不通过'
           wfNo = 'WF-MAT-20260920002'
           remark = '材质参数未达标，不符合上架规范'
+        } else if (index === 4) {
+          st = '待审核'
+          wfNo = 'WF-MAT-20260922002'
         }
         return {
           parentCode: item.parentCode,
@@ -3660,7 +4572,7 @@ const loadData = async () => {
           auditStatus: st,
           auditRemark: remark,
           workflowNo: wfNo,
-          productLineLeader: '夏忠保',
+          productLineLeader: index === 4 ? '李丹' : '夏忠保',
           updateTime: new Date().toLocaleString(),
           boundChildren: item.children
         }
@@ -3670,6 +4582,15 @@ const loadData = async () => {
     } else {
       let modified = false
       dataList.forEach((item: any, idx: number) => {
+        // 清洗负责人字段，防止历史数据或导入数据残留 JSON 字符串/对象
+        if (item.productLineLeader) {
+          const cleanLeader = resolveLeaderName(item.productLineLeader)
+          if (cleanLeader !== item.productLineLeader) {
+            item.productLineLeader = cleanLeader
+            modified = true
+          }
+        }
+
         if (item.auditStatus === '草稿') {
           item.auditStatus = '待提交'
           modified = true
@@ -3679,11 +4600,13 @@ const loadData = async () => {
           item.status = '已生效'
           modified = true
         }
-        if (idx === 0 && !dataList.some((x: any) => x.auditStatus === '待审核')) {
-          item.auditStatus = '待审核'
-          item.productLineLeader = '夏忠保'
-          item.workflowNo = 'WF-MAT-20260922001'
-          modified = true
+        if (idx === 0) {
+          if (item.auditStatus !== '待审核' || item.productLineLeader !== '夏忠保') {
+            item.auditStatus = '待审核'
+            item.productLineLeader = '夏忠保'
+            item.workflowNo = item.workflowNo || 'WF-MAT-20260922001'
+            modified = true
+          }
         } else if (idx === 1 && !dataList.some((x: any) => x.auditStatus === '待提交')) {
           item.auditStatus = '待提交'
           modified = true
@@ -3696,6 +4619,13 @@ const loadData = async () => {
           item.auditStatus = '审核不通过'
           item.auditRemark = '不符合品类规划与上架规范，审核不予通过'
           modified = true
+        } else if (idx === 4) {
+          if (item.auditStatus !== '待审核' || item.productLineLeader !== '李丹') {
+            item.auditStatus = '待审核'
+            item.productLineLeader = '李丹'
+            item.workflowNo = item.workflowNo || 'WF-MAT-20260922002'
+            modified = true
+          }
         }
       })
       if (modified) {
@@ -4299,6 +5229,236 @@ const handleDelete = async (row: any) => {
   }
 }
 
+// 单条提交审核
+const handleSingleSubmit = async (row: any) => {
+  const confirm = await ElMessageBox.confirm(
+    `确定要将组合物料【<b>${row.productName}</b>】提交审核吗？<br/>` +
+    `<span class="text-slate-500 text-xs">提交后单据将自动流转至产品线负责人待办审核队列。</span>`,
+    '提交审核确认',
+    { dangerouslyUseHTMLString: true, confirmButtonText: '提交审核', cancelButtonText: '取消', type: 'info' }
+  ).catch(() => false)
+
+  if (!confirm) return
+
+  try {
+    const currentList = await dbFetchMaterialBindings()
+    const idx = currentList.findIndex(i => (row.id && i.id === row.id) || i.parentCode === row.parentCode)
+    if (idx > -1) {
+      const item = currentList[idx]
+      const uniqueSuffix = Date.now().toString().slice(-6) + Math.random().toString(36).substring(2, 5).toUpperCase()
+      const wfNo = (item as any).workflowNo || ('WF-MAT-' + uniqueSuffix)
+      const leaderRes = lookupProductLineLeader(item.category, item.salesPlatform)
+      const cleanLeaderName = (leaderRes && typeof leaderRes === 'object') ? leaderRes.leader : (resolveLeaderName((item as any).productLineLeader) || '夏忠保')
+
+      ;(item as any).workflowNo = wfNo
+      if (!item.parentCode || item.parentCode.startsWith('DRAFT-')) {
+        item.parentCode = wfNo
+        item.sku = wfNo
+      }
+      ;(item as any).auditStatus = '待审核'
+      ;(item as any).status = '待审核'
+      ;(item as any).auditRemark = ''
+      ;(item as any).productLineLeader = cleanLeaderName
+      item.updateTime = new Date().toLocaleString()
+
+      localStorage.setItem('SKU_KANBAN_BINDINGS_V2', JSON.stringify(currentList))
+      ElMessage.success(`组合物料【${row.productName}】已成功提交审核！审批单号：${wfNo}`)
+      await loadData()
+    }
+  } catch (err: any) {
+    ElMessage.error('提交失败: ' + err.message)
+  }
+}
+
+// 批量提交审核
+const handleBatchSubmit = async () => {
+  if (!selectedRows.value.length) {
+    ElMessage.warning('请先勾选需要提交审核的组合物料！')
+    return
+  }
+
+  // 筛选出待提交或已驳回的单据
+  const submittableList = selectedRows.value.filter(r => {
+    const st = r.auditStatus || r.status
+    return st === '待提交' || st === '草稿' || st === '已驳回'
+  })
+
+  if (submittableList.length === 0) {
+    ElMessageBox.alert(
+      `选中的 ${selectedRows.value.length} 款组合物料中，没有处于【待提交】或【已驳回】状态的单据。<br/><br/>` +
+      `<span class="text-slate-600 text-xs">说明：处于【待审核】状态的单据已在审批流中；处于【审核通过】或【审核不通过】的单据流程已办结。</span>`,
+      '无待提交单据',
+      { dangerouslyUseHTMLString: true, type: 'warning' }
+    )
+    return
+  }
+
+  const skippedCount = selectedRows.value.length - submittableList.length
+  const confirm = await ElMessageBox.confirm(
+    `确定要将选中的 <b class="text-primary">${submittableList.length}</b> 款组合物料批量提交审核吗？<br/>` +
+    (skippedCount > 0 ? `<span class="text-gray-400 text-xs">（已自动跳过 ${skippedCount} 款处于审核中或已办结状态的物料）</span><br/>` : '') +
+    `<span class="text-slate-600 text-xs mt-1 block">提交后系统将根据【销售平台 + 运营大类】自动生成审批单号并派发至各产品线负责人待办队列。</span>`,
+    '批量提交审核确认',
+    { dangerouslyUseHTMLString: true, confirmButtonText: '确定批量提交', cancelButtonText: '取消', type: 'info' }
+  ).catch(() => false)
+
+  if (!confirm) return
+
+  try {
+    const currentList = await dbFetchMaterialBindings()
+    let successCount = 0
+
+    submittableList.forEach(target => {
+      const idx = currentList.findIndex(i => (target.id && i.id === target.id) || i.parentCode === target.parentCode)
+      if (idx > -1) {
+        const item = currentList[idx]
+        const uniqueSuffix = Date.now().toString().slice(-6) + Math.random().toString(36).substring(2, 5).toUpperCase()
+        const wfNo = (item as any).workflowNo || ('WF-MAT-' + uniqueSuffix)
+
+        const leaderRes = lookupProductLineLeader(item.category, item.salesPlatform)
+        const cleanLeaderName = (leaderRes && typeof leaderRes === 'object') ? leaderRes.leader : (resolveLeaderName((item as any).productLineLeader) || '夏忠保')
+
+        ;(item as any).workflowNo = wfNo
+        if (!item.parentCode || item.parentCode.startsWith('DRAFT-')) {
+          item.parentCode = wfNo
+          item.sku = wfNo
+        }
+        ;(item as any).auditStatus = '待审核'
+        ;(item as any).status = '待审核'
+        ;(item as any).auditRemark = ''
+        ;(item as any).productLineLeader = cleanLeaderName
+        item.updateTime = new Date().toLocaleString()
+        successCount++
+      }
+    })
+
+    localStorage.setItem('SKU_KANBAN_BINDINGS_V2', JSON.stringify(currentList))
+    ElMessage.success({
+      message: `成功批量提交 ${successCount} 款组合物料至产品线负责人审批队列！`,
+      duration: 3500
+    })
+    selectedRows.value = []
+    await loadData()
+  } catch (err: any) {
+    ElMessage.error('批量提交失败: ' + err.message)
+  }
+}
+
+// 打开批量审核弹窗 (权限控制：需过滤审批人非当前登录人的数据，但系统管理员可全量操作)
+const handleOpenBatchAuditModal = () => {
+  if (!selectedRows.value.length) {
+    ElMessage.warning('请先勾选需要审核的组合物料！')
+    return
+  }
+
+  // 1. 过滤出待审核状态单据
+  const pendingRows = selectedRows.value.filter(r => r.auditStatus === '待审核' || r.status === '待审核')
+  const nonPendingCount = selectedRows.value.length - pendingRows.length
+
+  if (pendingRows.length === 0) {
+    ElMessageBox.alert(
+      `选中的 ${selectedRows.value.length} 款组合物料中，没有处于【待审核】状态的单据。<br/><br/>` +
+      `<span class="text-slate-600 text-xs">说明：批量审核仅支持对【待审核】状态的物料进行审批操作。</span>`,
+      '无待审核单据',
+      { dangerouslyUseHTMLString: true, type: 'warning' }
+    )
+    return
+  }
+
+  // 2. 审批人权限过滤：需过滤审批人非当前登录人的数据，但系统管理员可全量操作
+  const isAdmin = currentUser.value.role === 'admin'
+  let auditable = pendingRows
+  let skippedLeaderCount = 0
+
+  if (!isAdmin) {
+    auditable = pendingRows.filter(r => resolveLeaderName(r.productLineLeader) === currentUser.value.name)
+    skippedLeaderCount = pendingRows.length - auditable.length
+
+    if (auditable.length === 0) {
+      ElMessageBox.alert(
+        `选中的 ${pendingRows.length} 款待审核单据中，审批人均为其他负责人（非当前登录人 <b>${currentUser.value.name}</b>）。<br/><br/>` +
+        `<span class="text-amber-600 font-medium">权限控制：</span>批量审批需过滤审批人非当前登录人的数据；产品线负责人仅可审批本人负责的单据。<br/><br/>` +
+        `<span class="text-slate-500 text-xs">提示：系统管理员具备全量跨责任人审批权限，可切换为【系统管理员】身份操作。</span>`,
+        '无本人负责的待审核单据',
+        { dangerouslyUseHTMLString: true, type: 'warning' }
+      )
+      return
+    }
+  }
+
+  batchAuditTargetList.value = auditable
+  batchAuditSkippedCount.value = nonPendingCount
+  batchAuditSkippedLeaderCount.value = skippedLeaderCount
+  batchAuditDecision.value = 'pass'
+  batchAuditRemark.value = ''
+  batchAuditModalVisible.value = true
+}
+
+// 确认执行批量审核
+const handleConfirmBatchAudit = async () => {
+  if (!batchAuditTargetList.value.length) return
+  if (batchAuditDecision.value !== 'pass' && !batchAuditRemark.value.trim()) {
+    ElMessage.warning(batchAuditDecision.value === 'reject' ? '请填写批量驳回原因！' : '请填写批量不通过原因说明！')
+    return
+  }
+
+  batchAuditSubmitting.value = true
+  try {
+    const currentList = await dbFetchMaterialBindings()
+    const decision = batchAuditDecision.value
+    const remark = batchAuditRemark.value.trim()
+    let processedCount = 0
+
+    batchAuditTargetList.value.forEach(target => {
+      const idx = currentList.findIndex(i => (target.id && i.id === target.id) || i.parentCode === target.parentCode)
+      if (idx > -1) {
+        const item = currentList[idx]
+        if (decision === 'pass') {
+          let generatedCode = item.parentCode
+          if (!item.parentCode || item.parentCode.startsWith('WF-') || item.parentCode.startsWith('DRAFT-') || item.auditStatus === '待审核') {
+            const children = item.boundChildren || item.children || []
+            const codes = children.map((c: any) => c.childCode).filter(Boolean)
+            if (codes.length === 1) {
+              generatedCode = `${codes[0]}X${children[0]?.ratio || 2}`
+            } else if (codes.length > 1) {
+              const p2 = codes[1]?.length > 3 ? codes[1].slice(-3) : codes[1]
+              generatedCode = `${codes[0]}+${p2}`
+            } else {
+              generatedCode = 'IF' + Date.now().toString().slice(-6)
+            }
+            item.parentCode = generatedCode
+            item.sku = generatedCode
+          }
+          ;(item as any).auditStatus = '审核通过'
+          ;(item as any).status = '已生效'
+          ;(item as any).auditRemark = remark || '批量审核通过，准予生效备货'
+        } else if (decision === 'reject') {
+          ;(item as any).auditStatus = '已驳回'
+          ;(item as any).status = '已驳回'
+          ;(item as any).auditRemark = remark || 'BOM配置及品名需进一步核对，批量驳回修改'
+        } else {
+          ;(item as any).auditStatus = '审核不通过'
+          ;(item as any).status = '审核不通过'
+          ;(item as any).auditRemark = remark || '不符合品类规划与上架规范，审核不予通过'
+        }
+        item.updateTime = new Date().toLocaleString()
+        processedCount++
+      }
+    })
+
+    localStorage.setItem('SKU_KANBAN_BINDINGS_V2', JSON.stringify(currentList))
+    const actionText = decision === 'pass' ? '审核通过并正式生效' : (decision === 'reject' ? '审核驳回' : '审核不通过')
+    ElMessage.success(`成功批量${actionText} ${processedCount} 款组合物料！`)
+    batchAuditModalVisible.value = false
+    selectedRows.value = []
+    await loadData()
+  } catch (err: any) {
+    ElMessage.error('批量审核处理失败: ' + err.message)
+  } finally {
+    batchAuditSubmitting.value = false
+  }
+}
+
 const handleBatchDelete = async () => {
   if (!selectedRows.value.length) return
   const totalCount = selectedRows.value.length
@@ -4373,43 +5533,69 @@ const handleCopyCalcResult = () => {
 
 // --- 批量导入组合物料相关逻辑 ---
 const importDialogVisible = ref(false)
-const importResultDialogVisible = ref(false)
 const showTemplateSpec = ref(false)
 const importLoading = ref(false)
 const importPreviewList = ref<any[]>([])
 const importTargetStatus = ref<'待提交' | '待审核'>('待提交')
-const lastImportTargetStatus = ref<'待提交' | '待审核'>('待提交')
 const importUploadRef = ref<any>(null)
 const uploadedFileName = ref('')
 const uploadedFileSize = ref('')
 
-// 本次导入产生的结果集与高亮标识
-const newlyImportedCodes = ref<string[]>([])
-const isFilteringOnlyImported = ref(false)
-const importedBatchResult = ref<{
-  count: number
-  childCount: number
-  status: '待提交' | '待审核'
-  leaderName: string
-  items: any[]
-  timestamp: string
-} | null>(null)
+// 导入阶段管理：1 = 模板下载与上传文件；2 = 全量数据校验与预览 (未入库)
+const importActiveStep = ref<1 | 2>(1)
+const previewSearchKeyword = ref('')
 
 const totalParsedChildCount = computed(() => {
   return importPreviewList.value.reduce((acc, item) => acc + (item.children?.length || 0), 0)
+})
+
+// 预览搜索筛选
+const filteredPreviewList = computed(() => {
+  if (!previewSearchKeyword.value.trim()) {
+    return importPreviewList.value
+  }
+  const k = previewSearchKeyword.value.trim().toLowerCase()
+  return importPreviewList.value.filter(item => {
+    return (
+      (item.productName && item.productName.toLowerCase().includes(k)) ||
+      (item.category && item.category.toLowerCase().includes(k)) ||
+      (item.style && item.style.toLowerCase().includes(k)) ||
+      (item.children || []).some((c: any) => c.childCode?.toLowerCase().includes(k) || c.childName?.toLowerCase().includes(k))
+    )
+  })
 })
 
 const handleResetUpload = () => {
   importPreviewList.value = []
   uploadedFileName.value = ''
   uploadedFileSize.value = ''
+  previewSearchKeyword.value = ''
 }
 
+// 打开导入弹窗，默认进入第 1 阶段（上传）
 const handleOpenImportDialog = () => {
   handleResetUpload()
+  importActiveStep.value = 1
   showTemplateSpec.value = false
   importTargetStatus.value = '待提交'
   importDialogVisible.value = true
+}
+
+// 返回第 1 阶段重新上传
+const handleBackToUpload = () => {
+  importActiveStep.value = 1
+  handleResetUpload()
+}
+
+// 在预览阶段单条移出不符合要求的物料
+const handleRemovePreviewItem = (index: number) => {
+  importPreviewList.value.splice(index, 1)
+  if (importPreviewList.value.length === 0) {
+    ElMessage.warning('预览列表已无数据，已自动返回上传页面')
+    importActiveStep.value = 1
+  } else {
+    ElMessage.info('已移出该条组合物料')
+  }
 }
 
 // 下载标准 Excel 导入模板 (带精美配色、分组表头、必填标红与示范数据)
@@ -4442,7 +5628,9 @@ const handleImportFileChange = async (file: any) => {
     const arrayBuffer = await rawFile.arrayBuffer()
     const parsed = await parseComboExcelFile(arrayBuffer, importTargetStatus.value)
     importPreviewList.value = parsed
-    ElMessage.success(`Excel 文件解析成功！共识别到 ${parsed.length} 款有效组合物料。`)
+    // 成功解析后，自动流转至第 2 阶段（全量数据校验与预览，此时完全未写入数据库）
+    importActiveStep.value = 2
+    ElMessage.success(`Excel 文件解析成功！共识别到 ${parsed.length} 款组合物料，已进入全量预览核对阶段（尚未入库）。`)
   } catch (err: any) {
     ElMessage.error('Excel 文件解析失败: ' + err.message)
     handleResetUpload()
@@ -4456,7 +5644,9 @@ const handleConfirmImport = async () => {
   try {
     const targetStatus = importTargetStatus.value
     const listToSave = importPreviewList.value.map(item => {
-      const leader = lookupProductLineLeader(item.category, item.salesPlatform) || item.productLineLeader || '夏忠保'
+      const leaderRes = lookupProductLineLeader(item.category, item.salesPlatform)
+      const cleanLeaderName = (leaderRes && typeof leaderRes === 'object') ? leaderRes.leader : (resolveLeaderName(item.productLineLeader) || '夏忠保')
+      const lineName = (leaderRes && typeof leaderRes === 'object') ? leaderRes.productLineName : (item.category || '家具/室内家具')
       const uniqueSuffix = Date.now().toString().slice(-6) + Math.random().toString(36).substring(2, 5).toUpperCase()
       const wfNo = item.workflowNo || ('WF-MAT-' + uniqueSuffix)
       const draftCode = item.parentCode?.startsWith('DRAFT-') ? item.parentCode : ('DRAFT-' + uniqueSuffix)
@@ -4465,7 +5655,8 @@ const handleConfirmImport = async () => {
         ...item,
         parentCode: targetStatus === '待审核' ? wfNo : draftCode,
         workflowNo: wfNo,
-        productLineLeader: leader,
+        productLineLeader: cleanLeaderName,
+        productLineName: lineName,
         auditStatus: targetStatus,
         status: targetStatus === '待审核' ? '待审核' : '已绑定',
         updateTime: new Date().toLocaleString()
@@ -4474,33 +5665,16 @@ const handleConfirmImport = async () => {
 
     await dbBatchImportMaterialBindings(listToSave)
 
-    // 记录本次导入的高亮物料与结果报告
-    const newCodes = listToSave.map(i => i.parentCode)
-    newlyImportedCodes.value = newCodes
-    lastImportTargetStatus.value = targetStatus
-    isFilteringOnlyImported.value = false
-
-    importedBatchResult.value = {
-      count: listToSave.length,
-      childCount: listToSave.reduce((acc, i) => acc + (i.children?.length || 0), 0),
-      status: targetStatus,
-      leaderName: listToSave[0]?.productLineLeader || '夏忠保',
-      items: listToSave,
-      timestamp: new Date().toLocaleTimeString()
-    }
-
+    // 关闭导入工作台弹窗
     importDialogVisible.value = false
     handleResetUpload()
     await loadData()
 
-    // 默认跳转到首屏展示置顶新数据
+    // 默认跳转到首屏展示数据
     currentPage.value = 1
 
-    // 弹出专业的结果报告卡片弹窗
-    importResultDialogVisible.value = true
-
     ElMessage.success({
-      message: `批量导入成功！已为您录入 ${listToSave.length} 款组合物料，已置顶并高亮显示。`,
+      message: `批量导入成功！已成功录入 ${listToSave.length} 款组合物料。`,
       duration: 3500
     })
   } catch (err: any) {
@@ -4510,106 +5684,46 @@ const handleConfirmImport = async () => {
   }
 }
 
-// 导入结果弹窗操作：高亮查看完成
-const handleCompleteAndHighlight = () => {
-  importResultDialogVisible.value = false
-  ElMessage.success({
-    message: `已为您在主表格首屏置顶展示本次导入的 ${newlyImportedCodes.value.length} 款组合物料`,
-    duration: 3000
-  })
-}
-
-// 导入结果弹窗操作：查看首条审批流程
-const handleViewFirstWorkflowFromResult = () => {
-  importResultDialogVisible.value = false
-  if (importedBatchResult.value?.items?.length) {
-    const first = importedBatchResult.value.items[0]
-    const matched = comboList.value.find(c => c.parentCode === first.parentCode) || first
-    handleViewWorkflow(matched)
-  }
-}
-
-// 导入结果弹窗操作：查看单条审批流程
-const handleViewWorkflowFromResult = (row: any) => {
-  importResultDialogVisible.value = false
-  const matched = comboList.value.find(c => c.parentCode === row.parentCode) || row
-  handleViewWorkflow(matched)
-}
-
-// 导入结果弹窗操作：编辑草稿
-const handleEditFromResult = (row: any) => {
-  importResultDialogVisible.value = false
-  const matched = comboList.value.find(c => c.parentCode === row.parentCode) || row
-  handleEdit(matched)
-}
-
-// 清除导入高亮
-const handleClearImportHighlight = () => {
-  newlyImportedCodes.value = []
-  isFilteringOnlyImported.value = false
-  ElMessage.info('已清除本次导入的高亮标记')
-}
-
-// 导出 CSV
-const handleExportCsv = () => {
+// 导出 BOM 清单 (严格按标准导入模板规范导出 Excel)
+const handleExportExcel = async () => {
   const list = selectedRows.value.length ? selectedRows.value : filteredTableData.value
   if (!list.length) {
-    ElMessage.warning('没有可导出的数据')
+    ElMessage.warning('没有可导出的组合物料数据！')
     return
   }
 
-  const headers = ['组合物料编码', '组合物料品名', '组合类型', '审核状态', '款式', '主材质', '颜色', '子物料编码', '子物料品名', '单套配比', '子物料包装']
-  const rows: string[][] = []
-
-  list.forEach(item => {
-    const children = item.boundChildren || item.children || []
-    if (children.length === 0) {
-      rows.push([
-        item.parentCode,
-        item.productName || '',
-        item.comboType || '',
-        item.auditStatus || '已启用',
-        item.style || '',
-        item.material || '',
-        item.color || '',
-        '-', '-', '-', '-'
-      ])
-    } else {
-      children.forEach((c: any) => {
-        rows.push([
-          item.parentCode,
-          item.productName || '',
-          item.comboType || '',
-          item.auditStatus || '已启用',
-          item.style || '',
-          item.material || '',
-          item.color || '',
-          c.childCode || '',
-          c.childName || '',
-          String(c.ratio || 1),
-          c.childPackQty || '1pack'
-        ])
-      })
-    }
+  const isBatchSelected = selectedRows.value.length > 0
+  const exportLoading = ElLoading.service({
+    lock: true,
+    text: `正在按导入模板规范生成 ${list.length} 款组合物料的 BOM 清单 Excel 文件...`,
+    background: 'rgba(0, 0, 0, 0.65)'
   })
 
-  const csvContent = '\uFEFF' + [
-    headers.join(','),
-    ...rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-  ].join('\n')
+  try {
+    const blob = await exportComboListToExcel(list)
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+    const filePrefix = isBatchSelected ? `组合物料BOM清单_勾选${list.length}款_标准模板版_${dateStr}` : `组合物料BOM全量清单_标准模板版_${dateStr}`
+    link.setAttribute('href', url)
+    link.setAttribute('download', `${filePrefix}.xlsx`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
 
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `组合物料_BOM清单_${new Date().toISOString().slice(0, 10)}.csv`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
-
-  ElMessage.success(`成功导出 ${list.length} 款组合物料明细！`)
+    ElMessage.success({
+      message: `BOM 清单导出成功！共导出 ${list.length} 款组合物料（标准 Excel 格式，严格符合导入模板 28 项规范，支持直接再导入）。`,
+      duration: 4500
+    })
+  } catch (err: any) {
+    ElMessage.error('导出 Excel 失败: ' + err.message)
+  } finally {
+    exportLoading.close()
+  }
 }
+
+const handleExportCsv = handleExportExcel
 
 onMounted(() => {
   loadData()
@@ -4626,86 +5740,209 @@ onMounted(() => {
   gap: 10px;
 }
 
-/* 顶部统计卡片 */
+/* 顶部统计卡片 (6 栏网格响应式设计) */
 .stat-overview-row {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+
+  @media (max-width: 1440px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
 
   .stat-card {
-    background: #fff;
+    background: #ffffff;
     border-radius: 8px;
-    padding: 14px 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    border: 1px solid #eef0f3;
+    padding: 11px 14px 10px;
+    border: 1px solid #e2e8f0;
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    position: relative;
+    overflow: hidden;
 
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      border-color: #409eff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
     }
 
-    &.active {
-      border-color: #409eff;
-      background: #f0f7ff;
-      box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
-    }
-
-    .stat-content {
+    .stat-card-inner {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      height: 100%;
+    }
 
-      .stat-label {
-        font-size: 13px;
-        color: #64748b;
-        font-weight: 500;
-      }
+    .stat-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
 
-      .stat-num {
-        font-size: 24px;
-        font-weight: 700;
-        color: #1e293b;
-
-        .unit {
-          font-size: 13px;
-          font-weight: normal;
-          color: #94a3b8;
-          margin-left: 2px;
-        }
-
-        &.text-primary { color: #2563eb; }
-        &.text-warning { color: #d97706; }
-        &.text-indigo { color: #4f46e5; }
-        &.text-amber-600 { color: #b45309; }
-      }
-
-      .stat-desc {
+      .type-badge {
+        padding: 2px 7px;
+        border-radius: 4px;
         font-size: 11px;
-        color: #94a3b8;
+        font-weight: 600;
+        line-height: 1.2;
       }
     }
 
     .stat-icon-box {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
-      color: #fff;
+      font-size: 15px;
+      transition: all 0.2s;
 
-      &.bg-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
-      &.bg-slate { background: linear-gradient(135deg, #64748b, #334155); }
-      &.bg-amber { background: linear-gradient(135deg, #f59e0b, #d97706); }
-      &.bg-amber-gradient { background: linear-gradient(135deg, #fbbf24, #d97706); }
-      &.bg-purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+      &.bg-blue {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        color: #2563eb;
+      }
+      &.bg-amber {
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        color: #d97706;
+      }
+      &.bg-slate {
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        color: #475569;
+      }
+      &.bg-orange {
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+        color: #ea580c;
+      }
+      &.bg-rose {
+        background: #fff1f2;
+        border: 1px solid #fecdd3;
+        color: #e11d48;
+      }
+      &.bg-purple {
+        background: #f5f3ff;
+        border: 1px solid #ddd6fe;
+        color: #7c3aed;
+      }
+    }
+
+    .stat-num-row {
+      display: flex;
+      align-items: baseline;
+      gap: 3px;
+      margin-bottom: 3px;
+
+      .stat-num {
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1.1;
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+        &.text-blue { color: #1d4ed8; }
+        &.text-amber { color: #b45309; }
+        &.text-slate { color: #334155; }
+        &.text-orange { color: #c2410c; }
+        &.text-rose { color: #be123c; }
+        &.text-purple { color: #6d28d9; }
+      }
+
+      .unit {
+        font-size: 11.5px;
+        font-weight: 500;
+        color: #94a3b8;
+      }
+    }
+
+    .stat-desc-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+
+      .stat-desc {
+        font-size: 11px;
+        color: #94a3b8;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .active-indicator {
+        flex-shrink: 0;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 0 4px;
+        border-radius: 3px;
+        line-height: 15px;
+      }
+    }
+
+    /* 各卡片的主题色与高亮激活态 */
+    &.card-all {
+      &:hover { border-color: #93c5fd; }
+      &.active {
+        border-color: #3b82f6;
+        background: linear-gradient(180deg, #f8faff 0%, #eff6ff 100%);
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
+        .active-indicator { background: #2563eb; color: #fff; }
+      }
+    }
+
+    &.card-pending {
+      &:hover { border-color: #fcd34d; }
+      &.active {
+        border-color: #f59e0b;
+        background: linear-gradient(180deg, #fffdf8 0%, #fffbeb 100%);
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.12);
+        .active-indicator { background: #d97706; color: #fff; }
+      }
+    }
+
+    &.card-multi-pack {
+      &:hover { border-color: #94a3b8; }
+      &.active {
+        border-color: #64748b;
+        background: linear-gradient(180deg, #fcfcfd 0%, #f1f5f9 100%);
+        box-shadow: 0 2px 8px rgba(100, 116, 139, 0.12);
+        .active-indicator { background: #475569; color: #fff; }
+      }
+    }
+
+    &.card-multi-box {
+      &:hover { border-color: #fdba74; }
+      &.active {
+        border-color: #f97316;
+        background: linear-gradient(180deg, #fffcf8 0%, #fff7ed 100%);
+        box-shadow: 0 2px 8px rgba(249, 115, 22, 0.12);
+        .active-indicator { background: #ea580c; color: #fff; }
+      }
+    }
+
+    &.card-main-attach {
+      &:hover { border-color: #fda4af; }
+      &.active {
+        border-color: #f43f5e;
+        background: linear-gradient(180deg, #fffbfb 0%, #fff1f2 100%);
+        box-shadow: 0 2px 8px rgba(244, 63, 94, 0.12);
+        .active-indicator { background: #e11d48; color: #fff; }
+      }
+    }
+
+    &.card-suite {
+      &:hover { border-color: #c4b5fd; }
+      &.active {
+        border-color: #8b5cf6;
+        background: linear-gradient(180deg, #faf8ff 0%, #f5f3ff 100%);
+        box-shadow: 0 2px 8px rgba(139, 92, 246, 0.12);
+        .active-indicator { background: #7c3aed; color: #fff; }
+      }
     }
   }
 }
@@ -4780,6 +6017,12 @@ onMounted(() => {
   font-weight: 600;
   text-align: center;
 
+  &.badge-blue {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+  }
+
   &.badge-gray {
     background-color: #f1f5f9;
     color: #475569;
@@ -4792,13 +6035,20 @@ onMounted(() => {
     border: 1px solid #fde68a;
   }
 
+  &.badge-orange {
+    background-color: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #fed7aa;
+  }
+
   &.badge-danger {
     background-color: #ffe4e6;
     color: #e11d48;
     border: 1px solid #fecdd3;
   }
 
-  &.badge-primary {
+  &.badge-primary,
+  &.badge-purple {
     background-color: #ede9fe;
     color: #6d28d9;
     border: 1px solid #ddd6fe;
@@ -6207,37 +7457,521 @@ onMounted(() => {
   height: auto !important;
 }
 
-.audit-action-modal-body .audit-target-card {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 12px 16px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 16px;
-}
+/* 单个审核弹窗现代高阶样式（与批量审核弹窗保持一致的高端质感） */
+.audit-action-dialog {
+  :deep(.el-dialog__header) {
+    padding: 16px 20px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    margin-right: 0;
+  }
 
-.audit-action-modal-body .target-item {
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-}
+  :deep(.el-dialog__body) {
+    padding: 16px 20px 18px;
+  }
 
-.audit-action-modal-body .target-item .label {
-  color: #64748b;
-  width: 90px;
-  flex-shrink: 0;
-}
+  :deep(.el-dialog__footer) {
+    padding: 12px 20px 16px;
+    border-top: 1px solid #f1f5f9;
+    background: #fafafa;
+  }
 
-.audit-action-modal-body .target-item .val {
-  color: #1e293b;
-  word-break: break-all;
-}
+  .audit-action-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
 
-.audit-decision-form .el-radio {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .header-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #0f172a;
+      }
+
+      .header-sub-tag {
+        font-size: 11px;
+        font-weight: 600;
+        color: #2563eb;
+        background: #eff6ff;
+        border: 1px solid #dbeafe;
+        border-radius: 12px;
+        padding: 1px 8px;
+      }
+    }
+  }
+
+  .audit-action-modal-body {
+    /* 1. 待审核单据状态条 */
+    .audit-status-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 9px 14px;
+      margin-bottom: 14px;
+
+      .strip-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        .strip-icon-circle {
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          background: #eff6ff;
+          border: 1px solid #bfdbfe;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #2563eb;
+          font-size: 14px;
+          flex-shrink: 0;
+        }
+
+        .strip-text {
+          font-size: 12.5px;
+          color: #334155;
+
+          .strip-main {
+            font-weight: 500;
+
+            b {
+              color: #0f172a;
+              font-size: 13px;
+              margin: 0 1px;
+            }
+          }
+
+          .strip-hint {
+            color: #64748b;
+            font-size: 12px;
+          }
+        }
+      }
+
+      .strip-right {
+        .audit-status-badge {
+          font-size: 11.5px;
+          font-weight: 600;
+        }
+      }
+    }
+
+    /* 共享小标题栏 */
+    .section-title-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+
+      .title-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .bar-title {
+          font-size: 13px;
+          font-weight: 700;
+          color: #1e293b;
+        }
+
+        .bar-badge {
+          font-size: 11px;
+          font-weight: 600;
+          color: #2563eb;
+          background: #eff6ff;
+          border: 1px solid #dbeafe;
+          border-radius: 10px;
+          padding: 1px 7px;
+        }
+
+        .bar-sub {
+          font-size: 11.5px;
+          color: #64748b;
+        }
+      }
+    }
+
+    /* 2. 单据基础属性与 BOM 子件核对区 */
+    .audit-target-details-section {
+      margin-bottom: 14px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 14px;
+
+      .meta-info-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px dashed #f1f5f9;
+
+        .meta-cell {
+          font-size: 12px;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+
+          .cell-label {
+            color: #64748b;
+            flex-shrink: 0;
+          }
+
+          .cell-val {
+            color: #1e293b;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+        }
+      }
+
+      .audit-bom-mini-table {
+        margin-top: 8px;
+
+        .bom-preview-table {
+          border-radius: 6px;
+          overflow: hidden;
+          border: 1px solid #e2e8f0;
+
+          :deep(th) {
+            background: #f8fafc;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: #475569;
+            padding: 5px 0;
+          }
+
+          :deep(td) {
+            padding: 5px 0;
+            font-size: 12px;
+          }
+        }
+      }
+    }
+
+    /* 3. 决策卡片三栏网格 */
+    .audit-decision-cards-section {
+      margin-bottom: 14px;
+
+      .decision-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+
+        .decision-choice-card {
+          position: relative;
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          background: #ffffff;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 12px 14px;
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          user-select: none;
+
+          &:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+          }
+
+          .card-radio-ring {
+            margin-top: 2px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 1.5px solid #cbd5e1;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+
+            .radio-inner-dot {
+              width: 8px;
+              height: 8px;
+              border-radius: 50%;
+              background: transparent;
+              transition: all 0.2s;
+            }
+          }
+
+          .card-main {
+            flex: 1;
+            min-width: 0;
+
+            .card-top-line {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 5px;
+
+              .title-wrap {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+
+                .status-icon {
+                  font-size: 15px;
+                }
+
+                .decision-name {
+                  font-size: 13.5px;
+                  font-weight: 700;
+                  color: #1e293b;
+                }
+              }
+
+              .status-action-tag {
+                font-size: 11px;
+                font-weight: 600;
+                padding: 1px 6px;
+                border-radius: 4px;
+
+                &.pass {
+                  color: #059669;
+                  background: #ecfdf5;
+                  border: 1px solid #a7f3d0;
+                }
+                &.reject {
+                  color: #d97706;
+                  background: #fffbeb;
+                  border: 1px solid #fde68a;
+                }
+                &.disapprove {
+                  color: #e11d48;
+                  background: #fff1f2;
+                  border: 1px solid #fecdd3;
+                }
+              }
+            }
+
+            .decision-desc {
+              font-size: 11.5px;
+              line-height: 1.45;
+              color: #64748b;
+            }
+          }
+
+          /* Pass 态 */
+          &.card-pass {
+            .title-wrap .status-icon {
+              color: #10b981;
+            }
+
+            &.is-selected {
+              border-color: #10b981;
+              background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+              box-shadow: 0 2px 10px rgba(16, 185, 129, 0.15);
+
+              .card-radio-ring {
+                border-color: #10b981;
+                background: #10b981;
+
+                .radio-inner-dot {
+                  background: #ffffff;
+                }
+              }
+
+              .title-wrap .decision-name {
+                color: #065f46;
+              }
+            }
+          }
+
+          /* Reject 态 */
+          &.card-reject {
+            .title-wrap .status-icon {
+              color: #f59e0b;
+            }
+
+            &.is-selected {
+              border-color: #f59e0b;
+              background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+              box-shadow: 0 2px 10px rgba(245, 158, 11, 0.15);
+
+              .card-radio-ring {
+                border-color: #f59e0b;
+                background: #f59e0b;
+
+                .radio-inner-dot {
+                  background: #ffffff;
+                }
+              }
+
+              .title-wrap .decision-name {
+                color: #92400e;
+              }
+            }
+          }
+
+          /* Disapprove 态 */
+          &.card-disapprove {
+            .title-wrap .status-icon {
+              color: #f43f5e;
+            }
+
+            &.is-selected {
+              border-color: #f43f5e;
+              background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+              box-shadow: 0 2px 10px rgba(244, 63, 94, 0.15);
+
+              .card-radio-ring {
+                border-color: #f43f5e;
+                background: #f43f5e;
+
+                .radio-inner-dot {
+                  background: #ffffff;
+                }
+              }
+
+              .title-wrap .decision-name {
+                color: #9f1239;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    /* 4. 审核意见区 */
+    .audit-remark-section {
+      .remark-title-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+
+        .title-left {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+
+          .bar-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+          }
+
+          .require-tag {
+            font-size: 11px;
+            font-weight: 600;
+            color: #e11d48;
+            background: #fff1f2;
+            border: 1px solid #fecdd3;
+            border-radius: 4px;
+            padding: 1px 6px;
+          }
+
+          .optional-tag {
+            font-size: 11.5px;
+            color: #94a3b8;
+          }
+        }
+
+        .preset-phrases-group {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+
+          .preset-label {
+            font-size: 11.5px;
+            color: #94a3b8;
+          }
+
+          .phrase-chip-btn {
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 11.5px;
+            border-radius: 12px;
+            padding: 2px 10px;
+            cursor: pointer;
+            transition: all 0.18s;
+            outline: none;
+
+            &:hover {
+              background: #eff6ff;
+              border-color: #93c5fd;
+              color: #1d4ed8;
+              transform: translateY(-1px);
+            }
+          }
+        }
+      }
+
+      .remark-textarea {
+        :deep(.el-textarea__inner) {
+          border-radius: 8px;
+          font-size: 12.5px;
+          padding: 8px 12px;
+          line-height: 1.5;
+          border-color: #cbd5e1;
+          transition: all 0.2s;
+
+          &:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+          }
+        }
+      }
+    }
+  }
+
+  /* 弹窗底部操作条 */
+  .audit-action-dialog-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .footer-left-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      .status-label {
+        font-size: 12px;
+        color: #64748b;
+      }
+
+      .status-tag {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 0 10px;
+        height: 24px;
+        line-height: 22px;
+      }
+    }
+
+    .footer-right-buttons {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .confirm-audit-btn {
+        padding: 8px 18px;
+        font-weight: 600;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        transition: all 0.2s;
+
+        &:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+        }
+      }
+    }
+  }
 }
 
 /* 组合类型标准定义规范抽屉高级样式 */
@@ -7026,6 +8760,480 @@ onMounted(() => {
   }
 }
 
+/* 阶段指示器 Stepper (高质感现代流程卡片) */
+.custom-import-stepper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 14px;
+
+  .stepper-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    transition: all 0.25s ease;
+
+    .step-badge-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .step-text-wrap {
+      min-width: 0;
+
+      .step-title {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #334155;
+        line-height: 1.3;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .step-desc {
+        font-size: 11px;
+        color: #94a3b8;
+        line-height: 1.2;
+        margin-top: 1px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    &.is-done {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+
+      .step-badge-num {
+        background: #10b981;
+        color: #ffffff;
+      }
+
+      .step-title {
+        color: #065f46;
+      }
+
+      .step-desc {
+        color: #059669;
+      }
+    }
+
+    &.is-active {
+      background: #eff6ff;
+      border-color: #93c5fd;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
+
+      .step-badge-num {
+        background: #2563eb;
+        color: #ffffff;
+      }
+
+      .step-title {
+        color: #1e40af;
+        font-weight: 700;
+      }
+
+      .step-desc {
+        color: #2563eb;
+      }
+    }
+
+    &.is-pending {
+      opacity: 0.85;
+      background: #f8fafc;
+      border-color: #e2e8f0;
+    }
+  }
+
+  .stepper-arrow-divider {
+    color: #cbd5e1;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+}
+
+/* 阶段2：预览核对横幅提示 (沙箱验证模式) */
+.preview-notice-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #fffdf5 0%, #fefce8 100%);
+  border: 1px solid #fef08a;
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  padding: 10px 16px;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.06);
+
+  .callout-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .callout-icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #d97706;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .callout-text-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .callout-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .callout-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #92400e;
+  }
+
+  .callout-tag {
+    font-size: 11px;
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+
+  .callout-desc {
+    font-size: 11.5px;
+    color: #78350f;
+    line-height: 1.45;
+  }
+
+  .sandbox-ready-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+    }
+  }
+}
+
+/* 阶段2：操作控制卡 (单行高协调度指标与控制栏) */
+.preview-toolbar-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: nowrap;
+    min-width: 0;
+
+    .metric-group-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      line-height: 1;
+
+      .metric-icon {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+
+        &.blue {
+          background: #eff6ff;
+          color: #2563eb;
+          border: 1px solid #dbeafe;
+        }
+
+        &.indigo {
+          background: #e0e7ff;
+          color: #4f46e5;
+          border: 1px solid #c7d2fe;
+        }
+      }
+
+      .metric-title {
+        color: #64748b;
+        font-weight: 500;
+        font-size: 12px;
+      }
+
+      .metric-num {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1;
+
+        &.blue {
+          color: #1d4ed8;
+        }
+
+        &.indigo {
+          color: #4338ca;
+        }
+      }
+
+      .metric-unit {
+        color: #94a3b8;
+        font-size: 12px;
+      }
+    }
+
+    .toolbar-v-sep {
+      width: 1px;
+      height: 18px;
+      background: #e2e8f0;
+    }
+
+    .metric-status-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+
+      .status-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #334155;
+        white-space: nowrap;
+      }
+
+      .preview-status-radios {
+        :deep(.el-radio-button__inner) {
+          font-size: 12px;
+          padding: 6px 12px;
+        }
+      }
+    }
+  }
+
+  .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+}
+
+/* 阶段2：全量预览表格与展开 BOM (含 28 字段多层分组表头) */
+.full-preview-table-box {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+
+  .full-preview-table {
+    :deep(.el-table__header-wrapper th) {
+      font-size: 11.5px;
+      padding: 5px 0;
+      text-align: center;
+    }
+
+    /* 分组大表头层级与背景色彩优化，呼应 Excel 模板规范配色 */
+    :deep(.el-table__header tr:first-child th) {
+      background: #f8fafc;
+      color: #334155;
+      font-weight: 700;
+      border-bottom: 2px solid #cbd5e1;
+      padding: 7px 0;
+    }
+
+    :deep(.el-table__header tr:nth-child(2) th) {
+      background: #f1f5f9;
+      color: #475569;
+      font-weight: 600;
+      font-size: 11.5px;
+      padding: 5px 0;
+    }
+
+    :deep(.el-table__cell) {
+      padding: 5px 0;
+    }
+
+    .group-header-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 3px 12px;
+      border-radius: 12px;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+      white-space: nowrap;
+
+      &.group-header-purple {
+        background: #f3e8ff;
+        color: #6b21a8;
+        border: 1px solid #d8b4fe;
+      }
+
+      &.group-header-sky {
+        background: #e0f2fe;
+        color: #0369a1;
+        border: 1px solid #7dd3fc;
+      }
+
+      &.group-header-indigo {
+        background: #e0e7ff;
+        color: #3730a3;
+        border: 1px solid #a5b4fc;
+      }
+
+      &.group-header-orange {
+        background: #ffedd5;
+        color: #c2410c;
+        border: 1px solid #fed7aa;
+      }
+
+      &.group-header-slate {
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+      }
+    }
+
+    /* BOM 子部件与配比标签芯片 */
+    .code-chips-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .code-chip {
+      display: inline-block;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #1d4ed8;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 1px 6px;
+      border-radius: 4px;
+      line-height: 1.35;
+      letter-spacing: 0.2px;
+    }
+
+    .ratio-chips-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .ratio-chip {
+      display: inline-block;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #b91c1c;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      padding: 1px 6px;
+      border-radius: 4px;
+      line-height: 1.35;
+    }
+
+    .leader-tag {
+      font-weight: 500;
+    }
+  }
+
+  .expanded-bom-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin: 4px 0;
+
+    .bom-box-header {
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .bom-sub-table {
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+      border-radius: 4px;
+      overflow: hidden;
+
+      :deep(th) {
+        background: #f1f5f9;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: #475569;
+        padding: 5px 0;
+      }
+
+      :deep(td) {
+        padding: 4px 0;
+        font-size: 12px;
+      }
+    }
+  }
+}
+
 /* 底部操作条 */
 .import-dialog-footer {
   display: flex;
@@ -7033,10 +9241,42 @@ onMounted(() => {
   justify-content: space-between;
 
   .footer-left-tip {
-    font-size: 11.5px;
-    color: #64748b;
     display: flex;
     align-items: center;
+
+    .preview-footer-status-pill {
+      display: inline-flex;
+      align-items: center;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 12px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+
+      .pill-main {
+        color: #334155;
+        font-weight: 500;
+
+        b {
+          color: #2563eb;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+          font-size: 13px;
+          margin: 0 2px;
+        }
+      }
+
+      .pill-dot {
+        color: #cbd5e1;
+        margin: 0 8px;
+        font-weight: bold;
+      }
+
+      .pill-sub {
+        color: #64748b;
+        font-size: 11.5px;
+      }
+    }
   }
 
   .footer-right-actions {
@@ -7052,213 +9292,564 @@ onMounted(() => {
   }
 }
 
-/* --- 本次导入后提示条与高亮样式 --- */
-.newly-imported-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
-  border: 1px solid #86efac;
-  border-radius: 6px;
-  padding: 8px 14px;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.08);
-  margin-bottom: 10px;
-
-  .banner-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    .banner-icon-box {
-      font-size: 18px;
-      color: #10b981;
-      display: flex;
-      align-items: center;
-    }
-
-    .banner-info {
-      font-size: 13px;
-      color: #065f46;
-
-      b {
-        color: #047857;
-        font-size: 14px;
-      }
-
-      .banner-desc {
-        color: #059669;
-        font-size: 12px;
-      }
-    }
-  }
-
-  .banner-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-}
-
-/* 主表格中本次导入行高亮样式 */
-:deep(.el-table .row-newly-imported) {
-  background-color: #f0fdf4 !important;
-  box-shadow: inset 4px 0 0 #10b981;
-  transition: background-color 0.2s ease;
-
-  &:hover > td {
-    background-color: #dcfce7 !important;
-  }
-}
-
-:deep(.el-table--striped .el-table__body tr.el-table__row--striped.row-newly-imported td) {
-  background-color: #ecfdf5 !important;
-}
-
-.newly-imported-tag {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-  border-color: #059669 !important;
-  color: #ffffff !important;
-  font-size: 10.5px !important;
-  font-weight: 600 !important;
-  padding: 0 6px !important;
-  height: 20px !important;
-  line-height: 20px !important;
-  border-radius: 4px !important;
-  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.25);
-  display: inline-flex;
-  align-items: center;
-}
-
-/* --- 导入结果报告弹窗样式 --- */
-.import-result-dialog {
+/* 批量审核弹窗现代高阶样式 */
+.batch-audit-dialog {
   :deep(.el-dialog__header) {
-    padding: 16px 20px 12px;
+    padding: 16px 20px 14px;
     border-bottom: 1px solid #f1f5f9;
+    margin-right: 0;
   }
 
   :deep(.el-dialog__body) {
-    padding: 16px 20px;
+    padding: 16px 20px 18px;
   }
 
-  .result-header-banner {
+  :deep(.el-dialog__footer) {
+    padding: 12px 20px 16px;
+    border-top: 1px solid #f1f5f9;
+    background: #fafafa;
+  }
+
+  .batch-audit-dialog-header {
     display: flex;
     align-items: center;
-    gap: 16px;
-    background: linear-gradient(135deg, #065f46 0%, #047857 50%, #059669 100%);
-    border-radius: 8px;
-    padding: 16px 20px;
-    color: #ffffff;
-    box-shadow: 0 4px 12px rgba(6, 95, 70, 0.2);
-    margin-bottom: 16px;
+    justify-content: space-between;
+    width: 100%;
 
-    .result-badge-icon {
-      font-size: 38px;
-      color: #a7f3d0;
+    .header-left {
       display: flex;
       align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
+      gap: 10px;
 
-    .result-header-text {
-      flex: 1;
-
-      .result-header-title {
-        font-size: 16px;
+      .header-title {
+        font-size: 15px;
         font-weight: 700;
-        margin-bottom: 4px;
-        letter-spacing: 0.3px;
+        color: #0f172a;
       }
 
-      .result-header-desc {
-        font-size: 12.5px;
-        color: #d1fae5;
-        line-height: 1.5;
+      .header-sub-tag {
+        font-size: 11px;
+        font-weight: 600;
+        color: #2563eb;
+        background: #eff6ff;
+        border: 1px solid #dbeafe;
+        border-radius: 12px;
+        padding: 1px 8px;
+      }
+    }
+  }
 
-        b {
-          color: #ffffff;
-          font-weight: 700;
+  .batch-audit-modal-body {
+    /* 1. 待审核单据状态条 */
+    .batch-audit-status-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 9px 14px;
+      margin-bottom: 14px;
+
+      .strip-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        .strip-icon-circle {
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          background: #eff6ff;
+          border: 1px solid #bfdbfe;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #2563eb;
+          font-size: 14px;
+          flex-shrink: 0;
+        }
+
+        .strip-text {
+          font-size: 12.5px;
+          color: #334155;
+
+          .strip-main {
+            font-weight: 500;
+
+            b {
+              color: #2563eb;
+              font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+              font-size: 13.5px;
+              margin: 0 1px;
+            }
+          }
+
+          .strip-hint {
+            color: #64748b;
+            font-size: 12px;
+          }
+        }
+      }
+
+      .strip-right {
+        .skipped-pill {
+          font-size: 11.5px;
+          font-weight: 500;
+          color: #b45309;
+          background: #fffbeb;
+          border: 1px solid #fde68a;
+          border-radius: 12px;
+          padding: 2px 9px;
+        }
+
+        .all-valid-pill {
+          font-size: 11.5px;
+          color: #059669;
+          background: #ecfdf5;
+          border: 1px solid #a7f3d0;
+          border-radius: 12px;
+          padding: 2px 9px;
         }
       }
     }
 
-    .result-header-status {
-      flex-shrink: 0;
+    /* 共享小标题栏 */
+    .section-title-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
 
-      .status-pill {
-        font-weight: 600;
-        letter-spacing: 0.5px;
-      }
-    }
-  }
+      .title-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
 
-  .result-metric-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 16px;
+        .bar-title {
+          font-size: 13px;
+          font-weight: 700;
+          color: #1e293b;
+        }
 
-    .metric-card {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      padding: 10px 12px;
-      text-align: center;
-      transition: all 0.2s ease;
-
-      &:hover {
-        border-color: #cbd5e1;
-        background: #ffffff;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-      }
-
-      .metric-label {
-        font-size: 11px;
-        color: #64748b;
-        margin-bottom: 4px;
-      }
-
-      .metric-val {
-        font-size: 18px;
-        font-weight: 700;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-        margin-bottom: 2px;
-
-        .unit {
+        .bar-badge {
           font-size: 11px;
-          font-weight: normal;
+          font-weight: 600;
+          color: #475569;
+          background: #f1f5f9;
+          border-radius: 10px;
+          padding: 1px 7px;
+        }
+
+        .bar-sub {
+          font-size: 11.5px;
           color: #64748b;
         }
       }
+    }
 
-      .metric-tip {
-        font-size: 10.5px;
-        color: #94a3b8;
+    /* 2. 待审核表格卡片 */
+    .batch-audit-table-section {
+      margin-bottom: 14px;
+
+      .batch-audit-table {
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+
+        :deep(th) {
+          background: #f8fafc;
+          font-size: 12px;
+          font-weight: 600;
+          color: #475569;
+          padding: 6px 0;
+        }
+
+        :deep(td) {
+          padding: 6px 0;
+          font-size: 12px;
+        }
+
+        .batch-expand-bom-wrap {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 6px;
+          padding: 8px 12px;
+          margin: 4px 0;
+
+          .inner-bom-table {
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+
+            :deep(th) {
+              background: #f1f5f9;
+              font-size: 11.5px;
+              color: #475569;
+              font-weight: 600;
+              padding: 5px 0;
+            }
+
+            :deep(td) {
+              padding: 5px 0;
+              font-size: 12px;
+            }
+          }
+        }
+      }
+    }
+
+    /* 3. 决策卡片三栏网格 */
+    .batch-audit-decision-section {
+      margin-bottom: 14px;
+
+      .decision-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+
+        .decision-choice-card {
+          position: relative;
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          background: #ffffff;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 12px 14px;
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          user-select: none;
+
+          &:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+          }
+
+          .card-radio-ring {
+            margin-top: 2px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 1.5px solid #cbd5e1;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+
+            .radio-inner-dot {
+              width: 8px;
+              height: 8px;
+              border-radius: 50%;
+              background: transparent;
+              transition: all 0.2s;
+            }
+          }
+
+          .card-main {
+            flex: 1;
+            min-width: 0;
+
+            .card-top-line {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 5px;
+
+              .title-wrap {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+
+                .status-icon {
+                  font-size: 15px;
+                }
+
+                .decision-name {
+                  font-size: 13.5px;
+                  font-weight: 700;
+                  color: #1e293b;
+                }
+              }
+
+              .status-action-tag {
+                font-size: 11px;
+                font-weight: 600;
+                padding: 1px 6px;
+                border-radius: 4px;
+
+                &.pass {
+                  color: #059669;
+                  background: #ecfdf5;
+                  border: 1px solid #a7f3d0;
+                }
+                &.reject {
+                  color: #d97706;
+                  background: #fffbeb;
+                  border: 1px solid #fde68a;
+                }
+                &.disapprove {
+                  color: #e11d48;
+                  background: #fff1f2;
+                  border: 1px solid #fecdd3;
+                }
+              }
+            }
+
+            .decision-desc {
+              font-size: 11.5px;
+              line-height: 1.45;
+              color: #64748b;
+            }
+          }
+
+          /* Pass 态 */
+          &.card-pass {
+            .title-wrap .status-icon {
+              color: #10b981;
+            }
+
+            &.is-selected {
+              border-color: #10b981;
+              background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+              box-shadow: 0 2px 10px rgba(16, 185, 129, 0.15);
+
+              .card-radio-ring {
+                border-color: #10b981;
+                background: #10b981;
+
+                .radio-inner-dot {
+                  background: #ffffff;
+                }
+              }
+
+              .title-wrap .decision-name {
+                color: #065f46;
+              }
+            }
+          }
+
+          /* Reject 态 */
+          &.card-reject {
+            .title-wrap .status-icon {
+              color: #f59e0b;
+            }
+
+            &.is-selected {
+              border-color: #f59e0b;
+              background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+              box-shadow: 0 2px 10px rgba(245, 158, 11, 0.15);
+
+              .card-radio-ring {
+                border-color: #f59e0b;
+                background: #f59e0b;
+
+                .radio-inner-dot {
+                  background: #ffffff;
+                }
+              }
+
+              .title-wrap .decision-name {
+                color: #92400e;
+              }
+            }
+          }
+
+          /* Disapprove 态 */
+          &.card-disapprove {
+            .title-wrap .status-icon {
+              color: #f43f5e;
+            }
+
+            &.is-selected {
+              border-color: #f43f5e;
+              background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+              box-shadow: 0 2px 10px rgba(244, 63, 94, 0.15);
+
+              .card-radio-ring {
+                border-color: #f43f5e;
+                background: #f43f5e;
+
+                .radio-inner-dot {
+                  background: #ffffff;
+                }
+              }
+
+              .title-wrap .decision-name {
+                color: #9f1239;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    /* 4. 审核意见区 */
+    .batch-audit-remark-section {
+      .remark-title-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+
+        .title-left {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+
+          .bar-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+          }
+
+          .require-tag {
+            font-size: 11px;
+            font-weight: 600;
+            color: #e11d48;
+            background: #fff1f2;
+            border: 1px solid #fecdd3;
+            border-radius: 4px;
+            padding: 1px 6px;
+          }
+
+          .optional-tag {
+            font-size: 11.5px;
+            color: #94a3b8;
+          }
+        }
+
+        .preset-phrases-group {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+
+          .preset-label {
+            font-size: 11.5px;
+            color: #94a3b8;
+          }
+
+          .phrase-chip-btn {
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 11.5px;
+            border-radius: 12px;
+            padding: 2px 10px;
+            cursor: pointer;
+            transition: all 0.18s;
+            outline: none;
+
+            &:hover {
+              background: #eff6ff;
+              border-color: #93c5fd;
+              color: #1d4ed8;
+              transform: translateY(-1px);
+            }
+          }
+        }
+      }
+
+      .remark-textarea {
+        :deep(.el-textarea__inner) {
+          border-radius: 8px;
+          font-size: 12.5px;
+          padding: 8px 12px;
+          line-height: 1.5;
+          border-color: #cbd5e1;
+          transition: all 0.2s;
+
+          &:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+          }
+        }
       }
     }
   }
 
-  .result-table-box {
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    padding: 12px;
-    background: #ffffff;
-
-    .box-title {
-      font-size: 12.5px;
-    }
-  }
-
-  .result-dialog-footer {
+  /* 弹窗底部操作条 */
+  .batch-audit-dialog-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
 
-    .complete-btn {
-      background: linear-gradient(135deg, #10b981, #059669);
-      border-color: #059669;
-      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+    .footer-left-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      .status-label {
+        font-size: 12px;
+        color: #64748b;
+      }
+
+      .status-tag {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 0 10px;
+        height: 24px;
+        line-height: 22px;
+      }
+
+      .status-count {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-left: 2px;
+      }
     }
+
+    .footer-right-buttons {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .confirm-audit-btn {
+        padding: 8px 18px;
+        font-weight: 600;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        transition: all 0.2s;
+
+        &:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+        }
+      }
+    }
+  }
+}
+
+/* 操作栏当前登录身份徽章 */
+.login-user-pill {
+  display: inline-flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 3px 9px;
+  font-size: 12px;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  &:hover {
+    border-color: #94a3b8;
+    background: #f8fafc;
+  }
+
+  .user-name b {
+    color: #1e293b;
+    font-weight: 600;
+  }
+
+  .user-role-tag {
+    height: 20px;
+    padding: 0 6px;
+    font-size: 11px;
+    font-weight: 600;
   }
 }
 </style>

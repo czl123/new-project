@@ -536,6 +536,23 @@ export async function dbBatchImportMaterialBindings(bindings: (Omit<MaterialBind
       }
     })
 
+    const rawLeader = (b as any).productLineLeader
+    let cleanLeader = '夏忠保'
+    if (typeof rawLeader === 'string') {
+      if (rawLeader.trim().startsWith('{')) {
+        try {
+          const parsed = JSON.parse(rawLeader)
+          cleanLeader = parsed.leader || '夏忠保'
+        } catch {
+          cleanLeader = rawLeader
+        }
+      } else {
+        cleanLeader = rawLeader
+      }
+    } else if (typeof rawLeader === 'object' && rawLeader !== null) {
+      cleanLeader = rawLeader.leader || '夏忠保'
+    }
+
     const idx = list.findIndex(item => item.parentCode === b.parentCode)
     const fullItem: MaterialBindingRecord = {
       ...b,
@@ -552,6 +569,7 @@ export async function dbBatchImportMaterialBindings(bindings: (Omit<MaterialBind
       tpWh: b.tpWh || '万邑通',
       status: b.status || (enrichedChildren.length > 0 ? '已绑定' : '未绑定'),
       auditStatus: b.auditStatus || '待提交',
+      productLineLeader: cleanLeader,
       updateTime: nowStr,
       boundChildren: enrichedChildren
     }

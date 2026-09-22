@@ -178,15 +178,17 @@ const SAMPLE_DATA_ROWS = [
 /**
  * 创建并生成带精美配色、规范说明的 Excel 模板
  */
-export async function generateStyledComboTemplateExcel(): Promise<Blob> {
+export async function generateStyledComboTemplateExcel(customRows?: any[], sheetTitle?: string): Promise<Blob> {
+  const isCustomExport = Boolean(customRows && customRows.length)
   const workbook = new ExcelJS.Workbook()
   workbook.creator = 'JC-ERP 组合物料管理系统'
   workbook.created = new Date()
 
   // -------------------------------------------------------------
-  // 工作表 1：组合物料数据录入
+  // 工作表 1：组合物料数据录入 / 导出
   // -------------------------------------------------------------
-  const ws = workbook.addWorksheet('组合物料导入数据录入', {
+  const actualSheetTitle = sheetTitle || (isCustomExport ? '组合物料BOM数据清单' : '组合物料导入数据录入')
+  const ws = workbook.addWorksheet(actualSheetTitle, {
     views: [{ showGridLines: true }]
   })
 
@@ -201,12 +203,14 @@ export async function generateStyledComboTemplateExcel(): Promise<Blob> {
   // 2. 行 1：系统大标题横幅
   ws.mergeCells(1, 1, 1, colCount)
   const titleCell = ws.getCell('A1')
-  titleCell.value = '组合物料批量导入标准录入表 (JC-ERP V2.2 规范版)'
+  titleCell.value = isCustomExport 
+    ? '组合物料 BOM 清单导出明细表 (JC-ERP V2.2 标准版)'
+    : '组合物料批量导入标准录入表 (JC-ERP V2.2 规范版)'
   titleCell.font = { name: 'Microsoft YaHei', size: 16, bold: true, color: { argb: 'FFFFFFFF' } }
   titleCell.fill = {
     type: 'pattern',
     pattern: 'solid',
-    fgColor: { argb: 'FF1E3A8A' } // 深邃皇家蓝
+    fgColor: { argb: isCustomExport ? 'FF0F766E' : 'FF1E3A8A' } // 导出使用优雅深松石绿，模板使用深蓝
   }
   titleCell.alignment = { vertical: 'middle', horizontal: 'center' }
   ws.getRow(1).height = 38
@@ -214,12 +218,14 @@ export async function generateStyledComboTemplateExcel(): Promise<Blob> {
   // 3. 行 2：规范说明提示条
   ws.mergeCells(2, 1, 2, colCount)
   const tipCell = ws.getCell('A2')
-  tipCell.value = '【填写指引】粉红底色且标有“*”的表头为必填字段；多个子物料与配比用英文分号 (;) 分隔；严禁删除或调换表头列顺序。录入完成后直接上传即可。'
-  tipCell.font = { name: 'Microsoft YaHei', size: 9.5, italic: true, color: { argb: 'FF92400E' } }
+  tipCell.value = isCustomExport
+    ? '【导出说明】本文件严格按照标准导入模板规范格式导出，包含 28 项属性与 BOM 子部件齐套配比，可直接用于归档核对或再次批量导入。'
+    : '【填写指引】粉红底色且标有“*”的表头为必填字段；多个子物料与配比用英文分号 (;) 分隔；严禁删除或调换表头列顺序。录入完成后直接上传即可。'
+  tipCell.font = { name: 'Microsoft YaHei', size: 9.5, italic: true, color: { argb: isCustomExport ? 'FF065F46' : 'FF92400E' } }
   tipCell.fill = {
     type: 'pattern',
     pattern: 'solid',
-    fgColor: { argb: 'FFFEF3C7' } // 淡琥珀黄
+    fgColor: { argb: isCustomExport ? 'FFECFDF5' : 'FFFEF3C7' } // 导出使用淡绿，模板使用淡黄
   }
   tipCell.alignment = { vertical: 'middle', horizontal: 'center' }
   ws.getRow(2).height = 24
@@ -275,8 +281,9 @@ export async function generateStyledComboTemplateExcel(): Promise<Blob> {
     }
   })
 
-  // 6. 行 5~8：注入高质量真实示范数据行
-  SAMPLE_DATA_ROWS.forEach((sample, rIdx) => {
+  // 6. 行 5 起：注入数据行 (自定义导出数据或示范数据)
+  const rowsToInject = isCustomExport ? customRows! : SAMPLE_DATA_ROWS
+  rowsToInject.forEach((sample, rIdx) => {
     const rowNum = 5 + rIdx
     const row = ws.getRow(rowNum)
     row.height = 24
@@ -284,7 +291,7 @@ export async function generateStyledComboTemplateExcel(): Promise<Blob> {
     COMBO_TEMPLATE_COLUMNS.forEach((col, cIdx) => {
       const colNum = cIdx + 1
       const cell = ws.getCell(rowNum, colNum)
-      cell.value = (sample as any)[col.key] || ''
+      cell.value = (sample as any)[col.key] ?? ''
       cell.font = { name: 'Microsoft YaHei', size: 9.5, color: { argb: 'FF1E293B' } }
       cell.fill = {
         type: 'pattern',
@@ -293,7 +300,7 @@ export async function generateStyledComboTemplateExcel(): Promise<Blob> {
       }
       cell.alignment = {
         vertical: 'middle',
-        horizontal: ['comboType', 'ratios', 'brand', 'packQty', 'hasBattery', 'seasonTag'].includes(col.key) ? 'center' : 'left'
+        horizontal: ['comboType', 'ratios', 'brand', 'packQty', 'hasBattery', 'seasonTag', 'isCeCategory'].includes(col.key) ? 'center' : 'left'
       }
       cell.border = {
         top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
@@ -348,6 +355,50 @@ export async function generateStyledComboTemplateExcel(): Promise<Blob> {
 
   const buffer = await workbook.xlsx.writeBuffer()
   return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+}
+
+/**
+ * 将系统中的组合物料数据按导入模板规范导出为标准 Excel 文件
+ */
+export async function exportComboListToExcel(rawItems: any[]): Promise<Blob> {
+  const formattedRows = rawItems.map(item => {
+    const children = item.boundChildren || item.children || []
+    const childCodes = item.childCodes || children.map((c: any) => c.childCode).filter(Boolean).join(';')
+    const ratios = item.ratios || children.map((c: any) => c.ratio || 1).join(';')
+
+    return {
+      childCodes: childCodes || 'IF260212',
+      ratios: ratios || '1',
+      comboType: item.comboType || '多件打包',
+      salesPlatform: item.salesPlatform || 'Amazon',
+      category: item.category || '家具/室内家具',
+      productName: item.productName || '',
+      style: item.style || '',
+      material: item.material || '',
+      targetBrandOrAudience: item.targetBrandOrAudience || item.childTarget || '通用',
+      model: item.model || '',
+      brand: item.brand || '中性',
+      pattern: item.pattern || '',
+      color: item.color || '',
+      size: item.size || '',
+      packQty: item.packQty || (children.length ? `${children.length}pack` : '1pack'),
+      productManager: item.productManager || '张经理 (产品经理)',
+      purchaser: item.purchaser || '采购A组-陈工',
+      operator: item.operator || '美区运营-Lucy',
+      holidayTag: item.holidayTag || '无',
+      seasonTag: item.seasonTag || '四季通用',
+      isCeCategory: item.isCeCategory || '否',
+      hasBattery: item.hasBattery || '否',
+      applicableModel: item.applicableModel || item.targetBrandOrAudience || '通用',
+      materialDetail: item.materialDetail || '',
+      colorCode: item.colorCode || '',
+      spec: item.spec || '标准款',
+      specModelDesc: item.specModelDesc || '',
+      warehouseLabelDesc: item.warehouseLabelDesc || ''
+    }
+  })
+
+  return await generateStyledComboTemplateExcel(formattedRows, '组合物料BOM清单数据')
 }
 
 /**
@@ -450,14 +501,25 @@ export async function parseComboExcelFile(arrayBuffer: ArrayBuffer, targetStatus
       childName: `${productName}-子部件${cIdx + 1}`,
       ratio: ratios[cIdx] || 1,
       childProductName: productName,
+      productName: productName,
       childStyle: style,
+      style: style,
       childMaterial: material,
-      childTarget: targetBrandOrAudience,
+      material: material,
+      applicableBrandOrModel: targetBrandOrAudience || applicableModel || '通用',
+      targetBrandOrAudience: targetBrandOrAudience || applicableModel || '通用',
+      applicableModel: applicableModel || '通用',
+      childTarget: targetBrandOrAudience || applicableModel || '通用',
       childModel: model || '通用',
-      childBrand: brand,
+      model: model || '通用',
+      childBrand: brand || '中性',
+      brand: brand || '中性',
+      childPackQty: packQty || '1pack',
+      packQty: packQty || '1pack',
+      childColor: color || '-',
+      color: color || '-',
       childPattern: pattern,
-      childColor: color,
-      childPackQty: '1pack'
+      pattern: pattern
     }))
 
     if (children.length === 0) {
@@ -466,14 +528,25 @@ export async function parseComboExcelFile(arrayBuffer: ArrayBuffer, targetStatus
         childName: `${productName}-部件1`,
         ratio: comboType === '多件打包' ? 2 : 1,
         childProductName: productName,
+        productName: productName,
         childStyle: style,
+        style: style,
         childMaterial: material,
-        childTarget: targetBrandOrAudience,
+        material: material,
+        applicableBrandOrModel: targetBrandOrAudience || applicableModel || '通用',
+        targetBrandOrAudience: targetBrandOrAudience || applicableModel || '通用',
+        applicableModel: applicableModel || '通用',
+        childTarget: targetBrandOrAudience || applicableModel || '通用',
         childModel: model || '通用',
-        childBrand: brand,
+        model: model || '通用',
+        childBrand: brand || '中性',
+        brand: brand || '中性',
+        childPackQty: packQty || '1pack',
+        packQty: packQty || '1pack',
+        childColor: color || '-',
+        color: color || '-',
         childPattern: pattern,
-        childColor: color,
-        childPackQty: '1pack'
+        pattern: pattern
       })
     }
 
@@ -484,6 +557,8 @@ export async function parseComboExcelFile(arrayBuffer: ArrayBuffer, targetStatus
       id: uniqueId,
       parentCode: targetStatus === '待审核' ? wfNo : 'DRAFT-' + uniqueId,
       sku: '',
+      childCodes: childCodesStr,
+      ratios: ratiosStr,
       productName,
       comboType,
       salesPlatform,
