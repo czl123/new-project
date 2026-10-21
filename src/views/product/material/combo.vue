@@ -225,7 +225,7 @@
           :disabled="!selectedRows.length"
           @click="handleBatchSubmit"
         >
-          批量提交 {{ selectedRows.length ? `(${selectedRows.length})` : '' }}
+          批量提交
         </el-button>
         <el-button 
           icon="Stamp" 
@@ -233,7 +233,14 @@
           :disabled="!selectedRows.length"
           @click="handleOpenBatchAuditModal"
         >
-          批量审核 {{ selectedRows.length ? `(${selectedRows.length})` : '' }}
+          批量审核
+        </el-button>
+        <el-button 
+          icon="User" 
+          size="small" 
+          @click="handleOpenBatchChangeLeaderModal"
+        >
+          批量修改审核人
         </el-button>
         <el-button 
           class="danger-btn"
@@ -242,7 +249,7 @@
           :disabled="!selectedRows.length"
           @click="handleBatchDelete"
         >
-          批量删除 {{ selectedRows.length ? `(${selectedRows.length})` : '' }}
+          批量删除
         </el-button>
         <el-button icon="Download" size="small" @click="handleExportExcel">
           导出 BOM 清单
@@ -479,96 +486,63 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="业务状态" prop="auditStatus" width="100" align="center">
+        <el-table-column label="业务状态" prop="auditStatus" width="115" align="center">
           <template #default="{ row }">
-            <el-tag 
-              v-if="row.auditStatus === '待审核' || row.status === '待审核'" 
-              type="warning" 
-              effect="light" 
-              size="small"
-              class="audit-pulse-tag"
-            >
-              <el-icon class="mr-1"><Clock /></el-icon> 待审核
-            </el-tag>
-            <el-tag 
-              v-else-if="row.auditStatus === '待提交' || row.auditStatus === '草稿' || row.status === '草稿'" 
-              type="info" 
-              effect="plain" 
-              size="small"
-            >
-              待提交
-            </el-tag>
-            <el-tag 
-              v-else-if="row.auditStatus === '已驳回'" 
-              type="danger" 
-              effect="plain" 
-              size="small"
-            >
-              <el-icon class="mr-1"><Close /></el-icon>已驳回
-            </el-tag>
-            <el-tag 
-              v-else-if="row.auditStatus === '审核不通过'" 
-              type="danger" 
-              effect="dark" 
-              size="small"
-            >
-              审核不通过
-            </el-tag>
-            <el-tag 
-              v-else-if="row.status === '停产'" 
-              type="info" 
-              size="small"
-            >
-              已停产
-            </el-tag>
-            <el-tag 
-              v-else 
-              type="success" 
-              size="small"
-            >
-              <el-icon class="mr-1"><Check /></el-icon>已生效
-            </el-tag>
-          </template>
-        </el-table-column>
+            <div class="business-status-cell flex flex-col items-center justify-center gap-1">
+              <el-tag 
+                v-if="row.auditStatus === '待审核' || row.status === '待审核'" 
+                type="warning" 
+                effect="light" 
+                size="small"
+                class="audit-pulse-tag"
+              >
+                <el-icon class="mr-1"><Clock /></el-icon> 待审核
+              </el-tag>
+              <el-tag 
+                v-else-if="row.auditStatus === '待提交' || row.auditStatus === '草稿' || row.status === '草稿'" 
+                type="info" 
+                effect="plain" 
+                size="small"
+              >
+                待提交
+              </el-tag>
+              <el-tag 
+                v-else-if="row.auditStatus === '已驳回'" 
+                type="danger" 
+                effect="plain" 
+                size="small"
+              >
+                <el-icon class="mr-1"><Close /></el-icon>已驳回
+              </el-tag>
+              <el-tag 
+                v-else-if="row.auditStatus === '审核不通过'" 
+                type="danger" 
+                effect="dark" 
+                size="small"
+              >
+                审核不通过
+              </el-tag>
+              <el-tag 
+                v-else-if="row.status === '停产'" 
+                type="info" 
+                size="small"
+              >
+                已停产
+              </el-tag>
+              <el-tag 
+                v-else 
+                type="success" 
+                size="small"
+              >
+                <el-icon class="mr-1"><Check /></el-icon>已生效
+              </el-tag>
 
-        <el-table-column label="审核流程" min-width="120" align="center">
-          <template #default="{ row }">
-            <div class="audit-flow-summary-cell">
-              <!-- 待审核状态 -->
-              <div v-if="row.auditStatus === '待审核' || row.status === '待审核'" class="flow-sub-tip">
-                <span>待</span><b class="text-slate-800 mx-0.5">{{ row.productLineLeader || '夏忠保' }}</b><span>审批</span>
-              </div>
-
-              <!-- 待提交状态 -->
-              <div v-else-if="row.auditStatus === '待提交' || row.auditStatus === '草稿' || row.status === '草稿'" class="flow-sub-tip text-gray-500">
-                <span>创建人：{{ row.operator || '美区运营' }}</span>
-              </div>
-
-              <!-- 已驳回状态 -->
-              <div v-else-if="row.auditStatus === '已驳回'" class="flow-sub-tip text-rose-600 font-medium">
-                <el-tooltip :content="row.auditRemark ? `驳回原因：${row.auditRemark}` : '审核已驳回，可点击编辑修改后重新提交'" placement="top">
-                  <span class="cursor-pointer">可编辑重提</span>
-                </el-tooltip>
-              </div>
-
-              <!-- 审核不通过状态 -->
-              <div v-else-if="row.auditStatus === '审核不通过'" class="flow-sub-tip text-gray-400">
-                <el-tooltip :content="row.auditRemark ? `不通过原因：${row.auditRemark}` : '单据审核不予通过，已归档不可删除'" placement="top">
-                  <span class="cursor-pointer">已归档</span>
-                </el-tooltip>
-              </div>
-
-              <!-- 审核通过状态 -->
-              <div v-else class="flow-sub-tip text-slate-600">
-                <span>审批人：{{ row.productLineLeader || '夏忠保' }}</span>
-              </div>
-
-              <!-- 快捷查看流程详情入口 -->
+              <!-- 查看流程入口 -->
               <el-button 
                 link 
                 type="primary" 
                 size="small" 
-                class="view-flow-btn mt-0.5" 
+                class="view-flow-link mt-0.5" 
                 @click="handleViewWorkflow(row)"
               >
                 查看流程
@@ -586,10 +560,20 @@
               type="warning" 
               link 
               size="small" 
-              icon="Stamp" 
               @click="handleOpenAuditModal(row)"
             >
               审核
+            </el-button>
+
+            <!-- 待审核时支持单条修改审核人 -->
+            <el-button 
+              v-if="row.auditStatus === '待审核' || row.status === '待审核'"
+              type="primary" 
+              link 
+              size="small" 
+              @click="handleSingleChangeLeader(row)"
+            >
+              修改审核人
             </el-button>
 
             <!-- 待提交或已驳回时提供快捷提交按钮 -->
@@ -598,7 +582,6 @@
               type="success" 
               link 
               size="small" 
-              icon="Promotion" 
               @click="handleSingleSubmit(row)"
             >
               提交
@@ -615,7 +598,6 @@
                   type="primary" 
                   link 
                   size="small" 
-                  icon="Edit" 
                   disabled
                 >
                   编辑
@@ -627,7 +609,6 @@
               type="primary" 
               link 
               size="small" 
-              icon="Edit" 
               @click="handleEdit(row)"
             >
               编辑
@@ -637,7 +618,6 @@
               type="primary" 
               link 
               size="small" 
-              icon="DocumentCopy" 
               @click="handleClone(row)"
             >
               复制
@@ -654,7 +634,6 @@
                   type="danger" 
                   link 
                   size="small" 
-                  icon="Delete" 
                   disabled
                 >
                   删除
@@ -666,7 +645,6 @@
               type="danger" 
               link 
               size="small" 
-              icon="Delete" 
               @click="handleDelete(row)"
             >
               删除
@@ -2372,6 +2350,199 @@
       </template>
     </el-dialog>
 
+    <!-- 6.6. 对话框：【批量修改审核人弹窗】 -->
+    <el-dialog
+      v-model="batchChangeLeaderModalVisible"
+      width="860px"
+      destroy-on-close
+      class="batch-change-leader-dialog"
+      :close-on-click-modal="false"
+      align-center
+    >
+      <template #header>
+        <div class="change-leader-dialog-header">
+          <div class="header-left">
+            <div class="header-icon-box">
+              <el-icon><UserFilled /></el-icon>
+            </div>
+            <div class="header-title-wrap">
+              <div class="title-row">
+                <span class="dialog-title-text">{{ batchChangeLeaderTargetList.length > 1 ? '批量修改审核人' : '修改审核人' }}</span>
+                <span class="header-count-badge">
+                  共 {{ batchChangeLeaderTargetList.length }} 款单据
+                </span>
+              </div>
+              <p class="dialog-subtitle-text">调整单据审批责任人（产品线负责人），变更后单据将自动流转至新审核人的待办审批队列中</p>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <div class="batch-change-leader-body">
+        <!-- 审核人选择表单 -->
+        <div class="change-leader-form-card">
+          <el-form label-width="85px" class="change-leader-form">
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="新审核人：" required>
+                  <el-select 
+                    v-model="batchNewLeader" 
+                    placeholder="请选择新的审核人" 
+                    filterable 
+                    clearable
+                    style="width: 100%"
+                  >
+                    <el-option 
+                      v-for="leader in availableApprovers" 
+                      :key="leader" 
+                      :label="leader" 
+                      :value="leader" 
+                    />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="调整说明：">
+                  <el-input 
+                    v-model="batchChangeLeaderRemark" 
+                    placeholder="选填，例如：人员交接、休假替岗等" 
+                    clearable 
+                  />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-form>
+        </div>
+
+        <!-- 3. 待修改单据明细表格 -->
+        <div class="change-leader-table-section">
+          <div class="section-title-bar">
+            <div class="bar-left">
+              <span class="bar-title">待调整物料清单</span>
+              <span class="bar-badge">{{ filteredBatchChangeLeaderList.length }} 款</span>
+              <span class="bar-tip" v-if="filteredBatchChangeLeaderList.length !== batchChangeLeaderTargetList.length">
+                (已筛选，全部共 {{ batchChangeLeaderTargetList.length }} 款)
+              </span>
+            </div>
+            <div class="bar-right" v-if="batchChangeLeaderTargetList.length > 3">
+              <el-input 
+                v-model="batchLeaderSearchKeyword" 
+                placeholder="搜索品名或编码..." 
+                prefix-icon="Search"
+                size="small" 
+                clearable 
+                class="search-mini-input"
+              />
+            </div>
+          </div>
+
+          <el-table 
+            :data="filteredBatchChangeLeaderList" 
+            border 
+            size="small" 
+            max-height="270" 
+            stripe
+            class="change-leader-table"
+          >
+            <el-table-column type="index" label="#" width="46" align="center" />
+
+            <el-table-column label="物料信息" min-width="260">
+              <template #default="{ row }">
+                <div class="material-cell-wrap">
+                  <div class="material-thumb">
+                    <el-image 
+                      :src="getParentMaterialImage(row)" 
+                      :preview-src-list="[getParentMaterialImage(row)]"
+                      preview-teleported
+                      fit="cover" 
+                      class="thumb-img"
+                    >
+                      <template #error>
+                        <div class="thumb-fallback">
+                          <el-icon><Picture /></el-icon>
+                        </div>
+                      </template>
+                    </el-image>
+                  </div>
+                  <div class="material-text">
+                    <div class="product-title" :title="row.productName">{{ row.productName }}</div>
+                    <div class="product-code font-mono">{{ row.parentCode }}</div>
+                  </div>
+                </div>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="业务状态" width="105" align="center">
+              <template #default="{ row }">
+                <span v-if="row.auditStatus === '待审核' || row.status === '待审核'" class="status-cell-tag pending">
+                  <el-icon class="mr-1"><Clock /></el-icon>待审核
+                </span>
+                <span v-else-if="row.auditStatus === '待提交' || row.auditStatus === '草稿'" class="status-cell-tag draft">
+                  待提交
+                </span>
+                <span v-else-if="row.auditStatus === '已驳回'" class="status-cell-tag reject">
+                  已驳回
+                </span>
+                <span v-else class="status-cell-tag pass">
+                  <el-icon class="mr-1"><Check /></el-icon>{{ row.auditStatus || '已生效' }}
+                </span>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="当前审核人" width="145" align="center">
+              <template #default="{ row }">
+                <span class="leader-current-tag">
+                  {{ resolveLeaderName(row.productLineLeader) || '待分配' }}
+                </span>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="修改后审核人" width="155" align="center">
+              <template #default>
+                <div v-if="batchNewLeader" class="leader-new-tag">
+                  <el-icon class="mr-1"><Right /></el-icon>
+                  <span>{{ batchNewLeader }}</span>
+                </div>
+                <span v-else class="leader-placeholder-tag">
+                  待选择
+                </span>
+              </template>
+            </el-table-column>
+
+            <el-table-column label="操作" width="70" align="center" v-if="batchChangeLeaderTargetList.length > 1">
+              <template #default="{ row }">
+                <el-button 
+                  link 
+                  type="danger" 
+                  size="small" 
+                  @click="handleRemoveTargetRow(row)"
+                  class="remove-row-btn"
+                >
+                  移除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="change-leader-dialog-footer">
+          <el-button @click="batchChangeLeaderModalVisible = false" class="cancel-btn">取消</el-button>
+          <el-button 
+            type="primary" 
+            :loading="batchChangeLeaderSubmitting" 
+            :disabled="!batchNewLeader || !batchChangeLeaderTargetList.length"
+            class="confirm-btn"
+            @click="handleConfirmBatchChangeLeader"
+          >
+            <el-icon class="mr-1"><Check /></el-icon>
+            {{ batchChangeLeaderTargetList.length > 1 ? `确认批量修改 (${batchChangeLeaderTargetList.length} 款)` : '确认修改审核人' }}
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
     <!-- 7. 对话框：【推送审批流详情 / 审核进度弹窗】 -->
     <el-dialog
       v-model="workflowDialogVisible"
@@ -3632,6 +3803,7 @@ import {
 import {
   SALES_PLATFORMS,
   lookupProductLineLeader,
+  getAllProductLines,
   type SalesPlatform
 } from '@/data/product-line-library'
 import {
@@ -3849,7 +4021,7 @@ const canEditRow = (row: any) => {
   if (status === '待审核') {
     // 提交审核后，审批责任人与系统管理员允许修改
     const isAdmin = currentUser.value.role === 'admin'
-    const isLeader = currentUser.value.role === 'leader'
+    const isLeader = currentUser.value.role === 'line_leader' || (currentUser.value.role as any) === 'leader'
     const leader = resolveLeaderName(row.productLineLeader)
     return isAdmin || isLeader || leader === currentUser.value.name
   }
@@ -4828,9 +5000,9 @@ const loadData = async () => {
           modified = true
         }
         if (idx === 0) {
-          if (item.auditStatus !== '待审核' || item.productLineLeader !== '夏忠保') {
+          if (!dataList.some((x: any) => x.auditStatus === '待审核')) {
             item.auditStatus = '待审核'
-            item.productLineLeader = '夏忠保'
+            item.productLineLeader = item.productLineLeader || '夏忠保'
             item.workflowNo = item.workflowNo || 'WF-MAT-20260922001'
             modified = true
           }
@@ -4839,7 +5011,7 @@ const loadData = async () => {
           modified = true
         } else if (idx === 2 && !dataList.some((x: any) => x.auditStatus === '已驳回')) {
           item.auditStatus = '已驳回'
-          item.productLineLeader = '夏忠保'
+          item.productLineLeader = item.productLineLeader || '夏忠保'
           item.auditRemark = 'BOM配比核对有误，单套配比建议核实后重新提交'
           modified = true
         } else if (idx === 3 && !dataList.some((x: any) => x.auditStatus === '审核不通过')) {
@@ -4847,10 +5019,8 @@ const loadData = async () => {
           item.auditRemark = '不符合品类规划与上架规范，审核不予通过'
           modified = true
         } else if (idx === 4) {
-          if (item.auditStatus !== '待审核' || item.productLineLeader !== '李丹') {
-            item.auditStatus = '待审核'
+          if (!item.productLineLeader) {
             item.productLineLeader = '李丹'
-            item.workflowNo = item.workflowNo || 'WF-MAT-20260922002'
             modified = true
           }
         }
@@ -5702,6 +5872,153 @@ const handleConfirmBatchAudit = async () => {
     ElMessage.error('批量审核处理失败: ' + err.message)
   } finally {
     batchAuditSubmitting.value = false
+  }
+}
+
+// --- 批量修改审核人 ---
+const batchChangeLeaderModalVisible = ref(false)
+const batchChangeLeaderTargetList = ref<any[]>([])
+const batchNewLeader = ref('')
+const batchChangeLeaderRemark = ref('')
+const batchChangeLeaderSubmitting = ref(false)
+
+const availableApprovers = computed(() => {
+  const set = new Set<string>()
+  set.add('夏忠保')
+  set.add('李丹')
+  set.add('李梦')
+  set.add('何阵阵')
+  set.add('邹晨')
+  set.add('王美艳')
+  set.add('彭永昌')
+  set.add('张小丽')
+  set.add('刘洋')
+  set.add('韩旭')
+  set.add('许静琪')
+  set.add('张秋霞')
+  set.add('周美美')
+
+  try {
+    const lines = getAllProductLines()
+    lines.forEach(line => {
+      if (line.teamLeader) set.add(line.teamLeader)
+      if (line.platforms) {
+        line.platforms.forEach(p => {
+          if (p.lineLeader) set.add(p.lineLeader)
+        })
+      }
+    })
+  } catch {}
+
+  comboList.value.forEach((item: any) => {
+    if (item.productLineLeader) {
+      set.add(resolveLeaderName(item.productLineLeader))
+    }
+  })
+
+  return Array.from(set).filter(Boolean)
+})
+
+const batchLeaderSearchKeyword = ref('')
+
+const batchChangeLeaderStats = computed(() => {
+  let pending = 0
+  let draft = 0
+  let passed = 0
+  batchChangeLeaderTargetList.value.forEach(item => {
+    if (item.auditStatus === '待审核' || item.status === '待审核') pending++
+    else if (item.auditStatus === '待提交' || item.auditStatus === '草稿') draft++
+    else passed++
+  })
+  return { pending, draft, passed, total: batchChangeLeaderTargetList.value.length }
+})
+
+const filteredBatchChangeLeaderList = computed(() => {
+  if (!batchLeaderSearchKeyword.value.trim()) return batchChangeLeaderTargetList.value
+  const kw = batchLeaderSearchKeyword.value.trim().toLowerCase()
+  return batchChangeLeaderTargetList.value.filter(item => 
+    (item.productName && item.productName.toLowerCase().includes(kw)) ||
+    (item.parentCode && item.parentCode.toLowerCase().includes(kw)) ||
+    (item.productLineLeader && item.productLineLeader.toLowerCase().includes(kw))
+  )
+})
+
+const handleRemoveTargetRow = (row: any) => {
+  const idx = batchChangeLeaderTargetList.value.findIndex(r => r.parentCode === row.parentCode)
+  if (idx > -1) {
+    batchChangeLeaderTargetList.value.splice(idx, 1)
+  }
+}
+
+const handleSingleChangeLeader = (row: any) => {
+  batchChangeLeaderTargetList.value = [row]
+  batchNewLeader.value = resolveLeaderName(row.productLineLeader) || ''
+  batchChangeLeaderRemark.value = ''
+  batchLeaderSearchKeyword.value = ''
+  batchChangeLeaderModalVisible.value = true
+}
+
+const handleOpenBatchChangeLeaderModal = () => {
+  if (selectedRows.value.length > 0) {
+    batchChangeLeaderTargetList.value = [...selectedRows.value]
+  } else {
+    // 未勾选任何行时，自动载入当前列表中处于【待审核】状态的单据，确保点击必定有弹窗响应
+    const pendingRows = comboList.value.filter((r: any) => r.auditStatus === '待审核' || r.status === '待审核')
+    if (pendingRows.length > 0) {
+      batchChangeLeaderTargetList.value = [...pendingRows]
+      ElMessage.info(`检测到未在主列表中勾选，已自动为您载入当前全部 ${pendingRows.length} 款【待审核】单据`)
+    } else {
+      batchChangeLeaderTargetList.value = [...comboList.value.slice(0, 10)]
+      ElMessage.info('未在列表中勾选物料，已默认载入前 10 款组合物料，您可选择新审核人后批量修改')
+    }
+  }
+  batchNewLeader.value = ''
+  batchChangeLeaderRemark.value = ''
+  batchLeaderSearchKeyword.value = ''
+  batchChangeLeaderModalVisible.value = true
+}
+
+const handleConfirmBatchChangeLeader = async () => {
+  if (!batchNewLeader.value) {
+    ElMessage.warning('请选择新的审核人！')
+    return
+  }
+  if (!batchChangeLeaderTargetList.value.length) {
+    ElMessage.warning('待修改单据列表为空！')
+    return
+  }
+
+  batchChangeLeaderSubmitting.value = true
+  try {
+    const currentList = await dbFetchMaterialBindings()
+    const targetLeader = batchNewLeader.value
+    let count = 0
+
+    for (const target of batchChangeLeaderTargetList.value) {
+      const idx = currentList.findIndex(i => (target.id && i.id === target.id) || i.parentCode === target.parentCode)
+      if (idx > -1) {
+        currentList[idx].productLineLeader = targetLeader
+        currentList[idx].updateTime = new Date().toLocaleString()
+        count++
+        try {
+          await dbSaveMaterialBinding(currentList[idx])
+        } catch {}
+      }
+    }
+
+    localStorage.setItem('SKU_KANBAN_BINDINGS_V2', JSON.stringify(currentList))
+    if (batchChangeLeaderTargetList.value.length === 1) {
+      ElMessage.success(`成功将【${batchChangeLeaderTargetList.value[0].productName || batchChangeLeaderTargetList.value[0].parentCode}】的审核人修改为【${targetLeader}】！`)
+    } else {
+      ElMessage.success(`成功为 ${count} 款组合物料批量修改审核人为【${targetLeader}】！`)
+    }
+    batchChangeLeaderModalVisible.value = false
+    selectedRows.value = []
+    await loadData()
+  } catch (err: any) {
+    ElMessage.error('修改审核人失败: ' + (err.message || err))
+  } finally {
+    batchChangeLeaderSubmitting.value = false
   }
 }
 
@@ -11049,6 +11366,332 @@ onMounted(() => {
     padding: 0 6px;
     font-size: 11px;
     font-weight: 600;
+  }
+}
+
+/* ==========================================================================
+   6.6. 批量修改审核人弹窗 - 高级企业级视觉样式
+   ========================================================================== */
+.batch-change-leader-dialog {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+
+  :deep(.el-dialog__header) {
+    padding: 16px 22px 14px;
+    border-bottom: 1px solid #eef2f6;
+    margin-right: 0;
+    background: #ffffff;
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 16px 22px 14px;
+    background: #fbfcfd;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 12px 22px 15px;
+    border-top: 1px solid #eef2f6;
+    background: #ffffff;
+  }
+
+  .change-leader-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .header-icon-box {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border: 1px solid #bfdbfe;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #2563eb;
+        font-size: 18px;
+        flex-shrink: 0;
+      }
+
+      .header-title-wrap {
+        .title-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+
+          .dialog-title-text {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+          }
+
+          .header-count-badge {
+            font-size: 11px;
+            font-weight: 600;
+            color: #2563eb;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 12px;
+            padding: 1px 9px;
+          }
+        }
+
+        .dialog-subtitle-text {
+          font-size: 12px;
+          color: #64748b;
+          margin-top: 3px;
+        }
+      }
+    }
+  }
+
+  .batch-change-leader-body {
+    /* 表单卡片 */
+    .change-leader-form-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px 16px 2px;
+      margin-bottom: 12px;
+
+      .change-leader-form {
+        :deep(.el-form-item) {
+          margin-bottom: 10px;
+        }
+
+        :deep(.el-form-item__label) {
+          font-size: 13px;
+          color: #334155;
+          font-weight: 500;
+          padding-right: 8px;
+          line-height: 32px;
+        }
+
+        :deep(.el-select .el-input__inner),
+        :deep(.el-input .el-input__inner) {
+          font-size: 13px;
+        }
+      }
+    }
+
+    /* 3. 表格区域 */
+    .change-leader-table-section {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+
+      .section-title-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+
+        .bar-left {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .bar-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+          }
+
+          .bar-badge {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: #2563eb;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            padding: 0 8px;
+          }
+
+          .bar-tip {
+            font-size: 11.5px;
+            color: #94a3b8;
+          }
+        }
+
+        .bar-right {
+          .search-mini-input {
+            width: 190px;
+          }
+        }
+      }
+
+      .change-leader-table {
+        border-radius: 6px;
+        overflow: hidden;
+
+        .material-cell-wrap {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+
+          .material-thumb {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: #f8fafc;
+
+            .thumb-img {
+              width: 100%;
+              height: 100%;
+            }
+
+            .thumb-fallback {
+              width: 100%;
+              height: 100%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: #cbd5e1;
+              font-size: 16px;
+            }
+          }
+
+          .material-text {
+            min-width: 0;
+
+            .product-title {
+              font-size: 12.5px;
+              font-weight: 600;
+              color: #1e293b;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+
+            .product-code {
+              font-size: 11px;
+              color: #64748b;
+              margin-top: 1px;
+            }
+          }
+        }
+
+        .status-cell-tag {
+          font-size: 11px;
+          font-weight: 600;
+          padding: 2px 8px;
+          border-radius: 4px;
+          display: inline-flex;
+          align-items: center;
+
+          &.pending {
+            color: #d97706;
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+          }
+
+          &.draft {
+            color: #475569;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+          }
+
+          &.reject {
+            color: #e11d48;
+            background: #ffe4e6;
+            border: 1px solid #fecdd3;
+          }
+
+          &.pass {
+            color: #059669;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+          }
+        }
+
+        .leader-current-tag {
+          font-size: 12px;
+          font-weight: 500;
+          color: #334155;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          padding: 2px 9px;
+          border-radius: 4px;
+          white-space: nowrap;
+        }
+
+        .leader-new-tag {
+          display: inline-flex;
+          align-items: center;
+          font-size: 12px;
+          font-weight: 700;
+          color: #1d4ed8;
+          background: #eff6ff;
+          border: 1px solid #bfdbfe;
+          padding: 2px 9px;
+          border-radius: 4px;
+          white-space: nowrap;
+        }
+
+        .leader-placeholder-tag {
+          font-size: 11.5px;
+          color: #94a3b8;
+          background: #f8fafc;
+          border: 1px dashed #cbd5e1;
+          padding: 2px 8px;
+          border-radius: 4px;
+        }
+
+        .remove-row-btn {
+          font-size: 11.5px;
+        }
+      }
+    }
+  }
+
+  .change-leader-dialog-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .footer-left-info {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .footer-right-buttons {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .cancel-btn {
+        padding: 8px 16px;
+      }
+
+      .confirm-btn {
+        padding: 8px 18px;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        border: none;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+        font-weight: 600;
+
+        &:hover {
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+        }
+
+        &:disabled {
+          background: #94a3b8;
+          box-shadow: none;
+        }
+      }
+    }
   }
 }
 </style>

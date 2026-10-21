@@ -770,7 +770,7 @@
                     共绑定 <b>{{ row.boundChildren.length }}</b> 款子物料
                   </span>
                   <span class="text-warning" v-else>
-                    ⚠️ 暂无绑定的子物料明细（可点击操作栏【编辑】进行绑定）
+                    ⚠️ 暂无绑定的子物料明细
                   </span>
                 </div>
 
@@ -1005,10 +1005,9 @@
           <el-table-column label="更新时间" prop="updateTime" width="170" align="center" />
 
           <!-- 8. 操作 -->
-          <el-table-column label="操作" width="220" align="center" fixed="right">
+          <el-table-column label="操作" width="180" align="center" fixed="right">
             <template #default="{ row }">
               <el-button type="primary" link size="small" icon="Refresh" @click="handleUpdateSingleBinding(row)">更新属性与关系</el-button>
-              <el-button type="primary" link size="small" icon="Edit" @click="handleEditBinding(row)">编辑</el-button>
               <el-button type="danger" link size="small" icon="Delete" @click="handleUnbind(row)">解绑</el-button>
             </template>
           </el-table-column>
@@ -2238,21 +2237,30 @@
       </template>
     </el-dialog>
 
-    <!-- 弹窗 1: 新增跟踪 ASIN 弹窗 (表格展示 ASIN 候选池，支持按账号、站点、ASIN/SKU 查询后批量勾选添加) -->
+    <!-- 弹窗 1: 新增跟踪 ASIN 弹窗 (表格展示 ASIN 候选池，仅限父子物料绑定关系中已存在的组合物料) -->
     <el-dialog
       v-model="addAsinDialogVisible"
-      width="1180px"
+      width="1240px"
+      top="4vh"
       destroy-on-close
       class="candidate-asin-dialog"
+      :close-on-click-modal="false"
     >
       <template #header>
         <div class="dialog-custom-header">
-          <div class="header-title-box">
-            <span class="main-title">新增跟踪 ASIN</span>
-            <span class="sub-badge">候选池检索与批量添加</span>
-          </div>
-          <div class="header-tip-text">
-            已智能对比当前跟踪库，可按账号、站点、ASIN 或 SKU 查询后批量勾选入库
+          <div class="header-left-box">
+            <div class="title-content">
+              <div class="title-row">
+                <span class="main-title">新增跟踪 ASIN</span>
+                <span class="sub-badge badge-green">
+                  <span class="badge-dot"></span>
+                  仅限已绑定组合物料 ({{ bindingTableData.length }} 款)
+                </span>
+              </div>
+              <div class="header-tip-text">
+                已严格联动【父子物料绑定关系】中的组合物料，支持按账号、站点、ASIN 或 SKU 查询后批量勾选入库
+              </div>
+            </div>
           </div>
         </div>
       </template>
@@ -2261,47 +2269,47 @@
         <div class="filter-flex-row">
           <div class="filter-left-group">
             <div class="filter-field">
-              <span class="field-label">平台</span>
-              <el-select v-model="candidateFilterPlatform" placeholder="全部平台" size="default" style="width: 120px;" clearable>
+              <span class="field-label">平台:</span>
+              <el-select v-model="candidateFilterPlatform" placeholder="全部平台" size="small" style="width: 105px;" clearable>
                 <el-option label="全部平台" value="全部" />
                 <el-option v-for="plat in platformOptions" :key="plat" :label="plat" :value="plat" />
               </el-select>
             </div>
 
             <div class="filter-field">
-              <span class="field-label">账号</span>
-              <el-select v-model="candidateFilterAccount" placeholder="全部账号" size="default" style="width: 130px;" clearable>
+              <span class="field-label">账号:</span>
+              <el-select v-model="candidateFilterAccount" placeholder="全部账号" size="small" style="width: 110px;" clearable>
                 <el-option label="全部账号" value="全部" />
                 <el-option v-for="acc in candidateAccountOptions" :key="acc" :label="acc" :value="acc" />
               </el-select>
             </div>
 
             <div class="filter-field">
-              <span class="field-label">站点</span>
-              <el-select v-model="candidateFilterSite" placeholder="全部站点" size="default" style="width: 125px;" clearable>
+              <span class="field-label">站点:</span>
+              <el-select v-model="candidateFilterSite" placeholder="全部站点" size="small" style="width: 95px;" clearable>
                 <el-option label="全部站点" value="全部" />
                 <el-option v-for="st in candidateSiteOptions" :key="st.value" :label="st.label" :value="st.value" />
               </el-select>
             </div>
 
-            <div class="filter-field">
-              <span class="field-label">查询</span>
+            <div class="filter-field search-field">
+              <span class="field-label">查询:</span>
               <el-input
                 v-model="candidateSearchKey"
-                placeholder="输入 ASIN / SKU / 物料编码 / 产品名称..."
+                placeholder="搜索 ASIN / 销售SKU / 对应物料编码 / 产品名称..."
                 prefix-icon="Search"
                 clearable
-                size="default"
-                style="width: 320px;"
+                size="small"
+                style="width: 250px;"
               />
             </div>
 
-            <el-checkbox v-model="candidateOnlyUntracked" label="仅看未跟踪" size="default" class="untracked-checkbox" />
+            <el-checkbox v-model="candidateOnlyUntracked" label="仅看未跟踪" size="small" class="untracked-checkbox" />
           </div>
 
           <div class="filter-right-group">
-            <el-button size="default" icon="RefreshLeft" @click="handleResetCandidateFilter">重置筛选</el-button>
-            <el-button type="primary" plain size="default" icon="Plus" @click="handleOpenManualAddModal">手动单条录入</el-button>
+            <el-button size="small" plain icon="RefreshRight" @click="handleResetCandidateFilter">重置筛选</el-button>
+            <el-button type="primary" plain size="small" icon="Plus" @click="handleOpenManualAddModal">手动单条录入</el-button>
           </div>
         </div>
       </div>
@@ -2320,19 +2328,19 @@
           @selection-change="handleCandidateSelectionChange"
         >
           <el-table-column type="selection" width="45" align="center" :selectable="canSelectCandidateRow" />
-          <el-table-column label="平台" prop="platform" width="95" align="center">
+          <el-table-column label="平台" prop="platform" width="92" align="center">
             <template #default="{ row }">
               <el-tag size="small" effect="plain" class="platform-tag" :class="getPlatformTagClass(row.platform)">
                 {{ row.platform || 'Amazon' }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="账号" prop="account" width="100" align="center">
+          <el-table-column label="账号" prop="account" width="95" align="center">
             <template #default="{ row }">
               <span class="account-badge">{{ row.account }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="站点" width="95" align="center">
+          <el-table-column label="站点" width="85" align="center">
             <template #default="{ row }">
               <span class="site-badge">
                 <span class="flag-icon">{{ getSiteFlagEmoji(row.site) }}</span>
@@ -2342,44 +2350,62 @@
           </el-table-column>
           <el-table-column label="ASIN" prop="asin" width="135" align="center">
             <template #default="{ row }">
-              <span class="asin-code-text">{{ row.asin }}</span>
+              <div class="flex-center gap-4">
+                <span class="asin-code-text">{{ row.asin }}</span>
+                <el-tooltip content="复制 ASIN" placement="top" :hide-after="800">
+                  <el-button
+                    type="primary"
+                    link
+                    size="small"
+                    icon="CopyDocument"
+                    class="copy-asin-btn"
+                    @click.stop="handleCopyText(row.asin, 'ASIN')"
+                  />
+                </el-tooltip>
+              </div>
             </template>
           </el-table-column>
-          <el-table-column label="销售 SKU" prop="sku" min-width="170" show-overflow-tooltip>
+          <el-table-column label="销售 SKU" prop="sku" min-width="155" show-overflow-tooltip>
             <template #default="{ row }">
               <span class="sku-code-text font-mono">{{ row.sku }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="对应物料编码" prop="materialCode" min-width="190" show-overflow-tooltip>
+          <el-table-column label="对应物料编码" prop="materialCode" min-width="175" show-overflow-tooltip>
             <template #default="{ row }">
-              <span class="mat-code-text font-mono font-semibold">{{ row.materialCode }}</span>
+              <div class="mat-code-box">
+                <span class="mat-code-text font-mono font-semibold" title="父子绑定组合物料编码">{{ row.materialCode }}</span>
+              </div>
             </template>
           </el-table-column>
-          <el-table-column label="产品名称" prop="productName" min-width="150" show-overflow-tooltip />
-          <el-table-column label="款式" prop="style" width="115" show-overflow-tooltip />
-          <el-table-column label="颜色" prop="color" width="85" align="center" />
-          <el-table-column label="包装数量" prop="packQty" width="85" align="center">
+          <el-table-column label="产品名称" prop="productName" min-width="160" show-overflow-tooltip>
+            <template #default="{ row }">
+              <span class="product-name-cell">{{ row.productName }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="款式" prop="style" width="110" show-overflow-tooltip />
+          <el-table-column label="颜色" prop="color" width="75" align="center" />
+          <el-table-column label="包装数量" prop="packQty" width="80" align="center">
             <template #default="{ row }">
               <span class="font-mono text-xs text-slate-600">{{ row.packQty || '-' }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="跟踪状态" width="100" align="center">
+          <el-table-column label="跟踪状态" width="95" align="center">
             <template #default="{ row }">
-              <el-tag v-if="isRowAlreadyTracked(row)" size="small" type="info" effect="plain">已在跟踪</el-tag>
-              <el-tag v-else size="small" type="success" effect="plain">可添加</el-tag>
+              <el-tag v-if="isRowAlreadyTracked(row)" size="small" type="info" effect="plain" class="status-tracked-tag">已在跟踪</el-tag>
+              <el-tag v-else size="small" type="success" effect="light" class="status-available-tag">可添加</el-tag>
             </template>
           </el-table-column>
         </el-table>
 
         <div class="candidate-pagination-bar">
           <div class="pagination-info text-xs text-slate-500">
-            候选池共 <b>{{ filteredCandidateList.length }}</b> 项 ASIN，当前显示第 <b>{{ candidateCurrentPage }}</b> / <b>{{ Math.ceil(filteredCandidateList.length / candidatePageSize) || 1 }}</b> 页
+            候选池共 <b>{{ filteredCandidateList.length }}</b> 项 ASIN (仅展示已绑定组合物料)，当前显示第 <b>{{ candidateCurrentPage }}</b> / <b>{{ Math.ceil(filteredCandidateList.length / candidatePageSize) || 1 }}</b> 页
           </div>
           <el-pagination
             v-model:current-page="candidateCurrentPage"
             v-model:page-size="candidatePageSize"
             :page-sizes="[10, 20, 50, 100]"
-            layout="total, sizes, prev, pager, next"
+            layout="total, sizes, prev, pager, next, jumper"
             :total="filteredCandidateList.length"
             size="small"
           />
@@ -2391,7 +2417,7 @@
           <div class="selected-summary">
             <span>已勾选 <b class="count-highlight">{{ selectedCandidateRows.length }}</b> 项 ASIN</span>
             <span v-if="selectedCandidateRows.length > 0" class="sub-ready-tip">
-              (可添加: {{ selectableCountInSelection }} 项)
+              (其中可入库: {{ selectableCountInSelection }} 项<span v-if="selectedCandidateRows.length > selectableCountInSelection">，已在跟踪 {{ selectedCandidateRows.length - selectableCountInSelection }} 项将自动跳过</span>)
             </span>
           </div>
           <div class="footer-actions">
@@ -2400,6 +2426,7 @@
               type="primary"
               :disabled="selectedCandidateRows.length === 0"
               icon="Plus"
+              class="batch-add-btn"
               @click="handleConfirmBatchAddAsin"
             >
               批量添加到跟踪列表 (已选 {{ selectedCandidateRows.length }} 项)
@@ -4014,10 +4041,24 @@ const allCandidateAsinList = computed<CandidateAsinItem[]>(() => {
   const result: CandidateAsinItem[] = []
   const seenKey = new Set<string>()
 
-  // 1. 先加入 rawKanbanData 中的真实看板记录
+  // 严格获取当前【父子物料绑定关系】中已存在的所有组合物料编码集合
+  const existingParentCodes = new Set(
+    bindingTableData.value
+      .map(b => b.parentCode)
+      .filter((code): code is string => Boolean(code && code.trim()))
+  )
+
+  if (existingParentCodes.size === 0) {
+    return result
+  }
+
+  // 1. 如果 rawKanbanData 中的真实看板记录对应的物料编码存在于【父子物料绑定关系】中，才纳入候选
   if (rawKanbanData.value && rawKanbanData.value.length) {
     rawKanbanData.value.forEach(k => {
-      if (!k.asin) return
+      if (!k.asin || !k.parentMaterialCode) return
+      // 必须属于父子物料绑定关系中已存在的组合物料
+      if (!existingParentCodes.has(k.parentMaterialCode)) return
+
       const platform = (k as any).platform || 'Amazon'
       const key = `${platform}_${k.account || 'MNE'}_${k.site || 'US'}_${k.asin}_${k.sku || k.parentMaterialCode}`
       if (!seenKey.has(key)) {
@@ -4043,10 +4084,8 @@ const allCandidateAsinList = computed<CandidateAsinItem[]>(() => {
     })
   }
 
-  // 2. 基于 bindingTableData 与 FURNITURE_COMBO_BOM_LIBRARY 组合构建丰富候选池
-  const combosToUse = bindingTableData.value.length >= 10
-    ? bindingTableData.value
-    : FURNITURE_COMBO_BOM_LIBRARY
+  // 2. 严格仅针对父子物料绑定关系 (bindingTableData) 中已存在的组合物料构建店铺对应候选 ASIN
+  const combosToUse = bindingTableData.value
 
   const accountStorePresets = [
     { platform: 'Amazon', account: 'MNE', site: 'US', flag: '🇺🇸' },
@@ -4059,15 +4098,16 @@ const allCandidateAsinList = computed<CandidateAsinItem[]>(() => {
   ]
 
   combosToUse.forEach((item, idx) => {
-    const parentCode = 'parentCode' in item ? item.parentCode : (item as any).parentCode
-    if (!parentCode) return
+    const parentCode = item.parentCode
+    if (!parentCode || !existingParentCodes.has(parentCode)) return
+
     const meta = getComboMetaByMaterialCode(parentCode) || {
-      productName: (item as any).productName || '家具单品',
-      style: (item as any).style || '-',
-      material: (item as any).material || '-',
-      brand: (item as any).brand || '中性',
-      color: (item as any).color || '-',
-      packQty: (item as any).packQty || '1pack'
+      productName: item.productName || '组合物料',
+      style: item.style || '-',
+      material: item.material || '-',
+      brand: item.brand || '中性',
+      color: item.color || '-',
+      packQty: item.packQty || '1pack'
     }
 
     const preset1 = accountStorePresets[idx % accountStorePresets.length]
@@ -4125,7 +4165,17 @@ const allCandidateAsinList = computed<CandidateAsinItem[]>(() => {
 })
 
 const filteredCandidateList = computed(() => {
+  const boundCodes = new Set(
+    bindingTableData.value
+      .map(b => b.parentCode)
+      .filter((c): c is string => Boolean(c && c.trim()))
+  )
+
   return allCandidateAsinList.value.filter(item => {
+    // 强制限定：物料编码必须存在于父子物料绑定关系中
+    if (!boundCodes.has(item.materialCode)) {
+      return false
+    }
     if (candidateFilterPlatform.value && candidateFilterPlatform.value !== '全部' && (item.platform || 'Amazon') !== candidateFilterPlatform.value) {
       return false
     }
@@ -5751,7 +5801,7 @@ const handleBatchAnalysis = () => { ElMessage.success('已完成齐套分析') }
 const handleViewBomDetailInBinding = (row: any) => {
   const childCount = row.boundChildren ? row.boundChildren.length : 0
   if (childCount === 0) {
-    ElMessage.warning(`父 SKU [${row.parentCode}] 当前未绑定任何子 SKU，可点击“编辑”进行绑定`)
+    ElMessage.warning(`父 SKU [${row.parentCode}] 当前未绑定任何子 SKU`)
   } else {
     ElMessage.info(`请点击行首 [+] 展开查看父 SKU [${row.parentCode}] 绑定的 ${childCount} 款子 SKU BOM 明细`)
   }
@@ -7964,25 +8014,25 @@ const handleGoToBindingForParent = (parentCode: string) => {
 // 候选 ASIN 弹窗整体优化样式
 .candidate-asin-dialog {
   :deep(.el-dialog) {
-    border-radius: 10px;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.18), 0 12px 24px -8px rgba(0, 0, 0, 0.08);
   }
 
   :deep(.el-dialog__header) {
-    padding: 16px 24px;
+    padding: 14px 22px;
     margin-right: 0;
     border-bottom: 1px solid #f1f5f9;
     background: #ffffff;
   }
 
   :deep(.el-dialog__body) {
-    padding: 16px 24px;
+    padding: 14px 22px;
     background: #ffffff;
   }
 
   :deep(.el-dialog__footer) {
-    padding: 12px 24px 16px;
+    padding: 12px 22px 14px;
     border-top: 1px solid #f1f5f9;
     background: #f8fafc;
   }
@@ -7990,65 +8040,103 @@ const handleGoToBindingForParent = (parentCode: string) => {
 
 .dialog-custom-header {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
 
-  .header-title-box {
+  .header-left-box {
     display: flex;
     align-items: center;
-    gap: 8px;
 
-    .main-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: #0f172a;
+    .title-content {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+
+      .title-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .main-title {
+          font-size: 16px;
+          font-weight: 700;
+          color: #0f172a;
+          letter-spacing: -0.2px;
+        }
+
+        .sub-badge {
+          font-size: 11px;
+          font-weight: 600;
+          padding: 1.5px 9px;
+          border-radius: 9999px;
+          line-height: 1.4;
+
+          &.badge-green {
+            color: #15803d;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+
+            .badge-dot {
+              width: 6px;
+              height: 6px;
+              border-radius: 50%;
+              background: #22c55e;
+            }
+          }
+        }
+      }
+
+      .header-tip-text {
+        font-size: 12px;
+        color: #64748b;
+        line-height: 1.4;
+      }
     }
-
-    .sub-badge {
-      font-size: 11px;
-      font-weight: 600;
-      color: #2563eb;
-      background: #eff6ff;
-      border: 1px solid #dbeafe;
-      padding: 1px 8px;
-      border-radius: 9999px;
-    }
-  }
-
-  .header-tip-text {
-    font-size: 12px;
-    color: #64748b;
   }
 }
 
 .candidate-filter-container {
   background-color: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 14px;
+  border-radius: 6px;
+  padding: 8px 14px;
+  margin-bottom: 12px;
 
   .filter-flex-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 10px;
+    flex-wrap: nowrap;
+    width: 100%;
   }
 
   .filter-left-group {
     display: flex;
     align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
+    gap: 10px;
+    flex-wrap: nowrap;
+    flex: 1;
+    min-width: 0;
   }
 
   .filter-field {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
+    flex-shrink: 0;
+
+    &.search-field {
+      flex-shrink: 1;
+      min-width: 200px;
+      max-width: 280px;
+    }
 
     .field-label {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
       color: #475569;
       white-space: nowrap;
@@ -8058,13 +8146,17 @@ const handleGoToBindingForParent = (parentCode: string) => {
   .untracked-checkbox {
     margin-left: 2px;
     margin-right: 0;
+    font-size: 12px;
+    flex-shrink: 0;
+    white-space: nowrap;
   }
 
   .filter-right-group {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     flex-shrink: 0;
+    margin-left: auto;
   }
 }
 
@@ -8082,11 +8174,13 @@ const handleGoToBindingForParent = (parentCode: string) => {
       font-size: 12px;
       background: #f8fafc;
       border-bottom: 1px solid #e2e8f0;
+      color: #334155;
+      padding: 8px 0;
     }
 
     td.el-table__cell {
       font-size: 12px;
-      padding: 7px 0;
+      padding: 6px 0;
     }
   }
 }
@@ -8097,9 +8191,9 @@ const handleGoToBindingForParent = (parentCode: string) => {
   color: #334155;
   background-color: #f1f5f9;
   border: 1px solid #e2e8f0;
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .site-badge {
@@ -8110,9 +8204,9 @@ const handleGoToBindingForParent = (parentCode: string) => {
   color: #1e293b;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  padding: 2px 8px;
+  padding: 2px 6px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11px;
 
   .flag-icon {
     font-size: 13px;
@@ -8122,27 +8216,65 @@ const handleGoToBindingForParent = (parentCode: string) => {
 .asin-code-text {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-weight: 700;
-  color: #2563eb;
+  color: #1d4ed8;
   letter-spacing: 0.2px;
+  font-size: 12px;
+}
+
+.copy-asin-btn {
+  padding: 2px 4px !important;
+  color: #94a3b8;
+  transition: all 0.15s ease;
+
+  &:hover {
+    color: #2563eb;
+    background: #eff6ff;
+  }
 }
 
 .sku-code-text {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  color: #1e293b;
+  color: #334155;
+  font-size: 12px;
   font-weight: 500;
+}
+
+.mat-code-box {
+  display: inline-block;
 }
 
 .mat-code-text {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   color: #0f172a;
   font-weight: 600;
+  font-size: 12px;
+}
+
+.product-name-cell {
+  color: #1e293b;
+  font-size: 12px;
+}
+
+.status-tracked-tag {
+  color: #64748b !important;
+  background: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+  font-size: 11px !important;
+}
+
+.status-available-tag {
+  color: #047857 !important;
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  font-weight: 600 !important;
+  font-size: 11px !important;
 }
 
 .candidate-pagination-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 6px 4px;
+  padding: 10px 10px 4px;
 }
 
 .dialog-footer-content {
@@ -8166,6 +8298,7 @@ const handleGoToBindingForParent = (parentCode: string) => {
       color: #059669;
       font-weight: 600;
       margin-left: 8px;
+      font-size: 12px;
     }
   }
 
@@ -8173,6 +8306,11 @@ const handleGoToBindingForParent = (parentCode: string) => {
     display: flex;
     align-items: center;
     gap: 10px;
+
+    .batch-add-btn {
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    }
   }
 }
 

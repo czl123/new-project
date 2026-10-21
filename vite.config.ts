@@ -55,6 +55,7 @@ export default defineConfig({
     }
   },
   server: {
+    host: '0.0.0.0',
     port: 9001,
     watch: {
       ignored: ['**/src/api/sku-kanban-store.json']
