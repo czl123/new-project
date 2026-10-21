@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vue-tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "save": "node scripts/git-save.js"
   },
   "dependencies": {
     "@bscjc/webui": "^1.7.0",

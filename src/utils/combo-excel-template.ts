@@ -358,9 +358,236 @@ export async function generateStyledComboTemplateExcel(customRows?: any[], sheet
 }
 
 /**
- * 将系统中的组合物料数据按导入模板规范导出为标准 Excel 文件
+ * 将系统中的组合物料数据导出为标准 BOM 清单 Excel 文件
+ * 包含：
+ * Sheet 1: 组合物料BOM穿透明细清单 (真正的标准 BOM 结构清单，包含父子物料级联、配比、名称、规格等)
+ * Sheet 2: 组合物料汇总清单 (按款汇总一物一行)
+ * Sheet 3: 批量导入兼容格式 (可用于二次编辑并直接批量导入)
  */
 export async function exportComboListToExcel(rawItems: any[]): Promise<Blob> {
+  const workbook = new ExcelJS.Workbook()
+  workbook.creator = 'JC-ERP 组合物料管理系统'
+  workbook.created = new Date()
+
+  // =========================================================================
+  // Sheet 1: 组合物料BOM穿透明细清单 (生产/仓库/供应链核心对账清单)
+  // =========================================================================
+  const wsBom = workbook.addWorksheet('组合物料BOM穿透明细清单', {
+    views: [{ showGridLines: true }]
+  })
+
+  // 列定义
+  wsBom.columns = [
+    { header: '序号', key: 'index', width: 8 },
+    { header: '组合物料编码', key: 'parentCode', width: 22 },
+    { header: '组合产品名称', key: 'productName', width: 32 },
+    { header: '组合类型', key: 'comboType', width: 15 },
+    { header: '运营大类', key: 'category', width: 18 },
+    { header: '款式', key: 'style', width: 16 },
+    { header: '主材料', key: 'material', width: 20 },
+    { header: '公司品牌', key: 'brand', width: 14 },
+    { header: '颜色', key: 'color', width: 12 },
+    { header: '包装数量', key: 'packQty', width: 12 },
+    { header: 'BOM子件数', key: 'childCount', width: 12 },
+    { header: '子部件序号', key: 'subIndex', width: 12 },
+    { header: '子物料编码', key: 'childCode', width: 20 },
+    { header: '单套配比', key: 'ratio', width: 12 },
+    { header: '子物料产品名称', key: 'childProductName', width: 28 },
+    { header: '子物料款式', key: 'childStyle', width: 16 },
+    { header: '子物料主材料', key: 'childMaterial', width: 20 },
+    { header: '子物料颜色', key: 'childColor', width: 12 },
+    { header: '业务状态', key: 'status', width: 12 },
+    { header: '审核状态', key: 'auditStatus', width: 14 },
+    { header: '审批流程号', key: 'workflowNo', width: 22 },
+    { header: '产品线负责人', key: 'leader', width: 16 }
+  ]
+
+  // 设置表头行样式
+  const headerRow = wsBom.getRow(1)
+  headerRow.height = 32
+  headerRow.eachCell((cell) => {
+    cell.font = { name: 'Microsoft YaHei', size: 10, bold: true, color: { argb: 'FFFFFFFF' } }
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } } // 稳重深蓝
+    cell.alignment = { vertical: 'middle', horizontal: 'center' }
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FF94A3B8' } },
+      left: { style: 'thin', color: { argb: 'FF94A3B8' } },
+      bottom: { style: 'medium', color: { argb: 'FF1E293B' } },
+      right: { style: 'thin', color: { argb: 'FF94A3B8' } }
+    }
+  })
+
+  // 注入数据行
+  rawItems.forEach((item, parentIdx) => {
+    const children = item.boundChildren || item.children || []
+    const parentCode = item.parentCode || item.sku || `COMBO-${parentIdx + 1}`
+    const productName = item.productName || ''
+    const comboType = item.comboType || '多件打包'
+    const category = item.category || '家具/室内家具'
+    const style = item.style || '-'
+    const material = item.material || '-'
+    const brand = item.brand || '中性'
+    const color = item.color || '-'
+    const packQty = item.packQty || (children.length ? `${children.length}pack` : '1pack')
+    const status = item.status || '已生效'
+    const auditStatus = item.auditStatus || '审核通过'
+    const workflowNo = item.workflowNo || '-'
+    const leader = typeof item.productLineLeader === 'string' ? item.productLineLeader : (item.productLineLeader?.name || '夏忠保')
+
+    if (children.length === 0) {
+      const r = wsBom.addRow({
+        index: parentIdx + 1,
+        parentCode,
+        productName,
+        comboType,
+        category,
+        style,
+        material,
+        brand,
+        color,
+        packQty,
+        childCount: 1,
+        subIndex: 1,
+        childCode: parentCode,
+        ratio: '1:1',
+        childProductName: productName,
+        childStyle: style,
+        childMaterial: material,
+        childColor: color,
+        status,
+        auditStatus,
+        workflowNo,
+        leader
+      })
+      styleBomDataRow(r, parentIdx % 2 === 0)
+    } else {
+      children.forEach((c: any, cIdx: number) => {
+        const r = wsBom.addRow({
+          index: cIdx === 0 ? parentIdx + 1 : '',
+          parentCode,
+          productName,
+          comboType,
+          category,
+          style,
+          material,
+          brand,
+          color,
+          packQty,
+          childCount: children.length,
+          subIndex: cIdx + 1,
+          childCode: c.childCode || '-',
+          ratio: c.ratio !== undefined ? `1:${c.ratio}` : '1:1',
+          childProductName: c.childProductName || c.childName || c.productName || productName,
+          childStyle: c.childStyle || c.style || style,
+          childMaterial: c.childMaterial || c.material || material,
+          childColor: c.childColor || c.color || color,
+          status,
+          auditStatus,
+          workflowNo,
+          leader
+        })
+        styleBomDataRow(r, parentIdx % 2 === 0)
+      })
+    }
+  })
+
+  // =========================================================================
+  // Sheet 2: 组合物料汇总清单 (按父物料一物一行)
+  // =========================================================================
+  const wsSummary = workbook.addWorksheet('组合物料汇总清单', {
+    views: [{ showGridLines: true }]
+  })
+
+  wsSummary.columns = [
+    { header: '序号', key: 'index', width: 8 },
+    { header: '物料编码', key: 'parentCode', width: 22 },
+    { header: '产品名称', key: 'productName', width: 32 },
+    { header: '组合类型', key: 'comboType', width: 16 },
+    { header: '运营大类', key: 'category', width: 18 },
+    { header: '款式', key: 'style', width: 16 },
+    { header: '主材料', key: 'material', width: 20 },
+    { header: '公司品牌', key: 'brand', width: 14 },
+    { header: '颜色', key: 'color', width: 12 },
+    { header: '包装规格', key: 'packQty', width: 12 },
+    { header: 'BOM结构构成摘要', key: 'bomSummary', width: 36 },
+    { header: '子物料编码明细', key: 'childCodes', width: 26 },
+    { header: '单套配比明细', key: 'ratios', width: 16 },
+    { header: '业务状态', key: 'status', width: 12 },
+    { header: '审核状态', key: 'auditStatus', width: 14 },
+    { header: '审批流程号', key: 'workflowNo', width: 22 },
+    { header: '产品线负责人', key: 'leader', width: 16 },
+    { header: '销售平台', key: 'salesPlatform', width: 14 }
+  ]
+
+  const summaryHeader = wsSummary.getRow(1)
+  summaryHeader.height = 32
+  summaryHeader.eachCell((cell) => {
+    cell.font = { name: 'Microsoft YaHei', size: 10, bold: true, color: { argb: 'FFFFFFFF' } }
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F766E' } } // 优雅松石绿
+    cell.alignment = { vertical: 'middle', horizontal: 'center' }
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FF94A3B8' } },
+      left: { style: 'thin', color: { argb: 'FF94A3B8' } },
+      bottom: { style: 'medium', color: { argb: 'FF134E4A' } },
+      right: { style: 'thin', color: { argb: 'FF94A3B8' } }
+    }
+  })
+
+  rawItems.forEach((item, idx) => {
+    const children = item.boundChildren || item.children || []
+    const childCodes = item.childCodes || children.map((c: any) => c.childCode).filter(Boolean).join(';')
+    const ratios = item.ratios || children.map((c: any) => c.ratio || 1).join(';')
+    const bomSummary = children.length > 0 
+      ? children.map((c: any) => `${c.childCode}×${c.ratio || 1}`).join(' + ')
+      : `${item.parentCode}×1`
+    const leader = typeof item.productLineLeader === 'string' ? item.productLineLeader : (item.productLineLeader?.name || '夏忠保')
+
+    const r = wsSummary.addRow({
+      index: idx + 1,
+      parentCode: item.parentCode || item.sku || '-',
+      productName: item.productName || '-',
+      comboType: item.comboType || '多件打包',
+      category: item.category || '家具/室内家具',
+      style: item.style || '-',
+      material: item.material || '-',
+      brand: item.brand || '中性',
+      color: item.color || '-',
+      packQty: item.packQty || (children.length ? `${children.length}pack` : '1pack'),
+      bomSummary,
+      childCodes,
+      ratios,
+      status: item.status || '已生效',
+      auditStatus: item.auditStatus || '审核通过',
+      workflowNo: item.workflowNo || '-',
+      leader,
+      salesPlatform: item.salesPlatform || 'Amazon'
+    })
+
+    r.height = 24
+    r.eachCell((cell, colNum) => {
+      cell.font = { name: 'Microsoft YaHei', size: 9.5, color: { argb: 'FF1E293B' } }
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: idx % 2 === 0 ? 'FFFFFFFF' : 'FFF8FAFC' }
+      }
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+        left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+        bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+        right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+      }
+      const centerCols = [1, 4, 8, 9, 10, 13, 14, 15, 17, 18]
+      cell.alignment = {
+        vertical: 'middle',
+        horizontal: centerCols.includes(colNum) ? 'center' : 'left'
+      }
+    })
+  })
+
+  // =========================================================================
+  // Sheet 3: 标准批量导入再录入模板格式 (兼容再导入)
+  // =========================================================================
   const formattedRows = rawItems.map(item => {
     const children = item.boundChildren || item.children || []
     const childCodes = item.childCodes || children.map((c: any) => c.childCode).filter(Boolean).join(';')
@@ -398,7 +625,57 @@ export async function exportComboListToExcel(rawItems: any[]): Promise<Blob> {
     }
   })
 
-  return await generateStyledComboTemplateExcel(formattedRows, '组合物料BOM清单数据')
+  const wsImport = workbook.addWorksheet('批量导入兼容格式', {
+    views: [{ showGridLines: true }]
+  })
+  wsImport.columns = COMBO_TEMPLATE_COLUMNS.map(c => ({ key: c.key, width: c.width }))
+
+  const importHeaderRow = wsImport.getRow(1)
+  importHeaderRow.height = 28
+  COMBO_TEMPLATE_COLUMNS.forEach((col, idx) => {
+    const cell = importHeaderRow.getCell(idx + 1)
+    cell.value = (col.required ? '* ' : '') + col.label
+    cell.font = { name: 'Microsoft YaHei', size: 9.5, bold: true, color: { argb: col.required ? 'FF9F1239' : 'FF334155' } }
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: col.required ? 'FFFFE4E6' : 'FFF1F5F9' } }
+    cell.alignment = { vertical: 'middle', horizontal: 'center' }
+  })
+
+  formattedRows.forEach((rowObj, rIdx) => {
+    const r = wsImport.getRow(rIdx + 2)
+    r.height = 22
+    COMBO_TEMPLATE_COLUMNS.forEach((col, cIdx) => {
+      const cell = r.getCell(cIdx + 1)
+      cell.value = (rowObj as any)[col.key] ?? ''
+      cell.font = { name: 'Microsoft YaHei', size: 9, color: { argb: 'FF334155' } }
+      cell.alignment = { vertical: 'middle', horizontal: 'left' }
+    })
+  })
+
+  const buffer = await workbook.xlsx.writeBuffer()
+  return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+}
+
+function styleBomDataRow(row: ExcelJS.Row, isEven: boolean) {
+  row.height = 24
+  row.eachCell((cell, colNum) => {
+    cell.font = { name: 'Microsoft YaHei', size: 9.5, color: { argb: 'FF1E293B' } }
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: isEven ? 'FFFFFFFF' : 'FFF8FAFC' }
+    }
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+      left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+      bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+      right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+    }
+    const centerCols = [1, 4, 8, 9, 10, 11, 12, 14, 18, 19, 20, 22]
+    cell.alignment = {
+      vertical: 'middle',
+      horizontal: centerCols.includes(colNum) ? 'center' : 'left'
+    }
+  })
 }
 
 /**
@@ -448,6 +725,7 @@ export async function parseComboExcelFile(arrayBuffer: ArrayBuffer, targetStatus
 
   const parsedItems: any[] = []
   const nowStr = new Date().toLocaleString()
+  let emptyRowCount = 0
 
   for (let r = headerRowNum + 1; r <= worksheet.rowCount; r++) {
     const row = worksheet.getRow(r)
@@ -456,14 +734,27 @@ export async function parseComboExcelFile(arrayBuffer: ArrayBuffer, targetStatus
       if (!colIdx) return ''
       const cellVal = row.getCell(colIdx).value
       if (cellVal === null || cellVal === undefined) return ''
-      if (typeof cellVal === 'object' && 'text' in cellVal) {
-        return String((cellVal as any).text || '').trim()
+      if (typeof cellVal === 'object') {
+        if ('text' in cellVal) return String((cellVal as any).text || '').trim()
+        if ('result' in cellVal) return String((cellVal as any).result || '').trim()
+        if ('richText' in cellVal && Array.isArray((cellVal as any).richText)) {
+          return (cellVal as any).richText.map((t: any) => t.text || '').join('').trim()
+        }
+        return ''
       }
       return String(cellVal).trim()
     }
 
     const productName = getVal('productName')
-    if (!productName) continue // 空行跳过
+    if (!productName) {
+      emptyRowCount++
+      if (emptyRowCount >= 15) {
+        // 连续超过 15 个空行，判定数据区已结束，直接跳出，防止 Excel 百万空行遍历卡死
+        break
+      }
+      continue // 空行跳过
+    }
+    emptyRowCount = 0
 
     const childCodesStr = getVal('childCodes')
     const ratiosStr = getVal('ratios')

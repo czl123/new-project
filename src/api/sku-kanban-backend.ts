@@ -6,6 +6,7 @@
 // 1. 数据结构定义
 export interface AsinTrackRecord {
   id: string
+  platform?: string
   account: string
   site: string
   countryFlag: string
@@ -30,6 +31,7 @@ export interface ChildBomItem {
   childPattern?: string
   childColor?: string
   childPackQty?: string
+  image?: string
 }
 
 import { type ComboType, getFurnitureChildMeta, getFurnitureComboMeta } from '@/data/furniture-bom-library'
@@ -101,8 +103,36 @@ export interface ChildPhysicalStockRecord {
   linkedParents: string[]
 }
 
+export interface ThirdPartyWarehouseBreakdown {
+  tpWh: string               // 第三方海外仓服务商 (如: 万邑通, 西邮, 谷仓, 千亚)
+  warehouseNames: string     // 涵盖仓库分支名称 (如: 美西洛杉矶1仓、美东新泽西仓)
+  availableQty: number       // 海外仓物理在库可售 (件)
+  transitQty: number         // 海外仓物理在途 (件)
+  availableSets: number      // 穿透折算可售数量 (套)
+  transitSets: number        // 穿透折算在途套数 (套)
+  orderOccupiedQty: number   // 待发货订单占用 (套)
+  unshippedOrderCount: number// 待发货订单笔数
+  netAvailableSets: number   // 分仓净可用套数 (availableSets - orderOccupiedQty)
+}
+
+export interface ChildWarehouseStockRow {
+  childCode: string          // 子物料编码
+  childName: string          // 子物料名称
+  image?: string             // 子物料图片
+  bomRatio: number           // BOM 绑定用量配比
+  tpWh: string               // 第三方海外仓 (如: 万邑通, 西邮)
+  warehouseName: string      // 涵盖海外仓分支仓库 (如: 美西洛杉矶1仓)
+  availableQty: number       // 海外仓物理可售 (件)
+  transitQty: number         // 海外仓物理在途 (件)
+  penetratedSets: number     // 穿透折算可支持父物料数 (套)
+  transitSets: number        // 穿透折算在途套数 (套)
+  rowSpan?: number           // 表格合并行数 (用于将同一子物料信息多行合并展示)
+  isFirstChildRow?: boolean  // 是否为该子物料的首行
+}
+
 export interface ParentPenetrateKanbanRecord {
   id: string
+  platform?: string
   account: string
   site: string
   countryFlag: string
@@ -112,14 +142,24 @@ export interface ParentPenetrateKanbanRecord {
   productName: string
   style: string
   mainMaterial: string
+  brand?: string
+  color?: string
+  packQty?: string
   targetBrand: string
   model: string
   tpOverseasWh: string
   warehouseName: string
+  coveredWarehouses?: { tpWh: string; warehouseName: string; availableSets: number }[]
+  warehouseNamesSummary?: string
+  warehouseBreakdown?: WarehouseStockBreakdown[]
+  tpWarehouseBreakdown: ThirdPartyWarehouseBreakdown[]
+  rawPenetratedAvailable: number
+  childWarehouseRows?: ChildWarehouseStockRow[]
   image: string
   childMaterials: {
     childCode: string
     childName: string
+    tpWh?: string
     bomRatio: number
     availableQty: number
     transitQty: number
@@ -127,46 +167,360 @@ export interface ParentPenetrateKanbanRecord {
   }[]
   calculatedParentAvailable: number
   calculatedParentTransit: number
+  orderOccupiedQty: number
+  unshippedOrderCount?: number
+  unshippedOrders?: UnshippedOrderRecord[]
   bottleneckChild: {
     childCode: string
     childName: string
     bomRatio: number
     availableQty: number
   } | null
+  bottleneckChildren?: {
+    childCode: string
+    childName: string
+    bomRatio: number
+    availableQty: number
+    availSets: number
+  }[]
+}
+
+export interface UnshippedOrderRecord {
+  orderId: string
+  platform: string
+  account: string
+  site: string
+  sku: string
+  parentMaterialCode: string
+  productName: string
+  tpOverseasWh: string
+  warehouseName: string
+  orderedQty: number
+  orderTime: string
+  latestShipTime: string
+  buyerInfo: string
+  orderStatus: 'Unshipped'
+}
+
+export interface WarehouseStockBreakdown {
+  tpWh: string
+  warehouseName: string
+  availableSets: number
+  transitSets: number
+  orderOccupiedQty: number
+  unshippedOrderCount?: number
+  tpRowSpan?: number
+  childMaterials?: {
+    childCode: string
+    childName: string
+    bomRatio: number
+    availableQty: number
+    transitQty: number
+    calcSets: number
+  }[]
+}
+
+export interface CompletenessShortageItem {
+  childCode: string
+  childName: string
+  childStock: number
+  bomRatio: number
+  currentSets: number
+  gapSets: number
+  suggestedQty: number
+  transitQty: number
+  transitSets: number
+  netShortageQty: number
+  isBottleneck: boolean
 }
 
 export interface CompletenessAlertRecord {
   id: string
+  platform?: string
+  account?: string
+  site?: string
+  countryFlag?: string
+  asin?: string
+  sku?: string
   parentCode: string
   productName: string
+  tpOverseasWh?: string
   warehouseName: string
-  otherMaxStock: number
+  image?: string
+  currentSets: number
   targetSets: number
-  shortageItems: {
-    childCode: string
-    childName: string
-    childStock: number
-    bomRatio: number
-    suggestedQty: number
-  }[]
+  gapSets: number
+  otherMaxStock: number
+  alertType: '断货归零' | '多物料共同短板' | '单物料短板'
+  alertLevel: 'danger' | 'warning' | 'info'
+  bottleneckCount: number
+  shortageItems: CompletenessShortageItem[]
+  totalSuggestedQty: number
+  totalTransitQty: number
+  netSuggestedQty: number
+  transitCoverage: '完全覆盖' | '部分覆盖' | '无在途'
   explanation: string
 }
 
+// 2. 第三方海外仓服务商与物理仓库标准映射关系字典 (依据真实业务映射构建)
+export const TP_OVERSEAS_WAREHOUSES_MAP: Record<string, string[]> = {
+  西邮: [
+    'WPCHI2',
+    'WPGA4',
+    'WPHOU4',
+    'WPLA11',
+    'WPLA4',
+    'WPNJ4',
+    'WPNJ7',
+    'WPLA16',
+    'WPHOU7',
+    'WPGA5',
+    'WPHOU6',
+    'WPCHI3',
+    'WPCHI4'
+  ],
+  环世: [
+    'USCOI03',
+    'USHOU04',
+    'USNJHM01',
+    'USCAEA02',
+    'USGASA01',
+    'USSAV02',
+    'USNJBW02',
+    'USTXHU01',
+    'USSAV03',
+    'USHOU04-1'
+  ],
+  千亚: [
+    'LA3',
+    'QY-NJ02',
+    'GA4131',
+    'QY-TX01',
+    'QY-GA01',
+    '自助分仓',
+    'QY-PA',
+    'QY-LA',
+    'QY-LA01'
+  ],
+  乐歌: [
+    'CAP',
+    'CAR',
+    'CAT',
+    'CHI',
+    'GAE',
+    'HOU05',
+    'HOU06',
+    'HOU07',
+    'MEM',
+    'MEM-R',
+    'NJF',
+    'NJF02',
+    'PAW',
+    'SAV',
+    'SCH',
+    'SCM',
+    'CAMV'
+  ]
+}
+
+export const ALL_TP_OVERSEAS_NAMES = Object.keys(TP_OVERSEAS_WAREHOUSES_MAP)
+
 // 2. Storage Storage Keys
 const STORAGE_KEYS = {
-  ASIN_TRACK: 'jcerp_asin_track_db_v2',
-  MATERIAL_BINDINGS: 'jcerp_material_bindings_db_v1',
-  CHILD_PHYSICAL_STOCKS: 'jcerp_child_stocks_db_v2',
-  KANBAN_PARENT_SKUS: 'jcerp_kanban_parent_skus_db_v1',
-  LAST_SYNC_TIME: 'jcerp_last_lingxing_sync_time'
+  ASIN_TRACK: 'jcerp_asin_track_db_v5',
+  MATERIAL_BINDINGS: 'jcerp_material_bindings_db_v5',
+  CHILD_PHYSICAL_STOCKS: 'jcerp_child_stocks_db_v5',
+  KANBAN_PARENT_SKUS: 'jcerp_kanban_parent_skus_db_v5',
+  LAST_SYNC_TIME: 'jcerp_last_lingxing_sync_time_v5',
+  UNSHIPPED_ORDERS: 'jcerp_unshipped_orders_db_v5',
+  LAST_UNSHIPPED_SYNC_TIME: 'jcerp_last_unshipped_sync_time_v5'
 }
 
 import storeData from './sku-kanban-store.json'
 
 // 3. 初始默认种子数据 (Initial Seed Data)
-const INITIAL_ASIN_TRACK: AsinTrackRecord[] = []
-const INITIAL_MATERIAL_BINDINGS: MaterialBindingRecord[] = []
-const INITIAL_CHILD_PHYSICAL_STOCKS: ChildPhysicalStockRecord[] = []
+const INITIAL_ASIN_TRACK: AsinTrackRecord[] = Array.isArray((storeData as any)?.asinTrack) ? (storeData as any).asinTrack : []
+const INITIAL_MATERIAL_BINDINGS: MaterialBindingRecord[] = Array.isArray((storeData as any)?.materialBindings) ? (storeData as any).materialBindings : []
+const INITIAL_CHILD_PHYSICAL_STOCKS: ChildPhysicalStockRecord[] = Array.isArray((storeData as any)?.childPhysicalStocks) ? (storeData as any).childPhysicalStocks : []
+
+export const INITIAL_UNSHIPPED_ORDERS: UnshippedOrderRecord[] = [
+  {
+    orderId: '114-8291048-2849102',
+    platform: 'Amazon',
+    account: 'MNE',
+    site: 'US',
+    sku: 'SKU-DEMO-SINGLE',
+    parentMaterialCode: 'DEMO-SINGLE-01',
+    productName: '法式复古实木餐边柜(2件装)',
+    tpOverseasWh: '西邮',
+    warehouseName: 'WPGA4',
+    orderedQty: 2,
+    orderTime: '2026-10-15 10:24:18',
+    latestShipTime: '2026-10-17 18:00:00',
+    buyerInfo: 'David K. (Atlanta, GA)',
+    orderStatus: 'Unshipped'
+  },
+  {
+    orderId: '114-9988112-7766554',
+    platform: 'Amazon',
+    account: 'MNE',
+    site: 'US',
+    sku: 'SKU-DEMO-SINGLE',
+    parentMaterialCode: 'DEMO-SINGLE-01',
+    productName: '法式复古实木餐边柜(2件装)',
+    tpOverseasWh: '环世',
+    warehouseName: 'USTXHU01',
+    orderedQty: 3,
+    orderTime: '2026-10-16 09:12:00',
+    latestShipTime: '2026-10-18 20:00:00',
+    buyerInfo: 'Robert S. (Houston, TX)',
+    orderStatus: 'Unshipped'
+  },
+  {
+    orderId: 'WM-84910391204',
+    platform: 'Walmart',
+    account: 'WKJ',
+    site: 'US',
+    sku: 'SKU-DEMO-CHAIR2P',
+    parentMaterialCode: 'DEMO-SINGLE-02',
+    productName: '北欧全实木休闲椅(2把装)',
+    tpOverseasWh: '千亚',
+    warehouseName: 'LA3',
+    orderedQty: 4,
+    orderTime: '2026-10-15 14:10:33',
+    latestShipTime: '2026-10-18 12:00:00',
+    buyerInfo: 'Robert B. (Los Angeles, CA)',
+    orderStatus: 'Unshipped'
+  },
+  {
+    orderId: 'TT-20261015-8912',
+    platform: 'TikTok',
+    account: 'YBS',
+    site: 'US',
+    sku: 'SKU-DEMO-STOOL4P',
+    parentMaterialCode: 'DEMO-SINGLE-03',
+    productName: '现代极简折叠圆凳(4把装)',
+    tpOverseasWh: '西邮',
+    warehouseName: 'WPCHI2',
+    orderedQty: 2,
+    orderTime: '2026-10-15 20:15:40',
+    latestShipTime: '2026-10-17 20:00:00',
+    buyerInfo: 'Jessica W. (Chicago, IL)',
+    orderStatus: 'Unshipped'
+  },
+  {
+    orderId: '113-4819204-1849201',
+    platform: 'Amazon',
+    account: 'MNE',
+    site: 'US',
+    sku: 'SKU-DEMO-BALANCED',
+    parentMaterialCode: 'DEMO-BALANCED-01',
+    productName: '等比齐套实木书桌',
+    tpOverseasWh: '西邮',
+    warehouseName: 'WPNJ4',
+    orderedQty: 8,
+    orderTime: '2026-10-15 11:05:22',
+    latestShipTime: '2026-10-17 15:00:00',
+    buyerInfo: 'Michael P. (Newark, NJ)',
+    orderStatus: 'Unshipped'
+  },
+  {
+    orderId: 'WF-78912034912',
+    platform: 'Wayfair',
+    account: 'DW',
+    site: 'US',
+    sku: 'SKU-DEMO-MULTI',
+    parentMaterialCode: 'DEMO-MULTI-01',
+    productName: '全能储物榻榻米多件套',
+    tpOverseasWh: '乐歌',
+    warehouseName: 'NJF',
+    orderedQty: 5,
+    orderTime: '2026-10-15 16:30:00',
+    latestShipTime: '2026-10-18 18:00:00',
+    buyerInfo: 'Thomas B. (Jersey City, NJ)',
+    orderStatus: 'Unshipped'
+  },
+  {
+    orderId: '114-3829104-5829104',
+    platform: 'Amazon',
+    account: 'MNE',
+    site: 'US',
+    sku: 'CB-B01*2-PBM-YL-2',
+    parentMaterialCode: 'CB-B01*2-PBM-YL-2',
+    productName: '餐边柜双门款',
+    tpOverseasWh: '西邮',
+    warehouseName: 'WPNJ7',
+    orderedQty: 12,
+    orderTime: '2026-10-15 09:12:44',
+    latestShipTime: '2026-10-17 18:00:00',
+    buyerInfo: 'Ashley H. (New York, NY)',
+    orderStatus: 'Unshipped'
+  },
+  {
+    orderId: 'WM-90284719283',
+    platform: 'Walmart',
+    account: 'WKJ',
+    site: 'US',
+    sku: 'CB-B04*3-PBM-HKYL-3',
+    parentMaterialCode: 'CB-B04*3-PBM-HKYL-3',
+    productName: '餐边柜三门款',
+    tpOverseasWh: '环世',
+    warehouseName: 'USNJBW02',
+    orderedQty: 5,
+    orderTime: '2026-10-16 02:40:19',
+    latestShipTime: '2026-10-18 16:00:00',
+    buyerInfo: 'Jennifer C. (Denver, CO)',
+    orderStatus: 'Unshipped'
+  },
+  {
+    orderId: '114-1928401-4920194',
+    platform: 'Amazon',
+    account: 'MNE',
+    site: 'US',
+    sku: 'DS-B05*3-PBM-HKYL-3',
+    parentMaterialCode: 'DS-B05*3-PBM-HKYL-3',
+    productName: '双抽电视柜',
+    tpOverseasWh: '千亚',
+    warehouseName: '自助分仓',
+    orderedQty: 10,
+    orderTime: '2026-10-15 13:22:01',
+    latestShipTime: '2026-10-17 12:00:00',
+    buyerInfo: 'Kevin R. (Dallas, TX)',
+    orderStatus: 'Unshipped'
+  },
+  {
+    orderId: '112-7491028-4820192',
+    platform: 'Amazon',
+    account: 'MNE',
+    site: 'US',
+    sku: 'SG-B06*3-PBM-YL-3',
+    parentMaterialCode: 'SG-B06*3-PBM-YL-3',
+    productName: '全开窗书柜',
+    tpOverseasWh: '乐歌',
+    warehouseName: 'GAE',
+    orderedQty: 4,
+    orderTime: '2026-10-16 07:14:55',
+    latestShipTime: '2026-10-18 20:00:00',
+    buyerInfo: 'Laura S. (Atlanta, GA)',
+    orderStatus: 'Unshipped'
+  },
+  {
+    orderId: '114-4910293-8492018',
+    platform: 'Amazon',
+    account: 'MNE',
+    site: 'US',
+    sku: 'CB-B02*3-PBMGL-YL-3',
+    parentMaterialCode: 'CB-B02*3-PBMGL-YL-3',
+    productName: '玻璃门餐边柜',
+    tpOverseasWh: '西邮',
+    warehouseName: 'WPLA16',
+    orderedQty: 8,
+    orderTime: '2026-10-15 15:45:30',
+    latestShipTime: '2026-10-17 22:00:00',
+    buyerInfo: 'Brandon F. (Los Angeles, CA)',
+    orderStatus: 'Unshipped'
+  }
+]
 
 // Helper: 本地 LocalStorage 读写
 function loadFromStorage<T>(key: string, defaultData: T): T {
@@ -195,6 +549,7 @@ export async function persistAllToLocalJsonFile(): Promise<void> {
     const asinTrack = loadFromStorage(STORAGE_KEYS.ASIN_TRACK, INITIAL_ASIN_TRACK)
     const materialBindings = loadFromStorage(STORAGE_KEYS.MATERIAL_BINDINGS, INITIAL_MATERIAL_BINDINGS)
     const childPhysicalStocks = loadFromStorage(STORAGE_KEYS.CHILD_PHYSICAL_STOCKS, INITIAL_CHILD_PHYSICAL_STOCKS)
+    const unshippedOrders = loadFromStorage(STORAGE_KEYS.UNSHIPPED_ORDERS, INITIAL_UNSHIPPED_ORDERS)
 
     await fetch('/api/local-store/sku-kanban', {
       method: 'POST',
@@ -202,7 +557,8 @@ export async function persistAllToLocalJsonFile(): Promise<void> {
       body: JSON.stringify({
         asinTrack,
         materialBindings,
-        childPhysicalStocks
+        childPhysicalStocks,
+        unshippedOrders
       }, null, 2)
     })
   } catch (err) {
@@ -257,6 +613,7 @@ export function deepScanAndRecoverAllHistoryData(): { asinCount: number; binding
             const siteMap: Record<string, string> = { US: '🇺🇸', DE: '🇩🇪', UK: '🇬🇧', JP: '🇯🇵', CA: '🇨🇦' }
             asinMap.set(k, {
               id: item.id || ('asin_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)),
+              platform: item.platform || 'Amazon',
               account: item.account || 'MNE',
               site: item.site || 'US',
               countryFlag: item.countryFlag || siteMap[item.site] || '🇺🇸',
@@ -344,15 +701,27 @@ export async function loadServerJsonStore(): Promise<boolean> {
     const res = await fetch('/api/local-store/sku-kanban')
     if (res.ok) {
       const data = await res.json()
-      if (data && typeof data === 'object') {
+      if (data && typeof data === 'object' && Array.isArray(data.materialBindings) && data.materialBindings.length > 0) {
         localStorage.setItem(STORAGE_KEYS.ASIN_TRACK, JSON.stringify(Array.isArray(data.asinTrack) ? data.asinTrack : []))
         localStorage.setItem(STORAGE_KEYS.MATERIAL_BINDINGS, JSON.stringify(Array.isArray(data.materialBindings) ? data.materialBindings : []))
         localStorage.setItem(STORAGE_KEYS.CHILD_PHYSICAL_STOCKS, JSON.stringify(Array.isArray(data.childPhysicalStocks) ? data.childPhysicalStocks : []))
+        if (Array.isArray(data.unshippedOrders) && data.unshippedOrders.length > 0) {
+          localStorage.setItem(STORAGE_KEYS.UNSHIPPED_ORDERS, JSON.stringify(data.unshippedOrders))
+        }
         return true
       }
     }
   } catch (err) {
     console.warn('loadServerJsonStore failed:', err)
+  }
+  if (storeData && typeof storeData === 'object' && Array.isArray((storeData as any).materialBindings)) {
+    localStorage.setItem(STORAGE_KEYS.ASIN_TRACK, JSON.stringify((storeData as any).asinTrack || []))
+    localStorage.setItem(STORAGE_KEYS.MATERIAL_BINDINGS, JSON.stringify((storeData as any).materialBindings || []))
+    localStorage.setItem(STORAGE_KEYS.CHILD_PHYSICAL_STOCKS, JSON.stringify((storeData as any).childPhysicalStocks || []))
+    if (Array.isArray((storeData as any).unshippedOrders) && (storeData as any).unshippedOrders.length > 0) {
+      localStorage.setItem(STORAGE_KEYS.UNSHIPPED_ORDERS, JSON.stringify((storeData as any).unshippedOrders))
+    }
+    return true
   }
   return false
 }
@@ -366,7 +735,11 @@ export async function initBackendStoreData(): Promise<{ asinCount: number; bindi
 
 // --- ASIN 跟踪模块后台 API ---
 export async function dbFetchAsinTracks(): Promise<AsinTrackRecord[]> {
-  return loadFromStorage(STORAGE_KEYS.ASIN_TRACK, INITIAL_ASIN_TRACK)
+  const list = loadFromStorage<AsinTrackRecord[]>(STORAGE_KEYS.ASIN_TRACK, INITIAL_ASIN_TRACK)
+  return list.map(item => ({
+    ...item,
+    platform: item.platform || 'Amazon'
+  }))
 }
 
 export async function dbSaveAsinTrack(record: Omit<AsinTrackRecord, 'id'> & { id?: string }): Promise<AsinTrackRecord> {
@@ -379,7 +752,7 @@ export async function dbSaveAsinTrack(record: Omit<AsinTrackRecord, 'id'> & { id
       list[idx] = { ...list[idx], ...record } as AsinTrackRecord
       savedRecord = list[idx]
     } else {
-      savedRecord = { ...record, id: 'asin_' + Date.now() } as AsinTrackRecord
+      savedRecord = { ...record, platform: record.platform || 'Amazon', id: 'asin_' + Date.now() } as AsinTrackRecord
       list.unshift(savedRecord)
     }
   } else {
@@ -389,7 +762,7 @@ export async function dbSaveAsinTrack(record: Omit<AsinTrackRecord, 'id'> & { id
       list[idx] = { ...list[idx], ...record } as AsinTrackRecord
       savedRecord = list[idx]
     } else {
-      savedRecord = { ...record, id: 'asin_' + Date.now() } as AsinTrackRecord
+      savedRecord = { ...record, platform: record.platform || 'Amazon', id: 'asin_' + Date.now() } as AsinTrackRecord
       list.unshift(savedRecord)
     }
   }
@@ -417,6 +790,7 @@ export async function dbBatchImportAsinTracks(newRecords: Partial<AsinTrackRecor
     const idx = list.findIndex(item => item.asin === rec.asin && item.sku === rec.sku)
     const fullItem: AsinTrackRecord = {
       id: 'asin_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      platform: rec.platform || 'Amazon',
       account: rec.account || 'Amazon-US-01',
       site: rec.site || 'US',
       countryFlag: flag,
@@ -437,6 +811,43 @@ export async function dbBatchImportAsinTracks(newRecords: Partial<AsinTrackRecor
 
   saveToStorage(STORAGE_KEYS.ASIN_TRACK, list)
   return importedCount
+}
+
+export async function dbUpdateSingleAsinTrack(asin: string, sku: string): Promise<AsinTrackRecord | null> {
+  const list = loadFromStorage<AsinTrackRecord[]>(STORAGE_KEYS.ASIN_TRACK, INITIAL_ASIN_TRACK)
+  const idx = list.findIndex(item => item.asin === asin && item.sku === sku)
+  if (idx === -1) return null
+
+  const existing = list[idx]
+  const siteFlags: Record<string, string> = { US: '🇺🇸', DE: '🇩🇪', UK: '🇬🇧', JP: '🇯🇵', CA: '🇨🇦' }
+  const flag = siteFlags[existing.site || 'US'] || existing.countryFlag || '🌐'
+
+  const updated: AsinTrackRecord = {
+    ...existing,
+    countryFlag: flag,
+    addTime: existing.addTime || new Date().toLocaleString().slice(0, 16)
+  }
+
+  list[idx] = updated
+  saveToStorage(STORAGE_KEYS.ASIN_TRACK, list)
+  return updated
+}
+
+export async function dbUpdateAllAsinTracks(): Promise<number> {
+  const list = loadFromStorage<AsinTrackRecord[]>(STORAGE_KEYS.ASIN_TRACK, INITIAL_ASIN_TRACK)
+  const siteFlags: Record<string, string> = { US: '🇺🇸', DE: '🇩🇪', UK: '🇬🇧', JP: '🇯🇵', CA: '🇨🇦' }
+  let count = 0
+
+  const updatedList = list.map(item => {
+    count++
+    return {
+      ...item,
+      countryFlag: siteFlags[item.site || 'US'] || item.countryFlag || '🌐'
+    }
+  })
+
+  saveToStorage(STORAGE_KEYS.ASIN_TRACK, updatedList)
+  return count
 }
 
 // --- 父子物料 BOM 绑定模块后台 API ---
@@ -584,6 +995,140 @@ export async function dbBatchImportMaterialBindings(bindings: (Omit<MaterialBind
   return count
 }
 
+export async function dbUpdateSingleMaterialBinding(parentCode: string): Promise<MaterialBindingRecord | null> {
+  const list = loadFromStorage<MaterialBindingRecord[]>(STORAGE_KEYS.MATERIAL_BINDINGS, INITIAL_MATERIAL_BINDINGS)
+  const idx = list.findIndex(item => item.parentCode === parentCode)
+  if (idx === -1) return null
+
+  const existing = list[idx]
+  const comboMeta = getFurnitureComboMeta(parentCode)
+
+  let boundChildren = existing.boundChildren || []
+  if (comboMeta && comboMeta.children && comboMeta.children.length > 0) {
+    boundChildren = comboMeta.children.map(c => {
+      const cMeta = getFurnitureChildMeta(c.childCode)
+      return {
+        childCode: c.childCode,
+        childName: c.childName || cMeta?.childName || c.childCode,
+        ratio: c.ratio || 1,
+        childProductName: c.childProductName || cMeta?.childProductName || '',
+        childStyle: c.childStyle || cMeta?.childStyle || '',
+        childMaterial: c.childMaterial || cMeta?.childMaterial || '',
+        childTarget: c.childTarget || cMeta?.childTarget || '通用',
+        childModel: c.childModel || cMeta?.childModel || '通用',
+        childBrand: c.childBrand || cMeta?.childBrand || '中性',
+        childPattern: c.childPattern || cMeta?.childPattern || '',
+        childColor: c.childColor || cMeta?.childColor || '',
+        childPackQty: c.childPackQty || cMeta?.childPackQty || '1pack',
+        image: c.image || cMeta?.image
+      }
+    })
+  } else {
+    boundChildren = boundChildren.map(c => {
+      const cMeta = getFurnitureChildMeta(c.childCode)
+      return {
+        ...c,
+        childName: c.childName || cMeta?.childName || c.childCode,
+        childProductName: c.childProductName || cMeta?.childProductName || '',
+        childStyle: c.childStyle || cMeta?.childStyle || '',
+        childMaterial: c.childMaterial || cMeta?.childMaterial || '',
+        childTarget: c.childTarget || cMeta?.childTarget || '通用',
+        childModel: c.childModel || cMeta?.childModel || '通用',
+        childBrand: c.childBrand || cMeta?.childBrand || '中性',
+        childPattern: c.childPattern || cMeta?.childPattern || '',
+        childColor: c.childColor || cMeta?.childColor || '',
+        childPackQty: c.childPackQty || cMeta?.childPackQty || '1pack',
+        image: c.image || cMeta?.image
+      }
+    })
+  }
+
+  const updated: MaterialBindingRecord = {
+    ...existing,
+    productName: comboMeta?.productName || existing.productName,
+    style: comboMeta?.style || existing.style || '',
+    material: comboMeta?.material || existing.material || '',
+    brand: comboMeta?.brand || existing.brand || '中性',
+    color: comboMeta?.color || existing.color || '',
+    packQty: comboMeta?.packQty || existing.packQty || '',
+    comboType: normalizeComboType(comboMeta?.comboType || existing.comboType),
+    status: boundChildren.length > 0 ? '已绑定' : '未绑定',
+    updateTime: new Date().toLocaleString(),
+    boundChildren
+  }
+
+  list[idx] = updated
+  saveToStorage(STORAGE_KEYS.MATERIAL_BINDINGS, list)
+  return updated
+}
+
+export async function dbUpdateAllMaterialBindings(): Promise<number> {
+  const list = loadFromStorage<MaterialBindingRecord[]>(STORAGE_KEYS.MATERIAL_BINDINGS, INITIAL_MATERIAL_BINDINGS)
+  let count = 0
+  const now = new Date().toLocaleString()
+
+  const updatedList = list.map(item => {
+    const comboMeta = getFurnitureComboMeta(item.parentCode)
+    let boundChildren = item.boundChildren || []
+    if (comboMeta && comboMeta.children && comboMeta.children.length > 0) {
+      boundChildren = comboMeta.children.map(c => {
+        const cMeta = getFurnitureChildMeta(c.childCode)
+        return {
+          childCode: c.childCode,
+          childName: c.childName || cMeta?.childName || c.childCode,
+          ratio: c.ratio || 1,
+          childProductName: c.childProductName || cMeta?.childProductName || '',
+          childStyle: c.childStyle || cMeta?.childStyle || '',
+          childMaterial: c.childMaterial || cMeta?.childMaterial || '',
+          childTarget: c.childTarget || cMeta?.childTarget || '通用',
+          childModel: c.childModel || cMeta?.childModel || '通用',
+          childBrand: c.childBrand || cMeta?.childBrand || '中性',
+          childPattern: c.childPattern || cMeta?.childPattern || '',
+          childColor: c.childColor || cMeta?.childColor || '',
+          childPackQty: c.childPackQty || cMeta?.childPackQty || '1pack',
+          image: c.image || cMeta?.image
+        }
+      })
+    } else {
+      boundChildren = boundChildren.map(c => {
+        const cMeta = getFurnitureChildMeta(c.childCode)
+        return {
+          ...c,
+          childName: c.childName || cMeta?.childName || c.childCode,
+          childProductName: c.childProductName || cMeta?.childProductName || '',
+          childStyle: c.childStyle || cMeta?.childStyle || '',
+          childMaterial: c.childMaterial || cMeta?.childMaterial || '',
+          childTarget: c.childTarget || cMeta?.childTarget || '通用',
+          childModel: c.childModel || cMeta?.childModel || '通用',
+          childBrand: c.childBrand || cMeta?.childBrand || '中性',
+          childPattern: c.childPattern || cMeta?.childPattern || '',
+          childColor: c.childColor || cMeta?.childColor || '',
+          childPackQty: c.childPackQty || cMeta?.childPackQty || '1pack',
+          image: c.image || cMeta?.image
+        }
+      })
+    }
+    count++
+    return {
+      ...item,
+      productName: comboMeta?.productName || item.productName,
+      style: comboMeta?.style || item.style || '',
+      material: comboMeta?.material || item.material || '',
+      brand: comboMeta?.brand || item.brand || '中性',
+      color: comboMeta?.color || item.color || '',
+      packQty: comboMeta?.packQty || item.packQty || '',
+      comboType: normalizeComboType(comboMeta?.comboType || item.comboType),
+      status: boundChildren.length > 0 ? '已绑定' : '未绑定',
+      updateTime: now,
+      boundChildren
+    } as MaterialBindingRecord
+  })
+
+  saveToStorage(STORAGE_KEYS.MATERIAL_BINDINGS, updatedList)
+  return count
+}
+
+
 // --- 子物料物理库存后台 API (子物料严格来源于父子物料绑定关系的子物料) ---
 export async function dbFetchChildPhysicalStocks(): Promise<ChildPhysicalStockRecord[]> {
   const bindings = loadFromStorage(STORAGE_KEYS.MATERIAL_BINDINGS, INITIAL_MATERIAL_BINDINGS)
@@ -635,13 +1180,14 @@ export async function dbFetchChildPhysicalStocks(): Promise<ChildPhysicalStockRe
       existing.linkedParents = Array.from(info.parents)
       resultList.push(existing)
     } else {
-      const defaultWh = info.tpWh === '谷仓' ? '德法兰克福1仓' : info.tpWh === '递四方' ? '英伦敦1仓' : info.tpWh === '乐歌' ? '美东新泽西2仓' : '美西洛杉矶1仓'
+      const targetTpWh = info.tpWh && TP_OVERSEAS_WAREHOUSES_MAP[info.tpWh] ? info.tpWh : '西邮'
+      const defaultWh = TP_OVERSEAS_WAREHOUSES_MAP[targetTpWh]?.[0] || 'WPLA11'
       resultList.push({
         id: 'c_auto_' + code + '_' + Date.now(),
         childCode: code,
         childName: info.childName,
         spec: info.spec,
-        tpWh: info.tpWh,
+        tpWh: targetTpWh,
         whName: defaultWh,
         availableQty: 500,
         transitQty: 200,
@@ -676,13 +1222,18 @@ export async function dbSaveChildPhysicalStock(record: Partial<ChildPhysicalStoc
     idx = list.findIndex(item => item.id === record.id)
   }
 
+  const assignedTpWh = record.tpWh && TP_OVERSEAS_WAREHOUSES_MAP[record.tpWh] ? record.tpWh : '西邮'
+  const assignedWhName = record.whName && TP_OVERSEAS_WAREHOUSES_MAP[assignedTpWh]?.includes(record.whName)
+    ? record.whName
+    : (TP_OVERSEAS_WAREHOUSES_MAP[assignedTpWh]?.[0] || 'WPLA11')
+
   const newItem: ChildPhysicalStockRecord = {
     id: record.id || ('child_stock_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)),
     childCode: record.childCode || 'SUB-NEW',
     childName: record.childName || '未命名子物料',
     spec: record.spec || '通用规格',
-    tpWh: record.tpWh || '西邮',
-    whName: record.whName || '美西洛杉矶1仓',
+    tpWh: assignedTpWh,
+    whName: assignedWhName,
     availableQty: record.availableQty ?? 100,
     transitQty: record.transitQty ?? 0,
     linkedParents: record.linkedParents || []
@@ -710,14 +1261,353 @@ export async function dbFetchPenetratedKanbanData(): Promise<ParentPenetrateKanb
   const bindings = loadFromStorage(STORAGE_KEYS.MATERIAL_BINDINGS, INITIAL_MATERIAL_BINDINGS)
   const childStocks = loadFromStorage(STORAGE_KEYS.CHILD_PHYSICAL_STOCKS, INITIAL_CHILD_PHYSICAL_STOCKS)
   const asinTracks = loadFromStorage(STORAGE_KEYS.ASIN_TRACK, INITIAL_ASIN_TRACK)
+  const unshippedOrders = loadFromStorage(STORAGE_KEYS.UNSHIPPED_ORDERS, INITIAL_UNSHIPPED_ORDERS)
 
-  // 1. 按 childCode 聚合子物料存量明细，同时去除仓库名称前后空格
+  // 1. 过滤已废弃的三方海外仓及旧测试仓库，确保严格对齐西邮、环世、千亚、乐歌 49 个标准物理仓
+  const validProviders = Object.keys(TP_OVERSEAS_WAREHOUSES_MAP)
+  let cleanStocks = childStocks.filter(s => validProviders.includes(s.tpWh) && TP_OVERSEAS_WAREHOUSES_MAP[s.tpWh]?.includes(s.whName))
+  if (cleanStocks.length === 0 && INITIAL_CHILD_PHYSICAL_STOCKS.length > 0) {
+    cleanStocks = [...INITIAL_CHILD_PHYSICAL_STOCKS]
+  }
+
+  // 2. 构造不同海外仓与分仓的丰富业务场景 (支持同销售SKU在不同海外仓同时存在缺货、在途覆盖或健康充盈)
+  // 场景 1: DEMO-MULTI-01 全能储物榻榻米
+  // 1.1 西邮 - WPLA11 (断货归零场景：地台为0，全套停摆)
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-13' && s.tpWh === '西邮' && s.whName === 'WPLA11')) {
+    cleanStocks.push({
+      id: 'c_demo_C13_xy_wpla11',
+      childCode: 'DEMO-C-13',
+      childName: '大容量气压高箱储物榻榻米床体',
+      spec: 'Tatami-Storage',
+      tpWh: '西邮',
+      whName: 'WPLA11',
+      availableQty: 0,
+      transitQty: 0,
+      linkedParents: ['DEMO-MULTI-01']
+    })
+  }
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-14' && s.tpWh === '西邮' && s.whName === 'WPLA11')) {
+    cleanStocks.push({
+      id: 'c_demo_C14_xy_wpla11',
+      childCode: 'DEMO-C-14',
+      childName: '顶天立地分区挂衣储物三门大衣柜',
+      spec: 'Wardrobe-3Door',
+      tpWh: '西邮',
+      whName: 'WPLA11',
+      availableQty: 180,
+      transitQty: 40,
+      linkedParents: ['DEMO-MULTI-01']
+    })
+  }
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-15' && s.tpWh === '西邮' && s.whName === 'WPLA11')) {
+    cleanStocks.push({
+      id: 'c_demo_C15_xy_wpla11',
+      childCode: 'DEMO-C-15',
+      childName: 'L型加宽加厚转角多功能书桌架',
+      spec: 'Desk-LCorner',
+      tpWh: '西邮',
+      whName: 'WPLA11',
+      availableQty: 180,
+      transitQty: 40,
+      linkedParents: ['DEMO-MULTI-01']
+    })
+  }
+
+  // 1.2 千亚 - QY-TX01 (多物料协同短板：榻榻米与大衣柜同为 60 套短板)
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-13' && s.tpWh === '千亚' && s.whName === 'QY-TX01')) {
+    cleanStocks.push({
+      id: 'c_demo_C13_qy_tx01',
+      childCode: 'DEMO-C-13',
+      childName: '大容量气压高箱储物榻榻米床体',
+      spec: 'Tatami-Storage',
+      tpWh: '千亚',
+      whName: 'QY-TX01',
+      availableQty: 60,
+      transitQty: 30,
+      linkedParents: ['DEMO-MULTI-01']
+    })
+  }
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-14' && s.tpWh === '千亚' && s.whName === 'QY-TX01')) {
+    cleanStocks.push({
+      id: 'c_demo_C14_qy_tx01',
+      childCode: 'DEMO-C-14',
+      childName: '顶天立地分区挂衣储物三门大衣柜',
+      spec: 'Wardrobe-3Door',
+      tpWh: '千亚',
+      whName: 'QY-TX01',
+      availableQty: 60,
+      transitQty: 30,
+      linkedParents: ['DEMO-MULTI-01']
+    })
+  }
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-15' && s.tpWh === '千亚' && s.whName === 'QY-TX01')) {
+    cleanStocks.push({
+      id: 'c_demo_C15_qy_tx01',
+      childCode: 'DEMO-C-15',
+      childName: 'L型加宽加厚转角多功能书桌架',
+      spec: 'Desk-LCorner',
+      tpWh: '千亚',
+      whName: 'QY-TX01',
+      availableQty: 200,
+      transitQty: 50,
+      linkedParents: ['DEMO-MULTI-01']
+    })
+  }
+
+  // 1.3 乐歌 - NJF (单物料短板 + 在途足额完全覆盖场景)
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-13' && s.tpWh === '乐歌' && s.whName === 'NJF')) {
+    cleanStocks.push({
+      id: 'c_demo_C13_lg_njf',
+      childCode: 'DEMO-C-13',
+      childName: '大容量气压高箱储物榻榻米床体',
+      spec: 'Tatami-Storage',
+      tpWh: '乐歌',
+      whName: 'NJF',
+      availableQty: 250,
+      transitQty: 0,
+      linkedParents: ['DEMO-MULTI-01']
+    })
+  }
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-14' && s.tpWh === '乐歌' && s.whName === 'NJF')) {
+    cleanStocks.push({
+      id: 'c_demo_C14_lg_njf',
+      childCode: 'DEMO-C-14',
+      childName: '顶天立地分区挂衣储物三门大衣柜',
+      spec: 'Wardrobe-3Door',
+      tpWh: '乐歌',
+      whName: 'NJF',
+      availableQty: 50,
+      transitQty: 200,
+      linkedParents: ['DEMO-MULTI-01']
+    })
+  }
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-15' && s.tpWh === '乐歌' && s.whName === 'NJF')) {
+    cleanStocks.push({
+      id: 'c_demo_C15_lg_njf',
+      childCode: 'DEMO-C-15',
+      childName: 'L型加宽加厚转角多功能书桌架',
+      spec: 'Desk-LCorner',
+      tpWh: '乐歌',
+      whName: 'NJF',
+      availableQty: 250,
+      transitQty: 0,
+      linkedParents: ['DEMO-MULTI-01']
+    })
+  }
+
+  // 1.4 环世 - USNJHM01 (平衡充盈健康在库)
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-13' && s.tpWh === '环世' && s.whName === 'USNJHM01')) {
+    cleanStocks.push({
+      id: 'c_demo_C13_hs_njhm01',
+      childCode: 'DEMO-C-13',
+      childName: '大容量气压高箱储物榻榻米床体',
+      spec: 'Tatami-Storage',
+      tpWh: '环世',
+      whName: 'USNJHM01',
+      availableQty: 300,
+      transitQty: 60,
+      linkedParents: ['DEMO-MULTI-01']
+    })
+  }
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-14' && s.tpWh === '环世' && s.whName === 'USNJHM01')) {
+    cleanStocks.push({
+      id: 'c_demo_C14_hs_njhm01',
+      childCode: 'DEMO-C-14',
+      childName: '顶天立地分区挂衣储物三门大衣柜',
+      spec: 'Wardrobe-3Door',
+      tpWh: '环世',
+      whName: 'USNJHM01',
+      availableQty: 300,
+      transitQty: 60,
+      linkedParents: ['DEMO-MULTI-01']
+    })
+  }
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-15' && s.tpWh === '环世' && s.whName === 'USNJHM01')) {
+    cleanStocks.push({
+      id: 'c_demo_C15_hs_njhm01',
+      childCode: 'DEMO-C-15',
+      childName: 'L型加宽加厚转角多功能书桌架',
+      spec: 'Desk-LCorner',
+      tpWh: '环世',
+      whName: 'USNJHM01',
+      availableQty: 300,
+      transitQty: 60,
+      linkedParents: ['DEMO-MULTI-01']
+    })
+  }
+
+  // 场景 2: DEMO-SHORT-01 轻奢岩板餐桌椅套装
+  // 西邮 - WPCHI3 (断货归零场景：餐椅为0)
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-09' && s.tpWh === '西邮' && s.whName === 'WPCHI3')) {
+    cleanStocks.push({
+      id: 'c_demo_C09_xy_wpchi3',
+      childCode: 'DEMO-C-09',
+      childName: '黑胡桃实木加厚长餐桌主台(1.6m)',
+      spec: 'Table-160cm',
+      tpWh: '西邮',
+      whName: 'WPCHI3',
+      availableQty: 150,
+      transitQty: 30,
+      linkedParents: ['DEMO-SHORT-01']
+    })
+  }
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-10' && s.tpWh === '西邮' && s.whName === 'WPCHI3')) {
+    cleanStocks.push({
+      id: 'c_demo_C10_xy_wpchi3',
+      childCode: 'DEMO-C-10',
+      childName: '人体工学弧形靠背餐椅(单把装)',
+      spec: 'Chair-Curve',
+      tpWh: '西邮',
+      whName: 'WPCHI3',
+      availableQty: 0,
+      transitQty: 0,
+      linkedParents: ['DEMO-SHORT-01']
+    })
+  }
+
+  // 千亚 - GA4131 (单物料短板场景)
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-09' && s.tpWh === '千亚' && s.whName === 'GA4131')) {
+    cleanStocks.push({
+      id: 'c_demo_C09_qy_ga4131',
+      childCode: 'DEMO-C-09',
+      childName: '黑胡桃实木加厚长餐桌主台(1.6m)',
+      spec: 'Table-160cm',
+      tpWh: '千亚',
+      whName: 'GA4131',
+      availableQty: 120,
+      transitQty: 20,
+      linkedParents: ['DEMO-SHORT-01']
+    })
+  }
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-10' && s.tpWh === '千亚' && s.whName === 'GA4131')) {
+    cleanStocks.push({
+      id: 'c_demo_C10_qy_ga4131',
+      childCode: 'DEMO-C-10',
+      childName: '人体工学弧形靠背餐椅(单把装)',
+      spec: 'Chair-Curve',
+      tpWh: '千亚',
+      whName: 'GA4131',
+      availableQty: 160,
+      transitQty: 120,
+      linkedParents: ['DEMO-SHORT-01']
+    })
+  }
+
+  // 场景 3: DEMO-SHORT-02 主卧高箱大床套组
+  // 乐歌 - SAV (协同短板)
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-11' && s.tpWh === '乐歌' && s.whName === 'SAV')) {
+    cleanStocks.push({
+      id: 'c_demo_C11_lg_sav',
+      childCode: 'DEMO-C-11',
+      childName: '北美白橡木高箱大床主框架',
+      spec: 'Bed-Oak180',
+      tpWh: '乐歌',
+      whName: 'SAV',
+      availableQty: 30,
+      transitQty: 20,
+      linkedParents: ['DEMO-SHORT-02']
+    })
+  }
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-12' && s.tpWh === '乐歌' && s.whName === 'SAV')) {
+    cleanStocks.push({
+      id: 'c_demo_C12_lg_sav',
+      childCode: 'DEMO-C-12',
+      childName: '亲肤乳胶高弹独立袋装弹簧床垫',
+      spec: 'Mattress-Spring',
+      tpWh: '乐歌',
+      whName: 'SAV',
+      availableQty: 30,
+      transitQty: 20,
+      linkedParents: ['DEMO-SHORT-02']
+    })
+  }
+
+  // 环世 - USSAV02 (断货归零)
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-11' && s.tpWh === '环世' && s.whName === 'USSAV02')) {
+    cleanStocks.push({
+      id: 'c_demo_C11_hs_sav02',
+      childCode: 'DEMO-C-11',
+      childName: '北美白橡木高箱大床主框架',
+      spec: 'Bed-Oak180',
+      tpWh: '环世',
+      whName: 'USSAV02',
+      availableQty: 100,
+      transitQty: 0,
+      linkedParents: ['DEMO-SHORT-02']
+    })
+  }
+  if (!cleanStocks.some(s => s.childCode === 'DEMO-C-12' && s.tpWh === '环世' && s.whName === 'USSAV02')) {
+    cleanStocks.push({
+      id: 'c_demo_C12_hs_sav02',
+      childCode: 'DEMO-C-12',
+      childName: '亲肤乳胶高弹独立袋装弹簧床垫',
+      spec: 'Mattress-Spring',
+      tpWh: '环世',
+      whName: 'USSAV02',
+      availableQty: 0,
+      transitQty: 0,
+      linkedParents: ['DEMO-SHORT-02']
+    })
+  }
+
+  // 场景 4: 物理编码 DRAFT-1790072625028uvld3 在乐歌 CAMV、SAV、SCM 都有库存且存在不齐套
+  const targetDraftStocks = [
+    // 4.1 乐歌 - CAMV (断货归零场景: IF260215=0, IF260207=160, IF260208=160 -> 齐套 0 套, 缺 160 套)
+    { childCode: 'IF260215', tpWh: '乐歌', whName: 'CAMV', availableQty: 0, transitQty: 0, spec: 'Suite-Nordic-Top' },
+    { childCode: 'IF260207', tpWh: '乐歌', whName: 'CAMV', availableQty: 160, transitQty: 30, spec: 'Suite-Nordic-Side' },
+    { childCode: 'IF260208', tpWh: '乐歌', whName: 'CAMV', availableQty: 160, transitQty: 30, spec: 'Suite-Nordic-Window' },
+    // 4.2 乐歌 - SAV (多物料协同短板场景: IF260215=40, IF260207=40并列短板, IF260208=180 -> 齐套 40 套, 缺 140 套)
+    { childCode: 'IF260215', tpWh: '乐歌', whName: 'SAV', availableQty: 40, transitQty: 20, spec: 'Suite-Nordic-Top' },
+    { childCode: 'IF260207', tpWh: '乐歌', whName: 'SAV', availableQty: 40, transitQty: 20, spec: 'Suite-Nordic-Side' },
+    { childCode: 'IF260208', tpWh: '乐歌', whName: 'SAV', availableQty: 180, transitQty: 40, spec: 'Suite-Nordic-Window' },
+    // 4.3 乐歌 - SCM (单物料短板场景: IF260208=60短板在途100, IF260215=200, IF260207=200 -> 齐套 60 套, 缺 140 套)
+    { childCode: 'IF260215', tpWh: '乐歌', whName: 'SCM', availableQty: 200, transitQty: 40, spec: 'Suite-Nordic-Top' },
+    { childCode: 'IF260207', tpWh: '乐歌', whName: 'SCM', availableQty: 200, transitQty: 40, spec: 'Suite-Nordic-Side' },
+    { childCode: 'IF260208', tpWh: '乐歌', whName: 'SCM', availableQty: 60, transitQty: 100, spec: 'Suite-Nordic-Window' }
+  ]
+
+  // 清除乐歌除 CAMV, SAV, SCM 外可能残存的 IF260215, IF260207, IF260208 旧数据
+  cleanStocks = cleanStocks.filter(s => {
+    if (['IF260215', 'IF260207', 'IF260208'].includes(s.childCode) && s.tpWh === '乐歌') {
+      return ['CAMV', 'SAV', 'SCM'].includes(s.whName)
+    }
+    return true
+  })
+
+  targetDraftStocks.forEach(t => {
+    const existing = cleanStocks.find(s => s.childCode === t.childCode && s.tpWh === t.tpWh && s.whName === t.whName)
+    if (existing) {
+      existing.availableQty = t.availableQty
+      existing.transitQty = t.transitQty
+    } else {
+      cleanStocks.push({
+        id: `c_${t.childCode}_${t.whName.toLowerCase()}`,
+        childCode: t.childCode,
+        childName: t.childCode === 'IF260215' ? '组合电视柜上架' : (t.childCode === 'IF260207' ? '边柜' : '窗边柜'),
+        spec: t.spec,
+        tpWh: t.tpWh,
+        whName: t.whName,
+        availableQty: t.availableQty,
+        transitQty: t.transitQty,
+        linkedParents: ['DRAFT-1790072625028uvld3']
+      })
+    }
+  })
+
+  const draftBinding = bindings.find(b => b.parentCode === 'DRAFT-1790072625028uvld3')
+  if (draftBinding) {
+    draftBinding.tpWh = '乐歌'
+  }
+
+  saveToStorage(STORAGE_KEYS.CHILD_PHYSICAL_STOCKS, cleanStocks)
+
+  // 3. 按 childCode 聚合子物料存量明细，同时去除仓库名称前后空格
   const childStockByCode = new Map<string, ChildPhysicalStockRecord[]>()
-  childStocks.forEach(st => {
+  cleanStocks.forEach(st => {
     if (!st.childCode) return
     const cleanedSt: ChildPhysicalStockRecord = {
       ...st,
-      whName: (st.whName || '美西洛杉矶1仓').trim(),
+      whName: (st.whName || 'WPLA11').trim(),
       tpWh: (st.tpWh || '西邮').trim()
     }
     const list = childStockByCode.get(st.childCode) || []
@@ -735,12 +1625,19 @@ export async function dbFetchPenetratedKanbanData(): Promise<ParentPenetrateKanb
 
   bindings.forEach((b, bIdx) => {
     const asinMatch = asinTrackMap.get(b.parentCode) || asinTrackMap.get(b.sku)
+    const platform = asinMatch?.platform || 'Amazon'
     const account = asinMatch ? asinMatch.account : 'MNE'
     const site = asinMatch ? asinMatch.site : 'US'
     const flag = asinMatch ? asinMatch.countryFlag : '🇺🇸'
     const asin = asinMatch ? asinMatch.asin : (b.parentCode ? 'B08' + b.parentCode.slice(-6) : 'B080000000')
     const sku = b.sku || (asinMatch ? asinMatch.sku : b.parentCode)
     const defaultTpWh = b.tpWh || '西邮'
+    const comboMeta = getFurnitureComboMeta(b.parentCode)
+    const style = b.style || comboMeta?.style || '标准版'
+    const mainMaterial = b.material || comboMeta?.material || '实木/刨花板/碳钢'
+    const brand = b.brand || comboMeta?.brand || '中性'
+    const color = b.color || comboMeta?.color || '-'
+    const packQty = b.packQty || comboMeta?.packQty || '1pack'
 
     const boundChildren = b.boundChildren || []
 
@@ -761,14 +1658,30 @@ export async function dbFetchPenetratedKanbanData(): Promise<ParentPenetrateKanb
       const childMaterials = boundChildren.map(sub => ({
         childCode: sub.childCode,
         childName: sub.childName || sub.childCode,
+        tpWh: defaultTpWh,
         bomRatio: sub.ratio || 1,
         availableQty: 0,
         transitQty: 0,
         warehouseDist: [{ whName: '暂无物理库存', shortName: '无', qty: 0 }]
       }))
 
+      const childWarehouseRows: ChildWarehouseStockRow[] = boundChildren.map(sub => ({
+        childCode: sub.childCode,
+        childName: sub.childName || sub.childCode,
+        bomRatio: sub.ratio || 1,
+        tpWh: defaultTpWh,
+        warehouseName: '暂无物理库存',
+        availableQty: 0,
+        transitQty: 0,
+        penetratedSets: 0,
+        transitSets: 0,
+        rowSpan: 1,
+        isFirstChildRow: true
+      }))
+
       result.push({
-        id: `k_${bIdx}_default`,
+        id: `k_${bIdx}`,
+        platform,
         account,
         site,
         countryFlag: flag,
@@ -776,34 +1689,58 @@ export async function dbFetchPenetratedKanbanData(): Promise<ParentPenetrateKanb
         sku,
         parentMaterialCode: b.parentCode,
         productName: b.productName,
-        style: '标准版',
-        mainMaterial: '实木/刨花板/碳钢',
-        targetBrand: '通用品牌',
+        style,
+        mainMaterial,
+        brand,
+        color,
+        packQty,
+        targetBrand: brand,
         model: b.parentCode,
+        coveredWarehouses: [],
+        warehouseNamesSummary: '暂无物理仓储',
         tpOverseasWh: defaultTpWh,
         warehouseName: '暂无物理库存',
         image: `https://picsum.photos/100/100?random=${(bIdx % 50) + 100}`,
         childMaterials,
+        childWarehouseRows,
+        warehouseBreakdown: [],
+        tpWarehouseBreakdown: [],
+        rawPenetratedAvailable: 0,
         calculatedParentAvailable: 0,
         calculatedParentTransit: 0,
+        orderOccupiedQty: 0,
+        unshippedOrderCount: 0,
+        unshippedOrders: [],
         bottleneckChild: childMaterials.length > 0 ? {
           childCode: childMaterials[0].childCode,
           childName: childMaterials[0].childName,
           bomRatio: childMaterials[0].bomRatio,
           availableQty: 0
-        } : null
+        } : null,
+        bottleneckChildren: []
       })
       return
     }
 
-    // 针对每个物理仓库独立穿透计算该仓库下的父物料可售套数
-    let whIdx = 0
-    warehouseKeysMap.forEach(({ tpWh, whName }) => {
-      let minParentAvail = Infinity
-      let minParentTransit = Infinity
-      let bottleneckChild: any = null
+    // 针对每个物理仓库独立穿透计算该仓库下的齐套可售与在途套数（跨国电商各仓独立齐套打包发货）
+    const warehouseBreakdown: WarehouseStockBreakdown[] = []
+    let totalParentAvail = 0
+    let totalParentTransit = 0
+    const coveredWarehouses: { tpWh: string; warehouseName: string; availableSets: number }[] = []
 
-      const childMaterials = boundChildren.map(sub => {
+    warehouseKeysMap.forEach(({ tpWh, whName }) => {
+      let minWhAvail = Infinity
+      let minWhTransit = Infinity
+      const whChildMaterials: {
+        childCode: string
+        childName: string
+        bomRatio: number
+        availableQty: number
+        transitQty: number
+        calcSets: number
+      }[] = []
+
+      boundChildren.forEach(sub => {
         const stocks = childStockByCode.get(sub.childCode) || []
         const matchingWhStocks = stocks.filter(st => st.whName === whName && st.tpWh === tpWh)
 
@@ -817,63 +1754,352 @@ export async function dbFetchPenetratedKanbanData(): Promise<ParentPenetrateKanb
         const availSets = Math.floor(availInWh / (sub.ratio || 1))
         const transitSets = Math.floor(transitInWh / (sub.ratio || 1))
 
-        if (availSets < minParentAvail) {
-          minParentAvail = availSets
-          bottleneckChild = {
-            childCode: sub.childCode,
-            childName: sub.childName || sub.childCode,
-            bomRatio: sub.ratio || 1,
-            availableQty: availInWh
-          }
-        }
-        if (transitSets < minParentTransit) {
-          minParentTransit = transitSets
-        }
+        if (availSets < minWhAvail) minWhAvail = availSets
+        if (transitSets < minWhTransit) minWhTransit = transitSets
 
-        return {
+        whChildMaterials.push({
           childCode: sub.childCode,
           childName: sub.childName || sub.childCode,
           bomRatio: sub.ratio || 1,
           availableQty: availInWh,
           transitQty: transitInWh,
-          warehouseDist: [{
-            whName: whName,
-            shortName: whName.slice(0, 6),
-            qty: availInWh
-          }]
-        }
+          calcSets: availSets
+        })
       })
 
       if (boundChildren.length === 0) {
-        minParentAvail = 0
-        minParentTransit = 0
+        minWhAvail = 0
+        minWhTransit = 0
       }
 
-      result.push({
-        id: `k_${bIdx}_wh_${whIdx++}`,
-        account,
-        site,
-        countryFlag: flag,
-        asin,
-        sku,
-        parentMaterialCode: b.parentCode,
-        productName: b.productName,
-        style: '标准版',
-        mainMaterial: '实木/刨花板/碳钢',
-        targetBrand: '通用品牌',
-        model: b.parentCode,
-        tpOverseasWh: tpWh,
-        warehouseName: whName,
-        image: `https://picsum.photos/100/100?random=${(bIdx % 50) + 100}`,
-        childMaterials,
-        calculatedParentAvailable: minParentAvail === Infinity ? 0 : minParentAvail,
-        calculatedParentTransit: minParentTransit === Infinity ? 0 : minParentTransit,
-        bottleneckChild
+      const finalWhAvail = minWhAvail === Infinity ? 0 : minWhAvail
+      const finalWhTransit = minWhTransit === Infinity ? 0 : minWhTransit
+
+      // 计算该分仓匹配的待发货 (Unshipped) 订单占用
+      const whOrders = unshippedOrders.filter(o => {
+        const matchCode = (o.parentMaterialCode && o.parentMaterialCode === b.parentCode) || (o.sku && (o.sku === sku || o.sku === b.parentCode))
+        const matchWh = o.warehouseName ? o.warehouseName === whName : (o.tpOverseasWh ? o.tpOverseasWh === tpWh : true)
+        return matchCode && matchWh
       })
+      const whOccupied = whOrders.reduce((sum, o) => sum + Number(o.orderedQty || 0), 0)
+
+      warehouseBreakdown.push({
+        tpWh,
+        warehouseName: whName,
+        availableSets: finalWhAvail,
+        transitSets: finalWhTransit,
+        orderOccupiedQty: whOccupied,
+        unshippedOrderCount: whOrders.length,
+        childMaterials: whChildMaterials
+      })
+
+      totalParentAvail += finalWhAvail
+      totalParentTransit += finalWhTransit
+
+      coveredWarehouses.push({
+        tpWh,
+        warehouseName: whName,
+        availableSets: finalWhAvail
+      })
+    })
+
+    // 按照第三方海外仓 (tpWh) 分组排序，确保属于同一个三方海外仓的多个仓库连续排列
+    warehouseBreakdown.sort((a, b) => a.tpWh.localeCompare(b.tpWh, 'zh-CN'))
+
+    // 计算同一个第三方海外仓的 rowSpan
+    let currentTpWh = ''
+    let startIndex = 0
+    warehouseBreakdown.forEach((item, index) => {
+      if (item.tpWh !== currentTpWh) {
+        if (currentTpWh !== '') {
+          const count = index - startIndex
+          warehouseBreakdown[startIndex].tpRowSpan = count
+          for (let k = startIndex + 1; k < index; k++) {
+            warehouseBreakdown[k].tpRowSpan = 0
+          }
+        }
+        currentTpWh = item.tpWh
+        startIndex = index
+      }
+    })
+    if (warehouseBreakdown.length > 0) {
+      const count = warehouseBreakdown.length - startIndex
+      warehouseBreakdown[startIndex].tpRowSpan = count
+      for (let k = startIndex + 1; k < warehouseBreakdown.length; k++) {
+        warehouseBreakdown[k].tpRowSpan = 0
+      }
+    }
+
+    // 针对每个【第三方海外仓】(tpWh) 独立计算该三方仓下的物理可售、物理在途、穿透折算可售数量、在途及待发货占用
+    const tpWhSet = new Set<string>()
+    boundChildren.forEach(sub => {
+      const stocks = childStockByCode.get(sub.childCode) || []
+      stocks.forEach(st => {
+        if (st.tpWh) tpWhSet.add(st.tpWh)
+      })
+    })
+    if (tpWhSet.size === 0) tpWhSet.add(defaultTpWh || '西邮')
+
+    const tpWarehouseBreakdown: ThirdPartyWarehouseBreakdown[] = []
+    let totalPenetratedAvail = 0
+    let totalPenetratedTransit = 0
+
+    tpWhSet.forEach(tpWh => {
+      let tpPhysicalAvail = 0
+      let tpPhysicalTransit = 0
+      const whNameSet = new Set<string>()
+
+      let minTpAvail = Infinity
+      let minTpTransit = Infinity
+
+      boundChildren.forEach(sub => {
+        const stocks = childStockByCode.get(sub.childCode) || []
+        const matchingStocks = stocks.filter(st => st.tpWh === tpWh)
+
+        let childAvailInTp = 0
+        let childTransitInTp = 0
+        matchingStocks.forEach(st => {
+          childAvailInTp += Number(st.availableQty || 0)
+          childTransitInTp += Number(st.transitQty || 0)
+          if (st.whName) whNameSet.add(st.whName)
+        })
+
+        tpPhysicalAvail += childAvailInTp
+        tpPhysicalTransit += childTransitInTp
+
+        const availSets = Math.floor(childAvailInTp / (sub.ratio || 1))
+        const transitSets = Math.floor(childTransitInTp / (sub.ratio || 1))
+
+        if (availSets < minTpAvail) minTpAvail = availSets
+        if (transitSets < minTpTransit) minTpTransit = transitSets
+      })
+
+      if (boundChildren.length === 0) {
+        minTpAvail = 0
+        minTpTransit = 0
+      }
+
+      // 跨国电商各分仓独立齐套备货与发货：同一三方海外仓的可售套数 = 其下属各物理分仓独立齐套可售套数之和
+      const tpWhBreakdowns = warehouseBreakdown.filter(w => w.tpWh === tpWh)
+      const finalTpAvail = tpWhBreakdowns.length > 0
+        ? tpWhBreakdowns.reduce((sum, w) => sum + w.availableSets, 0)
+        : (minTpAvail === Infinity ? 0 : minTpAvail)
+      const finalTpTransit = tpWhBreakdowns.length > 0
+        ? tpWhBreakdowns.reduce((sum, w) => sum + w.transitSets, 0)
+        : (minTpTransit === Infinity ? 0 : minTpTransit)
+
+      // 计算该第三方海外仓匹配的待发货 (Unshipped) 订单占用
+      const whOrders = unshippedOrders.filter(o => {
+        const matchCode = (o.parentMaterialCode && o.parentMaterialCode === b.parentCode) || (o.sku && (o.sku === sku || o.sku === b.parentCode))
+        const matchWh = o.tpOverseasWh ? o.tpOverseasWh === tpWh : Array.from(whNameSet).includes(o.warehouseName)
+        return matchCode && matchWh
+      })
+      const whOccupied = whOrders.reduce((sum, o) => sum + Number(o.orderedQty || 0), 0)
+
+      tpWarehouseBreakdown.push({
+        tpWh,
+        warehouseNames: Array.from(whNameSet).join('、') || `${tpWh}主仓`,
+        availableQty: tpPhysicalAvail,
+        transitQty: tpPhysicalTransit,
+        availableSets: finalTpAvail,
+        transitSets: finalTpTransit,
+        orderOccupiedQty: whOccupied,
+        unshippedOrderCount: whOrders.length,
+        netAvailableSets: Math.max(0, finalTpAvail - whOccupied)
+      })
+
+      totalPenetratedAvail += finalTpAvail
+      totalPenetratedTransit += finalTpTransit
+    })
+
+    // 汇总各子物料在全海外仓的物理总存量及分仓分布
+    const childMaterials = boundChildren.map(sub => {
+      const stocks = childStockByCode.get(sub.childCode) || []
+      let totalChildAvail = 0
+      let totalChildTransit = 0
+      const warehouseDist: ChildWarehouseDist[] = []
+
+      warehouseKeysMap.forEach(({ tpWh, whName }) => {
+        const matchingWhStocks = stocks.filter(st => st.whName === whName && st.tpWh === tpWh)
+        let q = 0
+        matchingWhStocks.forEach(st => {
+          q += Number(st.availableQty || 0)
+          totalChildTransit += Number(st.transitQty || 0)
+        })
+        totalChildAvail += q
+        warehouseDist.push({
+          whName,
+          shortName: whName.length > 7 ? whName.slice(0, 7) : whName,
+          qty: q
+        })
+      })
+
+      const tpList = Array.from(new Set(stocks.map(st => st.tpWh).filter(Boolean)))
+      const tpWh = tpList.length > 0 ? tpList.join('、') : defaultTpWh
+
+      return {
+        childCode: sub.childCode,
+        childName: sub.childName || sub.childCode,
+        tpWh,
+        bomRatio: sub.ratio || 1,
+        availableQty: totalChildAvail,
+        transitQty: totalChildTransit,
+        warehouseDist
+      }
+    })
+
+    // 为子物料生成按每个三方海外仓及分支仓库独立成行的明细列表 (展开行分多行展示)
+    const childWarehouseRows: ChildWarehouseStockRow[] = []
+
+    boundChildren.forEach(sub => {
+      const stocks = childStockByCode.get(sub.childCode) || []
+      const childWhEntries: {
+        tpWh: string
+        whName: string
+        avail: number
+        transit: number
+      }[] = []
+
+      // 按仓库分支汇总该子物料在各仓的物理在库与在途
+      warehouseKeysMap.forEach(({ tpWh, whName }) => {
+        const matchingStocks = stocks.filter(st => st.whName === whName && st.tpWh === tpWh)
+        let whAvail = 0
+        let whTransit = 0
+        matchingStocks.forEach(st => {
+          whAvail += Number(st.availableQty || 0)
+          whTransit += Number(st.transitQty || 0)
+        })
+        if (whAvail > 0 || whTransit > 0 || warehouseKeysMap.size === 1) {
+          childWhEntries.push({
+            tpWh,
+            whName,
+            avail: whAvail,
+            transit: whTransit
+          })
+        }
+      })
+
+      // 若未过滤出有库存仓，则补充各仓 0 存量行
+      if (childWhEntries.length === 0) {
+        if (warehouseKeysMap.size > 0) {
+          warehouseKeysMap.forEach(({ tpWh, whName }) => {
+            childWhEntries.push({ tpWh, whName, avail: 0, transit: 0 })
+          })
+        } else {
+          childWhEntries.push({ tpWh: defaultTpWh, whName: '暂无物理库存', avail: 0, transit: 0 })
+        }
+      }
+
+      const rowCount = childWhEntries.length
+      childWhEntries.forEach((entry, idx) => {
+        const availSets = Math.floor(entry.avail / (sub.ratio || 1))
+        const transitSets = Math.floor(entry.transit / (sub.ratio || 1))
+
+        childWarehouseRows.push({
+          childCode: sub.childCode,
+          childName: sub.childName || sub.childCode,
+          bomRatio: sub.ratio || 1,
+          tpWh: entry.tpWh,
+          warehouseName: entry.whName,
+          availableQty: entry.avail,
+          transitQty: entry.transit,
+          penetratedSets: availSets,
+          transitSets: transitSets,
+          rowSpan: idx === 0 ? rowCount : 0,
+          isFirstChildRow: idx === 0
+        })
+      })
+    })
+
+    // 提取全局短板子物料
+    const sortedChildren = childMaterials
+      .map(c => ({
+        childCode: c.childCode,
+        childName: c.childName,
+        bomRatio: c.bomRatio,
+        availableQty: c.availableQty,
+        availSets: Math.floor(c.availableQty / c.bomRatio)
+      }))
+      .sort((a, b) => a.availSets - b.availSets)
+
+    const lowestSets = sortedChildren.length > 0 ? sortedChildren[0].availSets : 0
+    const primaryBottlenecks = sortedChildren.filter(c => c.availSets === lowestSets)
+    const primaryBottleneck = primaryBottlenecks.length > 0 ? primaryBottlenecks[0] : null
+
+    // 该 SKU 在所有海外仓的总待发货 (Unshipped) 订单占用
+    const allMatchingOrders = unshippedOrders.filter(o => 
+      (o.parentMaterialCode && o.parentMaterialCode === b.parentCode) || 
+      (o.sku && (o.sku === sku || o.sku === b.parentCode))
+    )
+    const totalOccupiedQty = allMatchingOrders.reduce((sum, o) => sum + Number(o.orderedQty || 0), 0)
+
+    // 外层可售数量 = 多个第三方海外仓穿透可售汇总 - 订单占用套数
+    const outerAvailable = Math.max(0, totalPenetratedAvail - totalOccupiedQty)
+
+    const tpWhList = Array.from(new Set(coveredWarehouses.map(w => w.tpWh)))
+    const whNameList = coveredWarehouses.map(w => w.warehouseName)
+    const warehouseNamesSummary = coveredWarehouses.map(w => `${w.tpWh}(${w.warehouseName})`).join('、') || '暂无仓储'
+
+    result.push({
+      id: `k_${bIdx}`,
+      platform,
+      account,
+      site,
+      countryFlag: flag,
+      asin,
+      sku,
+      parentMaterialCode: b.parentCode,
+      productName: b.productName,
+      style,
+      mainMaterial,
+      brand,
+      color,
+      packQty,
+      targetBrand: brand,
+      model: b.parentCode,
+      coveredWarehouses,
+      warehouseNamesSummary,
+      tpOverseasWh: tpWhList.join('、') || defaultTpWh,
+      warehouseName: whNameList.join('、') || '暂无物理库存',
+      image: `https://picsum.photos/100/100?random=${(bIdx % 50) + 100}`,
+      childMaterials,
+      childWarehouseRows,
+      warehouseBreakdown,
+      tpWarehouseBreakdown,
+      rawPenetratedAvailable: totalPenetratedAvail,
+      orderOccupiedQty: totalOccupiedQty,
+      unshippedOrderCount: allMatchingOrders.length,
+      unshippedOrders: allMatchingOrders,
+      calculatedParentAvailable: outerAvailable,
+      calculatedParentTransit: totalPenetratedTransit,
+      bottleneckChild: primaryBottleneck,
+      bottleneckChildren: primaryBottlenecks
     })
   })
 
   return result
+}
+
+export async function dbFetchUnshippedOrders(): Promise<UnshippedOrderRecord[]> {
+  return loadFromStorage(STORAGE_KEYS.UNSHIPPED_ORDERS, INITIAL_UNSHIPPED_ORDERS)
+}
+
+export async function dbSyncUnshippedOrders(): Promise<{ count: number; totalOccupied: number; syncTime: string }> {
+  await new Promise(resolve => setTimeout(resolve, 400))
+  const orders = loadFromStorage<UnshippedOrderRecord[]>(STORAGE_KEYS.UNSHIPPED_ORDERS, INITIAL_UNSHIPPED_ORDERS)
+  const syncTime = new Date().toLocaleString()
+  saveToStorage(STORAGE_KEYS.UNSHIPPED_ORDERS, orders)
+  localStorage.setItem(STORAGE_KEYS.LAST_UNSHIPPED_SYNC_TIME, syncTime)
+  const totalOccupied = orders.reduce((sum, o) => sum + (o.orderedQty || 0), 0)
+  return { count: orders.length, totalOccupied, syncTime }
+}
+
+export function dbGetLastUnshippedSyncTime(): string {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.LAST_UNSHIPPED_SYNC_TIME) || '刚刚'
+  } catch {
+    return '刚刚'
+  }
 }
 
 // --- 齐套缺料预警后台 API ---
@@ -882,50 +2108,180 @@ export async function dbFetchCompletenessAlerts(): Promise<CompletenessAlertReco
   const alerts: CompletenessAlertRecord[] = []
 
   kanbanData.forEach((row, idx) => {
-    if (row.childMaterials.length > 1) {
-      // 找出当前仓库中支持套数最多的子物料套数 (目标齐套套数)
-      const maxSets = Math.max(...row.childMaterials.map(c => Math.floor(c.availableQty / c.bomRatio)))
+    // 1. 仅对多子物料组合 BOM 进行齐套分析 (单品打包不产生多子物料木桶短板)
+    if (!row.childMaterials || row.childMaterials.length <= 1) return
 
-      if (maxSets > 0) {
-        const shortageItems: {
-          childCode: string
-          childName: string
-          childStock: number
-          bomRatio: number
-          suggestedQty: number
-        }[] = []
+    // 多海外仓独立备货业务模型：按每个物理海外仓独立进行齐套与缺料预警分析
+    const whList = (row.warehouseBreakdown && row.warehouseBreakdown.length > 0)
+      ? row.warehouseBreakdown
+      : [{
+          tpWh: row.tpOverseasWh || '西邮',
+          warehouseName: row.warehouseName || 'WPLA11',
+          availableSets: row.calculatedParentAvailable || 0,
+          transitSets: row.calculatedParentTransit || 0,
+          orderOccupiedQty: row.orderOccupiedQty || 0,
+          childMaterials: row.childMaterials
+        }]
 
-        row.childMaterials.forEach(c => {
-          const currentSets = Math.floor(c.availableQty / c.bomRatio)
-          const gapSets = maxSets - currentSets
+    whList.forEach((wh, whIdx) => {
+      const whChildren = wh.childMaterials || []
+      if (whChildren.length <= 1) return
 
-          if (gapSets > 0) {
-            const neededQty = gapSets * c.bomRatio
-            shortageItems.push({
-              childCode: c.childCode,
-              childName: c.childName,
-              childStock: c.availableQty,
-              bomRatio: c.bomRatio,
-              suggestedQty: neededQty
-            })
-          }
-        })
+      const currentSets = Math.max(0, (wh.availableSets ?? 0) - (wh.orderOccupiedQty ?? 0))
 
-        if (shortageItems.length > 0) {
-          const shortDesc = shortageItems.map(item => `${item.childCode}(+${item.suggestedQty}件)`).join('、')
-          alerts.push({
-            id: `alert_${idx}`,
-            parentCode: row.parentMaterialCode + (row.warehouseName ? ` (${row.warehouseName})` : ''),
-            productName: row.productName,
-            warehouseName: row.warehouseName || '海外仓',
-            otherMaxStock: maxSets * (row.childMaterials[0]?.bomRatio || 1),
-            targetSets: maxSets,
-            shortageItems,
-            explanation: `补齐 ${shortDesc} 后，即可达 ${maxSets} 套全齐可售`
+      // 2. 找出当前物理仓库中各子物料支持的最大套数 (该仓的目标齐套基准)
+      const childSetsList = whChildren.map(c => Math.floor((c.availableQty || 0) / (c.bomRatio || 1)))
+      const maxSets = Math.max(...childSetsList)
+
+      // 如果最高充盈套数为 0，说明该仓全部子物料均无库存，不属于木桶短板失衡
+      if (maxSets <= 0) return
+
+      // 3. 如果该仓各子物料套数完全齐套平衡 (maxSets === currentSets)，无短板制约，不产生缺料预警
+      if (maxSets <= currentSets) return
+
+      // 4. 提取该仓达到最低折算套数的子物料 (当前仓真正的瓶颈短板)
+      const bottleneckItems = whChildren.filter(c => Math.floor((c.availableQty || 0) / (c.bomRatio || 1)) === currentSets)
+      const bottleneckCount = bottleneckItems.length
+
+      // 判定预警类型与严重级别
+      let alertType: '断货归零' | '多物料共同短板' | '单物料短板'
+      let alertLevel: 'danger' | 'warning' | 'info'
+      if (currentSets === 0) {
+        alertType = '断货归零'
+        alertLevel = 'danger'
+      } else if (bottleneckCount > 1) {
+        alertType = '多物料共同短板'
+        alertLevel = 'warning'
+      } else {
+        alertType = '单物料短板'
+        alertLevel = 'warning'
+      }
+
+      const shortageItems: CompletenessShortageItem[] = []
+      let totalSuggestedQty = 0
+      let totalTransitQty = 0
+      let netSuggestedQty = 0
+
+      whChildren.forEach(c => {
+        const cAvail = c.availableQty || 0
+        const cRatio = c.bomRatio || 1
+        const cSets = Math.floor(cAvail / cRatio)
+        const gapSets = maxSets - cSets
+
+        if (gapSets > 0) {
+          const neededQty = gapSets * cRatio
+          const tQty = c.transitQty || 0
+          const tSets = Math.floor(tQty / cRatio)
+          const netQty = Math.max(0, neededQty - tQty)
+
+          totalSuggestedQty += neededQty
+          totalTransitQty += tQty
+          netSuggestedQty += netQty
+
+          shortageItems.push({
+            childCode: c.childCode,
+            childName: c.childName,
+            childStock: cAvail,
+            bomRatio: cRatio,
+            currentSets: cSets,
+            gapSets,
+            suggestedQty: neededQty,
+            transitQty: tQty,
+            transitSets: tSets,
+            netShortageQty: netQty,
+            isBottleneck: cSets === currentSets
           })
         }
+      })
+
+      if (shortageItems.length === 0) return
+
+      let transitCoverage: '完全覆盖' | '部分覆盖' | '无在途' = '无在途'
+      if (netSuggestedQty === 0 && totalTransitQty > 0) {
+        transitCoverage = '完全覆盖'
+      } else if (totalTransitQty > 0) {
+        transitCoverage = '部分覆盖'
       }
+
+      // 智能业务说明与协同指引 (明确指向具体收货海外仓)
+      let explanation = ''
+      if (alertType === '断货归零') {
+        explanation = `[严重断货 · ${wh.warehouseName}] 子物料 ${bottleneckItems.map(b => b.childCode).join('、')} 存量为 0 件，整套商品停摆！需加急补齐 +${totalSuggestedQty} 件发往【${wh.warehouseName}】以达 ${maxSets} 套全齐可售。`
+      } else if (alertType === '多物料共同短板') {
+        explanation = `[协同补货 · ${wh.warehouseName}] 存在 ${bottleneckCount} 款并列共同短板(${bottleneckItems.map(b => b.childCode).join('、')})，必须协同补齐短板物料，该仓整套方可由 ${currentSets} 套提升至 ${maxSets} 套！`
+      } else {
+        explanation = `[定向补货 · ${wh.warehouseName}] 仅受制于单款瓶颈 ${bottleneckItems[0]?.childCode}，定向单独采购 +${shortageItems.find(s => s.isBottleneck)?.suggestedQty || totalSuggestedQty} 件发往【${wh.warehouseName}】即可释放 ${maxSets} 套全齐可售。`
+      }
+
+      if (transitCoverage === '完全覆盖') {
+        explanation += ` (🚚 在途 ${totalTransitQty} 件已足额覆盖缺口，到货入库后将自动解除告警)`
+      } else if (transitCoverage === '部分覆盖') {
+        explanation += ` (🚚 已有在途 ${totalTransitQty} 件，抵扣后净缺口为 ${netSuggestedQty} 件)`
+      }
+
+      alerts.push({
+        id: `alert_${idx}_${whIdx}`,
+        platform: row.platform || 'Amazon',
+        account: row.account || 'MNE',
+        site: row.site || 'US',
+        countryFlag: row.countryFlag || '🇺🇸',
+        asin: row.asin || '',
+        sku: row.sku || row.parentMaterialCode,
+        parentCode: row.parentMaterialCode,
+        productName: row.productName,
+        tpOverseasWh: wh.tpWh,
+        warehouseName: wh.warehouseName || '海外仓',
+        image: row.image,
+        currentSets,
+        targetSets: maxSets,
+        gapSets: maxSets - currentSets,
+        otherMaxStock: maxSets * (whChildren[0]?.bomRatio || 1),
+        alertType,
+        alertLevel,
+        bottleneckCount,
+        shortageItems,
+        totalSuggestedQty,
+        totalTransitQty,
+        netSuggestedQty,
+        transitCoverage,
+        explanation
+      })
+    })
+  })
+
+  // 按照物料编码优先分组排序，同物料编码的分仓记录必须连续排列，以便在前端表格中进行同物料编码字段合并展示
+  const levelScore = { danger: 3, warning: 2, info: 1 }
+  const parentPriorityMap = new Map<string, { maxScore: number; maxGap: number }>()
+  alerts.forEach(a => {
+    const s = levelScore[a.alertLevel] || 0
+    const current = parentPriorityMap.get(a.parentCode) || { maxScore: 0, maxGap: 0 }
+    if (s > current.maxScore) current.maxScore = s
+    if (a.gapSets > current.maxGap) current.maxGap = a.gapSets
+    parentPriorityMap.set(a.parentCode, current)
+  })
+
+  alerts.sort((a, b) => {
+    // 1. 先按物料的最高危险级别排序 (存在断货归零的父物料整体排最前)
+    const pA = parentPriorityMap.get(a.parentCode) || { maxScore: 0, maxGap: 0 }
+    const pB = parentPriorityMap.get(b.parentCode) || { maxScore: 0, maxGap: 0 }
+    if (pA.maxScore !== pB.maxScore) return pB.maxScore - pA.maxScore
+    if (pA.maxGap !== pB.maxGap) return pB.maxGap - pA.maxGap
+
+    // 2. 同优先级父物料按 parentCode 聚集
+    if (a.parentCode !== b.parentCode) {
+      return a.parentCode.localeCompare(b.parentCode)
     }
+
+    // 3. 同一父物料下：按三方海外仓名称聚集 (使相同三方海外仓的物理分仓连续)
+    if (a.tpOverseasWh !== b.tpOverseasWh) {
+      return (a.tpOverseasWh || '').localeCompare(b.tpOverseasWh || '', 'zh-CN')
+    }
+
+    // 4. 同一三方海外仓内部：按该分仓的预警严重等级降序排列
+    const sA = levelScore[a.alertLevel] || 0
+    const sB = levelScore[b.alertLevel] || 0
+    if (sA !== sB) return sB - sA
+    return b.gapSets - a.gapSets
   })
 
   return alerts
